@@ -2,62 +2,85 @@
 const conversions = [
   {
     name: "centimeters",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(cm|centimeters?|centimetres?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(cm|centimeters?|centimetres?)\\b",
+    convert: (val) => `${(val * 0.393701).toFixed(2)} in`
+  },
+  {
+    name: "centimetres_attached", 
+    pattern: "(\\d+(?:\\.\\d+)?)([DWHL])\\s?(?=.*centimetres?)",
     convert: (val) => `${(val * 0.393701).toFixed(2)} in`
   },
   {
     name: "meters", 
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(m|meters?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(m|meters?)\\b",
     convert: (val) => `${(val * 3.28084).toFixed(2)} ft`
   },
   {
     name: "kilograms",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(kg|kilograms?|kgs?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(kg|kilograms?|kgs?)\\b",
     convert: (val) => `${(val * 2.20462).toFixed(2)} lb`
   },
   {
     name: "grams",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(g|grams?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(g|grams?)\\b",
     convert: (val) => `${(val * 0.035274).toFixed(2)} oz`
   },
   {
     name: "liters",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(l|liters?|litres?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(l|liters?|litres?)\\b",
     convert: (val) => `${(val * 0.264172).toFixed(2)} gal`
   },
   {
     name: "celsius",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(°?\\s?(c|celsius|deg\\s?c))\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(°?\\s?(c|celsius|deg\\s?c))\\b",
     convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`
   },
   {
     name: "inches",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inches?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(in|inches?)\\b",
     convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
   },
   {
+    name: "inches_symbol",
+    pattern: "(\\d+(?:\\.\\d+)?(?:-\\d+(?:\\.\\d+)?)?)\"\?\\s?([DWHL])?",
+    convert: (val) => {
+      // Handle ranges like "28-45"
+      if (val.includes('-')) {
+        const [min, max] = val.split('-').map(Number);
+        const avgVal = (min + max) / 2;
+        return `${(avgVal / 0.393701).toFixed(2)} cm`;
+      }
+      return `${(parseFloat(val) / 0.393701).toFixed(2)} cm`;
+    }
+  },
+  {
     name: "feet",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
+    convert: (val) => `${(val / 3.28084).toFixed(2)} m`
+  },
+  {
+    name: "feet_symbol",
+    pattern: "(\\d+(?:\\.\\d+)?)'\\s?",
     convert: (val) => `${(val / 3.28084).toFixed(2)} m`
   },
   {
     name: "pounds",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(lb|lbs|pounds?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(lb|lbs|pounds?)\\b",
     convert: (val) => `${(val / 2.20462).toFixed(2)} kg`
   },
   {
     name: "ounces",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(oz|ounces?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(oz|ounces?)\\b",
     convert: (val) => `${(val / 0.035274).toFixed(2)} g`
   },
   {
     name: "gallons",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(gal|gallons?)\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(gal|gallons?)\\b",
     convert: (val) => `${(val / 0.264172).toFixed(2)} L`
   },
   {
     name: "fahrenheit",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(°?\\s?(f|fahrenheit|deg\\s?f))\\b",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(°?\\s?(f|fahrenheit|deg\\s?f))\\b",
     convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`
   }
 ];
@@ -156,17 +179,25 @@ function processTextNode(textNode) {
     span.textContent = fullMatch;
     
     // Find which conversion matched and calculate result
-    const numericValue = parseFloat(match[1] || match[3] || match[5] || match[7] || match[9] || match[11] || match[13] || match[15] || match[17] || match[19] || match[21] || match[23]);
-    
-    if (!isNaN(numericValue)) {
-      for (let i = 0; i < conversions.length; i++) {
-        const conversion = conversions[i];
-        const conversionRegex = new RegExp(conversion.pattern, "gi");
-        if (conversionRegex.test(fullMatch)) {
-          span.dataset.convert = `${fullMatch} = ${conversion.convert(numericValue)}`;
-          break;
+    let conversionResult = null;
+    for (const conversion of conversions) {
+      const testRegex = new RegExp(conversion.pattern, "gi");
+      const testMatch = testRegex.exec(fullMatch);
+      if (testMatch) {
+        let numericValue = parseFloat(testMatch[1]);
+        
+        // Special handling for inches_symbol with ranges
+        if (conversion.name === "inches_symbol" && testMatch[1].includes('-')) {
+          conversionResult = conversion.convert(testMatch[1]);
+        } else if (!isNaN(numericValue)) {
+          conversionResult = conversion.convert(numericValue);
         }
+        break;
       }
+    }
+    
+    if (conversionResult) {
+      span.dataset.convert = `${fullMatch} = ${conversionResult}`;
     }
     
     fragment.appendChild(span);
