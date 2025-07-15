@@ -87,7 +87,6 @@ const conversions = [
 
 // Create combined regex pattern
 const combinedPattern = conversions.map(c => `(${c.pattern})`).join("|");
-const combinedRegex = new RegExp(combinedPattern, "gi");
 
 // 🧰 Tooltip setup
 const tooltip = document.createElement("div");
@@ -182,6 +181,7 @@ function processTextNode(textNode) {
     let conversionResult = null;
     for (const conversion of conversions) {
       const testRegex = new RegExp(conversion.pattern, "gi");
+      testRegex.lastIndex = 0; // Reset regex state
       const testMatch = testRegex.exec(fullMatch);
       if (testMatch) {
         let numericValue = parseFloat(testMatch[1]);
