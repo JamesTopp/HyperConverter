@@ -2,194 +2,270 @@
 const conversions = [
   {
     name: "centimeters",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(cm|centimeters?|centimetres?)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(cm|centimeters?|centimetres?)\\b",
     convert: (val) => `${(val * 0.393701).toFixed(2)} in`
   },
   {
-    name: "meters",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(m|meters?)\b/gi,
+    name: "meters", 
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(m|meters?)\\b",
     convert: (val) => `${(val * 3.28084).toFixed(2)} ft`
   },
   {
     name: "kilograms",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(kg|kilograms?|kgs?)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(kg|kilograms?|kgs?)\\b",
     convert: (val) => `${(val * 2.20462).toFixed(2)} lb`
   },
   {
     name: "grams",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(g|grams?)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(g|grams?)\\b",
     convert: (val) => `${(val * 0.035274).toFixed(2)} oz`
   },
   {
     name: "liters",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(l|liters?|litres?)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(l|liters?|litres?)\\b",
     convert: (val) => `${(val * 0.264172).toFixed(2)} gal`
   },
   {
     name: "celsius",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(\u00b0?\s?(c|celsius|deg\s?c))\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(°?\\s?(c|celsius|deg\\s?c))\\b",
     convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`
   },
   {
     name: "inches",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(in|inches?)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inches?)\\b",
     convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
   },
   {
     name: "feet",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(ft|feet)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
     convert: (val) => `${(val / 3.28084).toFixed(2)} m`
   },
   {
     name: "pounds",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(lb|lbs|pounds?)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(lb|lbs|pounds?)\\b",
     convert: (val) => `${(val / 2.20462).toFixed(2)} kg`
   },
   {
     name: "ounces",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(oz|ounces?)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(oz|ounces?)\\b",
     convert: (val) => `${(val / 0.035274).toFixed(2)} g`
   },
   {
     name: "gallons",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(gal|gallons?)\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(gal|gallons?)\\b",
     convert: (val) => `${(val / 0.264172).toFixed(2)} L`
   },
   {
     name: "fahrenheit",
-    regex: /(?<!\d)(\d+(\.\d+)?)\s?(\u00b0?\s?(f|fahrenheit|deg\s?f))\b/gi,
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(°?\\s?(f|fahrenheit|deg\\s?f))\\b",
     convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`
   }
 ];
 
+// Create combined regex pattern
+const combinedPattern = conversions.map(c => `(${c.pattern})`).join("|");
+const combinedRegex = new RegExp(combinedPattern, "gi");
+
 // 🧰 Tooltip setup
 const tooltip = document.createElement("div");
+tooltip.id = "hyper-converter-tooltip";
 Object.assign(tooltip.style, {
-  position: "fixed",
+  position: "absolute",
   background: "#333",
   color: "#fff",
-  padding: "5px 10px",
+  padding: "6px 10px",
   borderRadius: "6px",
   fontSize: "12px",
-  zIndex: "999999",
+  zIndex: "2147483647", // Maximum z-index
   pointerEvents: "none",
   display: "none",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-  maxWidth: "250px"
+  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+  maxWidth: "200px",
+  whiteSpace: "nowrap",
+  fontFamily: "Arial, sans-serif"
 });
+
+// Inject CSS for highlighting
+const style = document.createElement("style");
+style.textContent = `
+  .hyper-hover {
+    border-bottom: 2px dashed #ff4444 !important;
+    cursor: help !important;
+    background-color: rgba(255, 68, 68, 0.1) !important;
+  }
+  .hyper-hover:hover {
+    background-color: rgba(255, 68, 68, 0.2) !important;
+  }
+`;
+document.head.appendChild(style);
 document.body.appendChild(tooltip);
 
 function showTooltip(e, text) {
-  tooltip.innerText = text;
+  tooltip.textContent = text;
   tooltip.style.display = "block";
-  tooltip.style.left = `${e.pageX + 10}px`;
-  tooltip.style.top = `${e.pageY + 10}px`;
-  console.log("📦 Tooltip text shown:", text);
+  
+  // Better positioning that accounts for viewport
+  const x = e.clientX + window.scrollX;
+  const y = e.clientY + window.scrollY;
+  
+  tooltip.style.left = `${x + 15}px`;
+  tooltip.style.top = `${y - 35}px`;
+  
+  console.log("📦 Tooltip shown:", text);
 }
 
 function hideTooltip() {
   tooltip.style.display = "none";
 }
 
-// 🔍 Text Node Processor
-function safelyWrapTextNodes(node) {
-  if (
-    node.nodeType === 3 &&
-    node.parentNode &&
-    !node.parentNode.closest(".unit-converted") &&
-    node.parentNode.offsetParent !== null
-  ) {
-    const text = node.textContent;
-    const frag = document.createDocumentFragment();
-    let lastIndex = 0;
-    let hasMatch = false;
+// 🔍 Improved Text Node Processor
+function processTextNode(textNode) {
+  if (!textNode || textNode.nodeType !== 3) return;
+  
+  const parent = textNode.parentNode;
+  if (!parent || 
+      parent.closest(".hyper-hover") || 
+      parent.closest("script, style, noscript") ||
+      parent.closest("#hyper-converter-tooltip")) return;
 
-    const allPatterns = conversions.map(c => c.regex);
-    const combinedRegex = new RegExp(allPatterns.map(r => r.source).join("|"), "gi");
-    const matches = [...text.matchAll(combinedRegex)];
-    if (matches.length === 0) return;
+  const text = textNode.textContent;
+  if (!text.trim()) return;
 
-    matches.forEach(match => {
-      const matchedText = match[0];
-      const offset = match.index;
-      const before = text.slice(lastIndex, offset);
-      if (before) frag.appendChild(document.createTextNode(before));
+  // Create fresh regex for each text node to avoid global flag issues
+  const regex = new RegExp(combinedPattern, "gi");
+  const matches = [...text.matchAll(regex)];
+  
+  if (matches.length === 0) return;
 
-      const span = document.createElement("span");
-      span.className = "hyper-hover";
-      span.style.border = "1px dashed red";
-      span.style.cursor = "help";
-      span.textContent = matchedText;
-      span.style.pointerEvents = "auto";
+  const fragment = document.createDocumentFragment();
+  let lastIndex = 0;
 
-      const conversion = conversions.find(({ regex }) => regex.test(matchedText));
-      if (conversion) {
-        const numberPart = match.find((part, i) => i !== 0 && part && /^\d/.test(part));
-        const val = parseFloat(numberPart);
-        if (!isNaN(val)) {
-          span.dataset.convert = `${matchedText} = ${conversion.convert(val)}`;
+  matches.forEach(match => {
+    const fullMatch = match[0];
+    const matchStart = match.index;
+    
+    // Add text before match
+    if (matchStart > lastIndex) {
+      const beforeText = text.slice(lastIndex, matchStart);
+      fragment.appendChild(document.createTextNode(beforeText));
+    }
+
+    // Create highlighted span
+    const span = document.createElement("span");
+    span.className = "hyper-hover";
+    span.textContent = fullMatch;
+    
+    // Find which conversion matched and calculate result
+    const numericValue = parseFloat(match[1] || match[3] || match[5] || match[7] || match[9] || match[11] || match[13] || match[15] || match[17] || match[19] || match[21] || match[23]);
+    
+    if (!isNaN(numericValue)) {
+      for (let i = 0; i < conversions.length; i++) {
+        const conversion = conversions[i];
+        const conversionRegex = new RegExp(conversion.pattern, "gi");
+        if (conversionRegex.test(fullMatch)) {
+          span.dataset.convert = `${fullMatch} = ${conversion.convert(numericValue)}`;
+          break;
         }
       }
-
-      frag.appendChild(span);
-      lastIndex = offset + matchedText.length;
-      hasMatch = true;
-    });
-
-    if (lastIndex < text.length) {
-      frag.appendChild(document.createTextNode(text.slice(lastIndex)));
     }
+    
+    fragment.appendChild(span);
+    lastIndex = matchStart + fullMatch.length;
+  });
 
-    if (hasMatch) {
-      node.parentNode.replaceChild(frag, node);
-    }
-  } else if (
-    node.nodeType === 1 &&
-    node.nodeName !== "SCRIPT" &&
-    node.nodeName !== "STYLE"
-  ) {
-    for (let child of node.childNodes) {
-      safelyWrapTextNodes(child);
-    }
+  // Add remaining text
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+
+  // Replace the text node with our fragment
+  try {
+    parent.replaceChild(fragment, textNode);
+  } catch (e) {
+    console.warn("Could not replace text node:", e);
   }
 }
 
-// 🧠 Init
-chrome.storage.sync.get(['enabled'], (res) => {
-  if (res.enabled ?? true) {
-    safelyWrapTextNodes(document.body);
-
-    document.body.addEventListener("mouseover", (e) => {
-      const target = e.target;
-      if (target.classList.contains("hyper-hover")) {
-        const text = target.dataset.convert;
-        console.log("🖱 Hovered element text:", target.textContent);
-        if (text) showTooltip(e, text);
-      }
-    });
-
-    document.body.addEventListener("mousemove", (e) => {
-      if (tooltip.style.display === "block") {
-        tooltip.style.left = `${e.pageX + 10}px`;
-        tooltip.style.top = `${e.pageY + 10}px`;
-      }
-    });
-
-    document.body.addEventListener("mouseout", (e) => {
-      if (e.target.classList.contains("hyper-hover")) hideTooltip();
-    });
-
-    const observer = new MutationObserver((mutations) => {
-      for (let mutation of mutations) {
-        for (let node of mutation.addedNodes) {
-          if (node.nodeType === 1) safelyWrapTextNodes(node);
+// 🔄 Process all text nodes in a container
+function processContainer(container) {
+  if (!container) return;
+  
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        // Skip if already processed or in excluded elements
+        if (node.parentNode?.closest(".hyper-hover") ||
+            node.parentNode?.closest("script, style, noscript") ||
+            node.parentNode?.closest("#hyper-converter-tooltip")) {
+          return NodeFilter.FILTER_REJECT;
         }
+        return NodeFilter.FILTER_ACCEPT;
       }
+    }
+  );
+
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    textNodes.push(node);
+  }
+
+  textNodes.forEach(processTextNode);
+}
+
+// 🎯 Event delegation using document-level listeners
+document.addEventListener("mouseover", function(e) {
+  if (e.target && e.target.classList && e.target.classList.contains("hyper-hover")) {
+    const convertText = e.target.dataset.convert;
+    if (convertText) {
+      showTooltip(e, convertText);
+    }
+  }
+}, true); // Use capture phase for better compatibility
+
+document.addEventListener("mouseout", function(e) {
+  if (e.target && e.target.classList && e.target.classList.contains("hyper-hover")) {
+    hideTooltip();
+  }
+}, true);
+
+document.addEventListener("mousemove", function(e) {
+  if (tooltip.style.display === "block") {
+    const x = e.clientX + window.scrollX;
+    const y = e.clientY + window.scrollY;
+    tooltip.style.left = `${x + 15}px`;
+    tooltip.style.top = `${y - 35}px`;
+  }
+});
+
+// 🧠 Initialize and observe changes
+chrome.storage.sync.get(['enabled'], (result) => {
+  const isEnabled = result.enabled ?? true;
+  
+  if (isEnabled) {
+    // Process initial content
+    processContainer(document.body);
+
+    // Watch for dynamic content changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) { // Element node
+            // Process the new element and its children
+            processContainer(node);
+          }
+        });
+      });
     });
 
+    // Start observing
     observer.observe(document.body, {
       childList: true,
       subtree: true
     });
+
+    console.log("🚀 HyperConverter initialized");
   }
 });
