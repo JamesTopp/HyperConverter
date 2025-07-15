@@ -35,18 +35,6 @@ const conversions = [
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inches?)\\b",
     convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
   },
-{
-  name: "inches_symbol",
-  pattern: "(\\d+(?:\\.\\d+)?(?:-\\d+(?:\\.\\d+)?)?)\"",
-  convert: (val) => {
-    if (val.includes('-')) {
-      const [min, max] = val.split('-').map(Number);
-      const avgVal = (min + max) / 2;
-      return `${(avgVal / 0.393701).toFixed(2)} cm`;
-    }
-    return `${(parseFloat(val) / 0.393701).toFixed(2)} cm`;
-  }
-},
   {
     name: "feet",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
