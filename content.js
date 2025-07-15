@@ -186,6 +186,7 @@ function processTextNode(textNode) {
 function processContainer(container) {
   if (!container) return;
   
+  // First, process regular text nodes
   const walker = document.createTreeWalker(
     container,
     NodeFilter.SHOW_TEXT,
@@ -208,6 +209,34 @@ function processContainer(container) {
   }
 
   textNodes.forEach(processTextNode);
+  
+  // Also process button elements and spans that might contain units
+  const interactiveElements = container.querySelectorAll('button, span[class*="size"], span[class*="dimension"], div[class*="size"]');
+  interactiveElements.forEach(element => {
+    if (!element.closest(".hyper-hover") && element.textContent.trim()) {
+      // Process each text node within the element
+      const elementWalker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function(node) {
+            if (node.parentNode?.closest(".hyper-hover")) {
+              return NodeFilter.FILTER_REJECT;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+      
+      const elementTextNodes = [];
+      let elementNode;
+      while (elementNode = elementWalker.nextNode()) {
+        elementTextNodes.push(elementNode);
+      }
+      
+      elementTextNodes.forEach(processTextNode);
+    }
+  });
 }
 
 document.addEventListener("mouseover", function(e) {
