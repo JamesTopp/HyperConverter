@@ -211,10 +211,18 @@ function processContainer(container) {
 }
 
 document.addEventListener("mouseover", function(e) {
-  if (e.target && e.target.classList && e.target.classList.contains("hyper-hover")) {
-    const convertText = e.target.dataset.convert;
+  const target = e.target;
+  if (target && target.classList && target.classList.contains("hyper-hover")) {
+    const convertText = target.dataset.convert;
     if (convertText) {
       showTooltip(e, convertText);
+    }
+  }
+  // Also check if we're hovering over a button or interactive element containing a hyper-hover span
+  else if (target && (target.tagName === 'BUTTON' || target.closest('button'))) {
+    const hoverSpan = target.querySelector('.hyper-hover') || target.closest('.hyper-hover');
+    if (hoverSpan && hoverSpan.dataset.convert) {
+      showTooltip(e, hoverSpan.dataset.convert);
     }
   }
 }, true);
