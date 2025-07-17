@@ -161,18 +161,20 @@ function processTextNode(textNode) {
     span.className = "hyper-hover";
     span.textContent = fullMatch;
     
-    let conversionResult = null;
-    for (const conversion of conversions) {
-      const testRegex = new RegExp(conversion.pattern, "gi");
-      const testMatch = testRegex.exec(fullMatch);
-      if (testMatch) {
-        let numericValue = parseFloat(testMatch[1]);
-        if (!isNaN(numericValue)) {
-          conversionResult = conversion.convert(numericValue);
-        }
-        break;
-      }
+   let conversionResult = null;
+for (const conversion of conversions) {
+  const testRegex = new RegExp(conversion.pattern, "gi");
+  testRegex.lastIndex = 0; // Reset regex state
+  const testMatch = testRegex.exec(fullMatch);
+  if (testMatch) {
+    let numericValue = parseFloat(testMatch[1]);
+    
+    if (!isNaN(numericValue)) {
+      conversionResult = conversion.convert(numericValue);
+      break;
     }
+  }
+}
     
     if (conversionResult) {
       span.dataset.convert = `${fullMatch} = ${conversionResult}`;
