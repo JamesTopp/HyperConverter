@@ -39,9 +39,7 @@ const conversions = [
     name: "inches_x_format",
     pattern: "(\\d+(?:\\.\\d+)?)\\s?x(?=\\s?\\d+)",
     convert: (val) => {
-      console.log("Converting inches_x_format:", val, typeof val);
       const result = `${(val / 0.393701).toFixed(2)} cm`;
-      console.log("Result:", result);
       return result;
     }
   },
@@ -49,9 +47,7 @@ const conversions = [
     name: "cm_x_format", 
     pattern: "(\\d+(?:\\.\\d+)?)\\s?x(?=\\s?\\d+)",
     convert: (val) => {
-      console.log("Converting cm_x_format:", val, typeof val);
       const result = `${(val * 0.393701).toFixed(2)} in`;
-      console.log("Result:", result);
       return result;
     }
   },
@@ -171,10 +167,8 @@ function processTextNode(textNode) {
     span.textContent = fullMatch;
     
     // Find which conversion matched and calculate result
-    console.log("Processing match:", fullMatch, "trying to convert");
     let conversionResult = null;
     for (const conversion of conversions) {
-      console.log("Testing conversion:", conversion.name, "against:", fullMatch);
       const testRegex = new RegExp(conversion.pattern, "gi");
       testRegex.lastIndex = 0; // Reset regex state
       const testMatch = testRegex.exec(fullMatch);
