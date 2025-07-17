@@ -35,22 +35,22 @@ const conversions = [
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inch|inches?)\\b",
     convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
   },
-  {
-    name: "inches_x_format",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+.*(?:in|inch|inches|cm|centimeter|centimetre))",
-    convert: (val) => {
-      const result = `${(val / 0.393701).toFixed(2)} cm`;
-      return result;
-    }
-  },
-  {
-    name: "cm_x_format", 
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+.*(?:in|inch|inches|cm|centimeter|centimetre))",
-    convert: (val) => {
-      const result = `${(val * 0.393701).toFixed(2)} in`;
-      return result;
-    }
-  },
+ //{
+ //   name: "inches_x_format",
+ //   pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+.*(?:in|inch|inches|cm|centimeter|centimetre))",
+ //   convert: (val) => {
+ //     const result = `${(val / 0.393701).toFixed(2)} cm`;
+ //     return result;
+ //   }
+ // },
+ // {
+ //   name: "cm_x_format", 
+  //  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+.*(?:in|inch|inches|cm|centimeter|centimetre))",
+    //convert: (val) => {
+      //const result = `${(val * 0.393701).toFixed(2)} in`;
+      //return result;
+    //}
+ // },
   {
     name: "feet",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
