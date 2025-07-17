@@ -35,22 +35,16 @@ const conversions = [
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inch|inches?)\\b",
     convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
   },
- //{
- //   name: "inches_x_format",
- //   pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+.*(?:in|inch|inches|cm|centimeter|centimetre))",
- //   convert: (val) => {
- //     const result = `${(val / 0.393701).toFixed(2)} cm`;
- //     return result;
- //   }
- // },
- // {
- //   name: "cm_x_format", 
-  //  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+.*(?:in|inch|inches|cm|centimeter|centimetre))",
-    //convert: (val) => {
-      //const result = `${(val * 0.393701).toFixed(2)} in`;
-      //return result;
-    //}
- // },
+  {
+  name: "inches_symbol",
+  pattern: "(\\d+(?:\\.\\d+)?)\"",
+  convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
+  },
+  {
+  name: "feet_symbol", 
+  pattern: "(\\d+(?:\\.\\d+)?)'",
+  convert: (val) => `${(val / 3.28084).toFixed(2)} m`
+  },
   {
     name: "feet",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
@@ -184,9 +178,7 @@ function processTextNode(textNode) {
 
     if (conversionResult) {
   span.dataset.convert = `${fullMatch} = ${conversionResult}`;
-  console.log("✅ Created span with tooltip:", fullMatch, "=", conversionResult);
 } else {
-  console.log("❌ No conversion result for:", fullMatch);
     }
     
     fragment.appendChild(span);
