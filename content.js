@@ -32,7 +32,7 @@ const conversions = [
   },
   {
     name: "inches",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inches?)\\b",
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inch|inches?)\\b",
     convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
   },
   {
