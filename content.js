@@ -183,7 +183,10 @@ function processTextNode(textNode) {
     }
 
     if (conversionResult) {
-      span.dataset.convert = `${fullMatch} = ${conversionResult}`;
+  span.dataset.convert = `${fullMatch} = ${conversionResult}`;
+  console.log("✅ Created span with tooltip:", fullMatch, "=", conversionResult);
+} else {
+  console.log("❌ No conversion result for:", fullMatch);
     }
     
     fragment.appendChild(span);
