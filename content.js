@@ -35,26 +35,26 @@ const conversions = [
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inch|inches?)\\b",
     convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
   },
-{
-  name: "inches_x_format",
-  pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+(?:\\.\\d+)?\\s?(?:in|inch|inches?)\\b)",
-  convert: (val) => {
-    console.log("Converting inches_x_format:", val, typeof val);
-    const result = `${(val / 0.393701).toFixed(2)} cm`;
-    console.log("Result:", result);
-    return result;
-  }
-},
-{
-  name: "cm_x_format", 
-  pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+(?:\\.\\d+)?\\s?(?:cm|centimeters?|centimetres?)\\b)",
-  convert: (val) => {
-    console.log("Converting cm_x_format:", val, typeof val);
-    const result = `${(val * 0.393701).toFixed(2)} in`;
-    console.log("Result:", result);
-    return result;
-  }
-},
+  {
+    name: "inches_x_format",
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+(?:\\.\\d+)?\\s?(?:in|inch|inches?)\\b)",
+    convert: (val) => {
+      console.log("Converting inches_x_format:", val, typeof val);
+      const result = `${(val / 0.393701).toFixed(2)} cm`;
+      console.log("Result:", result);
+      return result;
+    }
+  },
+  {
+    name: "cm_x_format", 
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+(?:\\.\\d+)?\\s?(?:cm|centimeters?|centimetres?)\\b)",
+    convert: (val) => {
+      console.log("Converting cm_x_format:", val, typeof val);
+      const result = `${(val * 0.393701).toFixed(2)} in`;
+      console.log("Result:", result);
+      return result;
+    }
+  },
   {
     name: "feet",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
@@ -84,7 +84,6 @@ const conversions = [
 
 // Create combined regex pattern
 const combinedPattern = conversions.map(c => `(${c.pattern})`).join("|");
-const combinedRegex = new RegExp(combinedPattern, "gi");
 
 // 🧰 Tooltip setup
 const tooltip = document.createElement("div");
@@ -171,21 +170,24 @@ function processTextNode(textNode) {
     span.className = "hyper-hover";
     span.textContent = fullMatch;
     
-   let conversionResult = null;
-for (const conversion of conversions) {
-  const testRegex = new RegExp(conversion.pattern, "gi");
-  testRegex.lastIndex = 0; // Reset regex state
-  const testMatch = testRegex.exec(fullMatch);
-  if (testMatch) {
-    let numericValue = parseFloat(testMatch[1]);
-    
-    if (!isNaN(numericValue)) {
-      conversionResult = conversion.convert(numericValue);
-      break;
+    // Find which conversion matched and calculate result
+    console.log("Processing match:", fullMatch, "trying to convert");
+    let conversionResult = null;
+    for (const conversion of conversions) {
+      console.log("Testing conversion:", conversion.name, "against:", fullMatch);
+      const testRegex = new RegExp(conversion.pattern, "gi");
+      testRegex.lastIndex = 0; // Reset regex state
+      const testMatch = testRegex.exec(fullMatch);
+      if (testMatch) {
+        let numericValue = parseFloat(testMatch[1]);
+        
+        if (!isNaN(numericValue)) {
+          conversionResult = conversion.convert(numericValue);
+          break;
+        }
+      }
     }
-  }
-}
-    
+
     if (conversionResult) {
       span.dataset.convert = `${fullMatch} = ${conversionResult}`;
     }
