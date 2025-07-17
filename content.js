@@ -37,7 +37,7 @@ const conversions = [
   },
   {
     name: "inches_x_format",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?x(?=\\s?\\d+)",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+.*(?:in|inch|inches|cm|centimeter|centimetre))",
     convert: (val) => {
       const result = `${(val / 0.393701).toFixed(2)} cm`;
       return result;
@@ -45,7 +45,7 @@ const conversions = [
   },
   {
     name: "cm_x_format", 
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?x(?=\\s?\\d+)",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(?=\\d+.*(?:in|inch|inches|cm|centimeter|centimetre))",
     convert: (val) => {
       const result = `${(val * 0.393701).toFixed(2)} in`;
       return result;
