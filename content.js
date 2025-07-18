@@ -72,22 +72,9 @@ const conversions = [
   },
   {
   name: "cups",
-  pattern: "(\\d+(?:\\.\\d+)?|½|¼|¾|⅓|⅔|⅛|⅜|⅝|⅞|\\d+\\s?/\\s?\\d+)\\s?cups?\\b",
+  pattern: "(\\d+)\\s?cups?\\b",
   convert: (val) => {
-     console.log("🥄 Converting cups:", val);
-    // Handle unicode fractions
-    if (val === '½') return '118 ml';
-    if (val === '¼') return '59 ml';
-    if (val === '¾') return '177 ml';
-    if (val === '⅓') return '79 ml';
-    if (val === '⅔') return '158 ml';
-    
-    // Handle regular fractions like "1/2"
-    if (val.includes('/')) {
-      const parts = val.split('/');
-      const result = parseFloat(parts[0]) / parseFloat(parts[1]);
-      return `${(result * 237).toFixed(0)} ml`;
-    }
+    console.log("🥄 Converting cups:", val);
     return `${(parseFloat(val) * 237).toFixed(0)} ml`;
   }
   },
