@@ -74,6 +74,7 @@ const conversions = [
   name: "cups",
   pattern: "(\\d+(?:\\.\\d+)?|½|¼|¾|⅓|⅔|⅛|⅜|⅝|⅞|\\d+\\s?/\\s?\\d+)\\s?cups?\\b",
   convert: (val) => {
+     console.log("🥄 Converting cups:", val);
     // Handle unicode fractions
     if (val === '½') return '118 ml';
     if (val === '¼') return '59 ml';
@@ -94,6 +95,7 @@ const conversions = [
   name: "tablespoons",
   pattern: "(\\d+(?:\\.\\d+)?|½|¼|¾)\\s?(tbsp|tablespoons?)\\b",
   convert: (val) => {
+    console.log("🥄 Converting teaspoons:", val);
     if (val === '½') return '7.5 ml';
     if (val === '¼') return '3.75 ml';
     if (val === '¾') return '11.25 ml';
