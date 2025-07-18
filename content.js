@@ -109,7 +109,7 @@ const conversions = [
     if (val === '¾') return '3.75 ml';
     return `${(parseFloat(val) * 5).toFixed(0)} ml`;
   }
-  }
+  },
 ];
 
 // Create combined regex pattern
