@@ -26,9 +26,9 @@ const conversions = [
     convert: (val) => `${(val * 0.264172).toFixed(2)} gal`
   },
   {
-    name: "celsius",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(°?\\s?(c|celsius|deg\\s?c))\\b",
-    convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`
+  name: "celsius",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?(°\\s?c|degrees?\\s?c|celsius)\\b",
+  convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`
   },
   {
     name: "inches",
@@ -66,9 +66,32 @@ const conversions = [
     convert: (val) => `${(val / 0.264172).toFixed(2)} L`
   },
   {
-    name: "fahrenheit",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(°?\\s?(f|fahrenheit|deg\\s?f))\\b",
-    convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`
+  name: "fahrenheit", 
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?(°\\s?f|degrees?\\s?f|fahrenheit)\\b",
+  convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`
+  },
+  {
+  name: "cups",
+  pattern: "(\\d+(?:\\.\\d+)?(?:\\s?/\\s?\\d+)?)\\s?cups?\\b",
+  convert: (val) => {
+    // Handle fractions like "1/2"
+    if (val.includes('/')) {
+      const parts = val.split('/');
+      const result = parseFloat(parts[0]) / parseFloat(parts[1]);
+      return `${(result * 237).toFixed(0)} ml`;
+    }
+    return `${(parseFloat(val) * 237).toFixed(0)} ml`;
+  }
+  },
+  {
+  name: "tablespoons",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?(tbsp|tablespoons?)\\b",
+  convert: (val) => `${(val * 15).toFixed(0)} ml`
+  },
+  {
+  name: "teaspoons", 
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?(tsp|teaspoons?)\\b",
+  convert: (val) => `${(val * 5).toFixed(0)} ml`
   }
 ];
 
