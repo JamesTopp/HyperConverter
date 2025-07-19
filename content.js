@@ -74,27 +74,30 @@ const conversions = [
   name: "cups",
   pattern: "(\\d+(?:/\\d+)?|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\\s?cups?\\b",
   convert: (val) => {
-    console.log("🥄 Converting cups:", val);
-    
-    // Handle Unicode fractions
-    const unicodeFractions = {
-      '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
-      '⅜': 0.375, '⅖': 0.4, '⅔': 0.667, '⅗': 0.6, '¾': 0.75,
-      '⅘': 0.8, '⅚': 0.833, '⅞': 0.875
-    };
-    
-    let numericValue;
-    if (unicodeFractions[val]) {
-      numericValue = unicodeFractions[val];
-    } else if (val.includes('/')) {
-      // Handle text fractions like "1/3"
-      const [numerator, denominator] = val.split('/');
-      numericValue = parseFloat(numerator) / parseFloat(denominator);
-    } else {
-      numericValue = parseFloat(val);
-    }
-    
-    return `${(numericValue * 237).toFixed(0)} ml`;
+  console.log("🥄 Converting cups:", val);
+  
+  // Convert to string for processing
+  const valStr = String(val);
+  
+  // Handle Unicode fractions
+  const unicodeFractions = {
+    '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
+    '⅜': 0.375, '⅖': 0.4, '⅔': 0.667, '⅗': 0.6, '¾': 0.75,
+    '⅘': 0.8, '⅚': 0.833, '⅞': 0.875
+  };
+  
+  let numericValue;
+  if (unicodeFractions[valStr]) {
+    numericValue = unicodeFractions[valStr];
+  } else if (valStr.includes('/')) {
+    // Handle text fractions like "1/3"
+    const [numerator, denominator] = valStr.split('/');
+    numericValue = parseFloat(numerator) / parseFloat(denominator);
+  } else {
+    numericValue = parseFloat(val);
+  }
+  
+  return `${(numericValue * 237).toFixed(0)} ml`;
   }
   },
   {
