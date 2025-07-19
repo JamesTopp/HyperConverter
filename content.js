@@ -218,31 +218,15 @@ function processTextNode(textNode) {
 } else {
     }
 
-    function processStructuredIngredients(container) {
-  // Look for AllRecipes-style structured ingredients
-  const quantitySpans = container.querySelectorAll('span[data-ingredient-quantity="true"]');
+   function debugIngredientStructure(container) {
+  const allSpans = container.querySelectorAll('span');
+  console.log("Total spans found:", allSpans.length);
   
-  quantitySpans.forEach(qSpan => {
-    const unitSpan = qSpan.nextElementSibling;
-    if (unitSpan && unitSpan.hasAttribute('data-ingredient-unit')) {
-      const quantity = qSpan.textContent.trim();
-      const unit = unitSpan.textContent.trim();
-      const fullText = `${quantity} ${unit}`;
-      
-      // Check if this combination matches our conversions
-      for (const conversion of conversions) {
-        const testRegex = new RegExp(conversion.pattern, "gi");
-        if (testRegex.test(fullText)) {
-          console.log("Found structured ingredient:", fullText);
-          // Add styling to both spans
-          qSpan.classList.add('hyper-hover');
-          unitSpan.classList.add('hyper-hover');
-          
-          const result = conversion.convert(parseFloat(quantity));
-          qSpan.dataset.convert = `${fullText} = ${result}`;
-          unitSpan.dataset.convert = `${fullText} = ${result}`;
-          break;
-        }
+  allSpans.forEach((span, index) => {
+    if (span.textContent.trim().match(/^\d+$/)) {  // Numbers only
+      console.log(`Number span ${index}:`, span.textContent.trim(), "Attributes:", [...span.attributes].map(a => `${a.name}="${a.value}"`));
+      if (span.nextElementSibling) {
+        console.log("  Next sibling:", span.nextElementSibling.textContent.trim(), "Attributes:", [...span.nextElementSibling.attributes].map(a => `${a.name}="${a.value}"`));
       }
     }
   });
@@ -318,7 +302,7 @@ chrome.storage.sync.get(['enabled'], (result) => {
   
   if (isEnabled) {
     processContainer(document.body);
-    processStructuredIngredients(document.body);
+debugIngredientStructure(document.body);
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
