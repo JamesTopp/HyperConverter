@@ -265,18 +265,30 @@ function processTextNode(textNode) {
             console.log("First child:", item.firstChild);
             console.log("Text nodes in item:", item.childNodes.length);
 
-            // Try processing all text nodes in the item, not just the first
-            const walker = document.createTreeWalker(
-              item,
-              NodeFilter.SHOW_TEXT,
-              null,
-              false
-            );
+            // AllRecipes splits ingredients into separate spans, so reconstruct the full text
+            const fullText = item.textContent.trim();
+            console.log("Full reconstructed text:", fullText);
 
-            let textNode;
-            while ((textNode = walker.nextNode())) {
-              console.log("Processing text node:", textNode.textContent);
-              processTextNode(textNode);
+            // Check if this matches our patterns when put together
+            if (
+              fullText.match(
+                /\d+\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp)/
+              )
+            ) {
+              console.log(
+                "Full text matches pattern, processing whole ingredient"
+              );
+
+              // Process the entire item as one unit instead of individual text nodes
+              const tempDiv = document.createElement("div");
+              tempDiv.textContent = fullText;
+              processTextNode(tempDiv.firstChild);
+
+              // If processing worked, copy the result back
+              if (tempDiv.querySelector(".hyper-hover")) {
+                item.innerHTML = tempDiv.innerHTML;
+                console.log("Successfully highlighted ingredient:", fullText);
+              }
             }
           }
         });
