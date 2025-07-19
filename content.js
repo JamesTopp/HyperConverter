@@ -243,6 +243,15 @@ function processTextNode(textNode) {
       }
     });
   }
+    // ADD: Also try looking for ingredients in other common AllRecipes structures
+  const otherIngredients = container.querySelectorAll('[class*="ingredient"] li, .recipe-ingredient, [data-ingredient]');
+  otherIngredients.forEach(item => {
+    const text = item.textContent.trim();
+    if (text.match(/\d+\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp)/)) {
+      console.log("Found ingredient in other structure:", text);
+      processTextNode(item.firstChild);
+    }
+  });
 }
 
 function processContainer(container) {
