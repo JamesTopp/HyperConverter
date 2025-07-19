@@ -56,9 +56,9 @@ const conversions = [
     convert: (val) => `${(val / 2.20462).toFixed(2)} kg`
   },
   {
-    name: "ounces",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(oz|ounces?)\\b",
-    convert: (val) => `${(val / 0.035274).toFixed(2)} g`
+  name: "ounces",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?(oz|ounce|ounces)\\b",
+  convert: (val) => `${(val / 0.035274).toFixed(2)} g`
   },
   {
     name: "gallons",
