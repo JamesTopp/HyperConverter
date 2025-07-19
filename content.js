@@ -219,7 +219,8 @@ function processTextNode(textNode) {
     }
 
    function processAllRecipesIngredients(container) {
-  console.log("🥄 Looking for AllRecipes ingredients");
+    console.log("🚀 FUNCTION CALLED!");
+    console.log("🥄 Looking for AllRecipes ingredients");
   
   // Find all text that looks like ingredients in the ingredient list
   const ingredientList = container.querySelector('ul');
