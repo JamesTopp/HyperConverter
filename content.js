@@ -209,8 +209,21 @@ function processTextNode(textNode) {
   span.dataset.convert = `${fullMatch} = ${conversionResult}`;
 } else {
     }
+    fragment.appendChild(span);
+    lastIndex = matchStart + fullMatch.length;
+  });
 
-   function processAllRecipesIngredients(container) {
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+
+  try {
+    parent.replaceChild(fragment, textNode);
+  } catch (e) {
+    console.warn("Could not replace text node:", e);
+  }
+}
+ function processAllRecipesIngredients(container) {
     console.log("🚀 FUNCTION CALLED!");
     console.log("🥄 Looking for AllRecipes ingredients");
   
@@ -229,20 +242,6 @@ function processTextNode(textNode) {
         processTextNode(item.firstChild);
       }
     });
-  }
-}
-    fragment.appendChild(span);
-    lastIndex = matchStart + fullMatch.length;
-  });
-
-  if (lastIndex < text.length) {
-    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-  }
-
-  try {
-    parent.replaceChild(fragment, textNode);
-  } catch (e) {
-    console.warn("Could not replace text node:", e);
   }
 }
 
