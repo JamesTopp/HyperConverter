@@ -260,7 +260,24 @@ function processTextNode(textNode) {
           const text = item.textContent.trim();
           if (text.match(/\d+\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp)/)) {
             console.log("Processing ingredient:", text);
-            processTextNode(item.firstChild);
+            // Debug: Let's see what we're trying to process
+            console.log("Item structure:", item.innerHTML);
+            console.log("First child:", item.firstChild);
+            console.log("Text nodes in item:", item.childNodes.length);
+
+            // Try processing all text nodes in the item, not just the first
+            const walker = document.createTreeWalker(
+              item,
+              NodeFilter.SHOW_TEXT,
+              null,
+              false
+            );
+
+            let textNode;
+            while ((textNode = walker.nextNode())) {
+              console.log("Processing text node:", textNode.textContent);
+              processTextNode(textNode);
+            }
           }
         });
         foundIngredients = true;
