@@ -226,6 +226,14 @@ function processTextNode(textNode) {
  function processAllRecipesIngredients(container) {
     console.log("🚀 FUNCTION CALLED!");
     console.log("🥄 Looking for AllRecipes ingredients");
+
+     // Debug: Let's see what ul elements exist
+     const allUls = container.querySelectorAll('ul');
+     console.log("Found", allUls.length, "ul elements");
+  
+     allUls.forEach((ul, index) => {
+    console.log(`UL ${index}:`, ul.className, "with", ul.querySelectorAll('li').length, "items");
+    });
   
   // Find all text that looks like ingredients in the ingredient list
   const ingredientList = container.querySelector('ul');
