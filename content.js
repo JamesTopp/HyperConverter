@@ -79,14 +79,6 @@ const conversions = [
   }
   },
   {
-  name: "teaspoons",
-  pattern: "(\\d+)\\s?teaspoons?\\b",
-  convert: (val) => {
-    console.log("🥄 Converting teaspoons:", val);
-    return `${(parseFloat(val) * 5).toFixed(0)} ml`;
-  }
-  },
-  {
   name: "tablespoons",
   pattern: "(\\d+(?:\\.\\d+)?|½|¼|¾)\\s?(tbsp|tablespoons?)\\b",
   convert: (val) => {
