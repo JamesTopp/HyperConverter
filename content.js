@@ -102,24 +102,73 @@ const conversions = [
   },
   {
   name: "tablespoons",
-  pattern: "(\\d+(?:\\.\\d+)?|½|¼|¾)\\s?(tbsp|tablespoons?)\\b",
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|[⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞])\\s?(tbsp|tablespoons?)\\b",
   convert: (val) => {
-    console.log("🥄 Converting teaspoons:", val);
-    if (val === '½') return '7.5 ml';
-    if (val === '¼') return '3.75 ml';
-    if (val === '¾') return '11.25 ml';
-    return `${(parseFloat(val) * 15).toFixed(0)} ml`;
+  console.log("🥄 Converting tablespoons:", val);
+  
+  // Convert to string for processing
+  const valStr = String(val);
+  
+  // Handle Unicode fractions
+  const unicodeFractions = {
+    '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
+    '⅜': 0.375, '⅖': 0.4, '⅔': 0.667, '⅗': 0.6, '¾': 0.75,
+    '⅘': 0.8, '⅚': 0.833, '⅞': 0.875, '½': 0.5
+  };
+  
+  let numericValue;
+  if (unicodeFractions[valStr]) {
+    numericValue = unicodeFractions[valStr];
+  } else if (valStr.includes('/')) {
+    const [numerator, denominator] = valStr.split('/');
+    numericValue = parseFloat(numerator) / parseFloat(denominator);
+  } else if (valStr === '½') {
+    numericValue = 0.5;
+  } else if (valStr === '¼') {
+    numericValue = 0.25;
+  } else if (valStr === '¾') {
+    numericValue = 0.75;
+  } else {
+    numericValue = parseFloat(val);
+  }
+  
+  return `${(numericValue * 15).toFixed(1)} ml`;
   }
   },
   {
   name: "teaspoons",
-  pattern: "(\\d+(?:\\.\\d+)?|½|¼|¾)\\s?(tsp|teaspoons?)\\b",
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|[⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞])\\s?(tsp|teaspoons?)\\b",
   convert: (val) => {
-    if (val === '½') return '2.5 ml';
-    if (val === '¼') return '1.25 ml'; 
-    if (val === '¾') return '3.75 ml';
-    return `${(parseFloat(val) * 5).toFixed(0)} ml`;
+  console.log("🥄 Converting teaspoons:", val);
+  
+  // Convert to string for processing
+  const valStr = String(val);
+  
+  // Handle Unicode fractions
+  const unicodeFractions = {
+    '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
+    '⅜': 0.375, '⅖': 0.4, '⅔': 0.667, '⅗': 0.6, '¾': 0.75,
+    '⅘': 0.8, '⅚': 0.833, '⅞': 0.875, '½': 0.5
+  };
+  
+  let numericValue;
+  if (unicodeFractions[valStr]) {
+    numericValue = unicodeFractions[valStr];
+  } else if (valStr.includes('/')) {
+    const [numerator, denominator] = valStr.split('/');
+    numericValue = parseFloat(numerator) / parseFloat(denominator);
+  } else if (valStr === '½') {
+    numericValue = 0.5;
+  } else if (valStr === '¼') {
+    numericValue = 0.25;
+  } else if (valStr === '¾') {
+    numericValue = 0.75;
+  } else {
+    numericValue = parseFloat(val);
   }
+  
+  return `${(numericValue * 5).toFixed(1)} ml`;
+}
   }
 ];
 
