@@ -137,7 +137,8 @@ const conversions = [
   },
   {
   name: "teaspoons",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|[⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞])\\s?(tsp|teaspoons?|teaspoon)\\b",  convert: (val) => {
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|[⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞])\\s?(tsp|teaspoons?|teaspoon)\\b",  
+  convert: (val) => {
   console.log("🥄 Converting teaspoons:", val);
   
   // Convert to string for processing
