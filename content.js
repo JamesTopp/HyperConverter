@@ -219,6 +219,7 @@ function processTextNode(textNode) {
     }
 
    function debugIngredientStructure(container) {
+      console.log("🔍 DEBUG FUNCTION CALLED - Looking for ingredient spans");
   const allSpans = container.querySelectorAll('span');
   console.log("Total spans found:", allSpans.length);
   
