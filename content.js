@@ -98,7 +98,7 @@ const conversions = [
     if (val === '¾') return '3.75 ml';
     return `${(parseFloat(val) * 5).toFixed(0)} ml`;
   }
-  },
+  }
 ];
 
 // Create combined regex pattern
@@ -302,7 +302,7 @@ chrome.storage.sync.get(['enabled'], (result) => {
   
   if (isEnabled) {
     processContainer(document.body);
-processAllRecipesIngredients(document.body);
+    processAllRecipesIngredients(document.body);
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
