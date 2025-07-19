@@ -218,19 +218,25 @@ function processTextNode(textNode) {
 } else {
     }
 
-   function debugIngredientStructure(container) {
-      console.log("🔍 DEBUG FUNCTION CALLED - Looking for ingredient spans");
-  const allSpans = container.querySelectorAll('span');
-  console.log("Total spans found:", allSpans.length);
+   function processAllRecipesIngredients(container) {
+  console.log("🥄 Looking for AllRecipes ingredients");
   
-  allSpans.forEach((span, index) => {
-    if (span.textContent.trim().match(/^\d+$/)) {  // Numbers only
-      console.log(`Number span ${index}:`, span.textContent.trim(), "Attributes:", [...span.attributes].map(a => `${a.name}="${a.value}"`));
-      if (span.nextElementSibling) {
-        console.log("  Next sibling:", span.nextElementSibling.textContent.trim(), "Attributes:", [...span.nextElementSibling.attributes].map(a => `${a.name}="${a.value}"`));
+  // Find all text that looks like ingredients in the ingredient list
+  const ingredientList = container.querySelector('ul');
+  if (ingredientList) {
+    const listItems = ingredientList.querySelectorAll('li');
+    listItems.forEach(item => {
+      const text = item.textContent.trim();
+      console.log("Found ingredient text:", text);
+      
+      // Check if it matches our cooking patterns
+      if (text.match(/\d+\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp)/)) {
+        console.log("Matches cooking pattern:", text);
+        // Try to process this entire text node
+        processTextNode(item.firstChild);
       }
-    }
-  });
+    });
+  }
 }
     fragment.appendChild(span);
     lastIndex = matchStart + fullMatch.length;
@@ -303,8 +309,7 @@ chrome.storage.sync.get(['enabled'], (result) => {
   
   if (isEnabled) {
     processContainer(document.body);
-debugIngredientStructure(document.body);
-
+processAllRecipesIngredients(document.body);
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
