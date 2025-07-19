@@ -224,42 +224,56 @@ function processTextNode(textNode) {
   }
 }
  function processAllRecipesIngredients(container) {
-    console.log("🚀 FUNCTION CALLED!");
-    console.log("🥄 Looking for AllRecipes ingredients");
-
-     // Debug: Let's see what ul elements exist
-     const allUls = container.querySelectorAll('ul');
-     console.log("Found", allUls.length, "ul elements");
+  console.log("🚀 FUNCTION CALLED!");
+  console.log("🥄 Looking for AllRecipes ingredients");
   
-     allUls.forEach((ul, index) => {
-    console.log(`UL ${index}:`, ul.className, "with", ul.querySelectorAll('li').length, "items");
-    });
+  // Try multiple selectors in order of specificity
+  const selectors = [
+    '.mm-recipes-structured-ingredients__list',  // AllRecipes specific
+    'ul[class*="ingredient"]',                   // General ingredient lists
+    'ul[class*="recipe"]',                       // Recipe-related lists
+    '.ingredients ul',                           // Ingredients section
+    '.recipe-ingredients ul',                    // Recipe ingredients section
+    'ul'                                         // Fallback to any ul
+  ];
   
-  // Find all text that looks like ingredients in the ingredient list
-  const ingredientList = container.querySelector('ul');
-  if (ingredientList) {
-    const listItems = ingredientList.querySelectorAll('li');
-    listItems.forEach(item => {
-      const text = item.textContent.trim();
-      console.log("Found ingredient text:", text);
+  let foundIngredients = false;
+  
+  for (const selector of selectors) {
+    const lists = container.querySelectorAll(selector);
+    
+    for (const list of lists) {
+      const listItems = list.querySelectorAll('li');
+      let hasIngredients = false;
       
-      // Check if it matches our cooking patterns
-      if (text.match(/\d+\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp)/)) {
-        console.log("Matches cooking pattern:", text);
-        // Try to process this entire text node
-        processTextNode(item.firstChild);
+      // Check if this list actually contains cooking measurements
+      listItems.forEach(item => {
+        const text = item.textContent.trim();
+        if (text.match(/\d+\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp)/)) {
+          hasIngredients = true;
+        }
+      });
+      
+      if (hasIngredients) {
+        console.log(`Found ingredients using selector: ${selector}`);
+        listItems.forEach(item => {
+          const text = item.textContent.trim();
+          if (text.match(/\d+\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp)/)) {
+            console.log("Processing ingredient:", text);
+            processTextNode(item.firstChild);
+          }
+        });
+        foundIngredients = true;
+        break; // Found ingredients, stop looking
       }
-    });
-  }
-    // ADD: Also try looking for ingredients in other common AllRecipes structures
-  const otherIngredients = container.querySelectorAll('[class*="ingredient"] li, .recipe-ingredient, [data-ingredient]');
-  otherIngredients.forEach(item => {
-    const text = item.textContent.trim();
-    if (text.match(/\d+\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp)/)) {
-      console.log("Found ingredient in other structure:", text);
-      processTextNode(item.firstChild);
     }
-  });
+    
+    if (foundIngredients) break; // Found ingredients, stop trying selectors
+  }
+  
+  if (!foundIngredients) {
+    console.log("No ingredient lists found with cooking measurements");
+  }
 }
 
 function processContainer(container) {
