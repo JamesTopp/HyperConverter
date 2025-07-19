@@ -72,8 +72,7 @@ const conversions = [
   },
   {
   name: "cups",
-  pattern: "(\\d+(?:/\\d+)?|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\\s?cups?\\b",
-  convert: (val) => {
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(cup|cups?)\\b",  convert: (val) => {
   console.log("🥄 Converting cups:", val);
   
   // Convert to string for processing
@@ -102,8 +101,7 @@ const conversions = [
   },
   {
   name: "tablespoons",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|[⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞])\\s?(tbsp|tablespoons?)\\b",
-  convert: (val) => {
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tbsp|tablespoons?)\\b",  convert: (val) => {
   console.log("🥄 Converting tablespoons:", val);
   
   // Convert to string for processing
@@ -137,8 +135,7 @@ const conversions = [
   },
   {
   name: "teaspoons",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|[⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞])\\s?(tsp|teaspoons?|teaspoon)\\b",  
-  convert: (val) => {
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tsp|teaspoons?|teaspoon)\\b",  convert: (val) => {
   console.log("🥄 Converting teaspoons:", val);
   
   // Convert to string for processing
