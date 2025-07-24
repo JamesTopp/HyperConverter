@@ -294,87 +294,176 @@ function processTextNode(textNode) {
   }
 }
  function processAllRecipesIngredients(container) {
-  console.log("🚀 FUNCTION CALLED!");
-  console.log("🥄 Looking for AllRecipes ingredients");
-  
-  // Try multiple selectors in order of specificity
-  const selectors = [
-    '.mm-recipes-structured-ingredients__list',  // AllRecipes specific
-    'ul[class*="ingredient"]',                   // General ingredient lists
-    'ul[class*="recipe"]',                       // Recipe-related lists
-    '.ingredients ul',                           // Ingredients section
-    '.recipe-ingredients ul',                    // Recipe ingredients section
-    'ul'                                         // Fallback to any ul
-  ];
-  
-  let foundIngredients = false;
-  
-  for (const selector of selectors) {
-    const lists = container.querySelectorAll(selector);
-    
-    for (const list of lists) {
-      const listItems = list.querySelectorAll('li');
-      let hasIngredients = false;
-      
-      // Check if this list actually contains cooking measurements
-      listItems.forEach(item => {
-        const text = item.textContent.trim();
-        if (text.match(/(\d+|½|¼|¾|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i)) {
-          hasIngredients = true;
-        }
-      });
-      
-      if (hasIngredients) {
-        console.log(`Found ingredients using selector: ${selector}`);
-        listItems.forEach(item => {
-          const text = item.textContent.trim();
-          if (text.match(/(\d+|½|¼|¾|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i)) {
-            console.log("Processing ingredient:", text);
-            // Debug: Let's see what we're trying to process
-            console.log("Item structure:", item.innerHTML);
-            console.log("First child:", item.firstChild);
-            console.log("Text nodes in item:", item.childNodes.length);
+   console.log("🚀 FUNCTION CALLED!");
+   console.log("🥄 Looking for AllRecipes ingredients");
 
-            // AllRecipes splits ingredients into separate spans, so reconstruct the full text
-            const fullText = item.textContent.trim();
-            console.log("Full reconstructed text:", fullText);
-            console.log("Testing if ½ teaspoon matches pattern:", fullText.match(/(\d+|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|...)/i));
+   // Try multiple selectors in order of specificity
+   const selectors = [
+     ".mm-recipes-structured-ingredients__list", // AllRecipes specific
+     'ul[class*="ingredient"]', // General ingredient lists
+     'ul[class*="recipe"]', // Recipe-related lists
+     ".ingredients ul", // Ingredients section
+     ".recipe-ingredients ul", // Recipe ingredients section
+     "ul", // Fallback to any ul
+   ];
 
-            // Check if this matches our patterns when put together
-            if (
-              fullText.match(
-                /(\d+|½|¼|¾|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i
-              )
-            ) {
-              console.log(
-                "Full text matches pattern, processing whole ingredient"
-              );
+   let foundIngredients = false;
 
-              // Process the entire item as one unit instead of individual text nodes
-              const tempDiv = document.createElement("div");
-              tempDiv.textContent = fullText;
-              processTextNode(tempDiv.firstChild);
+   for (const selector of selectors) {
+     const lists = container.querySelectorAll(selector);
 
-              // If processing worked, copy the result back
-              if (tempDiv.querySelector(".hyper-hover")) {
-                item.innerHTML = tempDiv.innerHTML;
-                console.log("Successfully highlighted ingredient:", fullText);
-              }
-            }
-          }
-        });
-        foundIngredients = true;
-        break; // Found ingredients, stop looking
-      }
-    }
-    
-    if (foundIngredients) break; // Found ingredients, stop trying selectors
-  }
-  
-  if (!foundIngredients) {
-    console.log("No ingredient lists found with cooking measurements");
-  }
-}
+     for (const list of lists) {
+       const listItems = list.querySelectorAll("li");
+       let hasIngredients = false;
+
+       // Check if this list actually contains cooking measurements
+       listItems.forEach((item) => {
+         const text = item.textContent.trim();
+         if (
+           text.match(
+             /(\d+|½|¼|¾|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i
+           )
+         ) {
+           hasIngredients = true;
+         }
+       });
+
+       if (hasIngredients) {
+         console.log(`Found ingredients using selector: ${selector}`);
+         listItems.forEach((item) => {
+           const text = item.textContent.trim();
+           if (
+             text.match(
+               /(\d+|½|¼|¾|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i
+             )
+           ) {
+             console.log("Processing ingredient:", text);
+             // Debug: Let's see what we're trying to process
+             console.log("Item structure:", item.innerHTML);
+             console.log("First child:", item.firstChild);
+             console.log("Text nodes in item:", item.childNodes.length);
+
+             // AllRecipes splits ingredients into separate spans, so reconstruct the full text
+             const fullText = item.textContent.trim();
+             console.log("Full reconstructed text:", fullText);
+             console.log(
+               "Testing if ½ teaspoon matches pattern:",
+               fullText.match(
+                 /(\d+|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|...)/i
+               )
+             );
+
+             // Check if this matches our patterns when put together
+             if (
+               fullText.match(
+                 /(\d+|½|¼|¾|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i
+               )
+             ) {
+               console.log(
+                 "Full text matches pattern, processing whole ingredient"
+               );
+
+               // Directly create the conversion for AllRecipes Unicode fractions
+               const match = fullText.match(
+                 /(½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\d+(?:\/\d+)?)\s+(teaspoon|teaspoons|cup|cups|tablespoon|tablespoons|tsp|tbsp)/i
+               );
+               if (match) {
+                 const value = match[1];
+                 const unit = match[2];
+
+                 // Find the right conversion
+                 let conversion = "";
+                 if (unit.includes("teaspoon") || unit === "tsp") {
+                   const unicodeFractions = {
+                     "½": 0.5,
+                     "¼": 0.25,
+                     "¾": 0.75,
+                     "⅛": 0.125,
+                     "⅙": 0.167,
+                     "⅕": 0.2,
+                     "⅓": 0.333,
+                     "⅜": 0.375,
+                     "⅖": 0.4,
+                     "⅔": 0.667,
+                     "⅗": 0.6,
+                     "⅘": 0.8,
+                     "⅚": 0.833,
+                     "⅞": 0.875,
+                   };
+                   let numericValue =
+                     unicodeFractions[value] || parseFloat(value);
+                   conversion = `${value} ${unit} = ${(
+                     numericValue * 5
+                   ).toFixed(1)} ml`;
+                 } else if (unit.includes("cup")) {
+                   const unicodeFractions = {
+                     "½": 0.5,
+                     "¼": 0.25,
+                     "¾": 0.75,
+                     "⅛": 0.125,
+                     "⅙": 0.167,
+                     "⅕": 0.2,
+                     "⅓": 0.333,
+                     "⅜": 0.375,
+                     "⅖": 0.4,
+                     "⅔": 0.667,
+                     "⅗": 0.6,
+                     "⅘": 0.8,
+                     "⅚": 0.833,
+                     "⅞": 0.875,
+                   };
+                   let numericValue =
+                     unicodeFractions[value] || parseFloat(value);
+                   conversion = `${value} ${unit} = ${(
+                     numericValue * 237
+                   ).toFixed(0)} ml`;
+                 } else if (unit.includes("tablespoon") || unit === "tbsp") {
+                   const unicodeFractions = {
+                     "½": 0.5,
+                     "¼": 0.25,
+                     "¾": 0.75,
+                     "⅛": 0.125,
+                     "⅙": 0.167,
+                     "⅕": 0.2,
+                     "⅓": 0.333,
+                     "⅜": 0.375,
+                     "⅖": 0.4,
+                     "⅔": 0.667,
+                     "⅗": 0.6,
+                     "⅘": 0.8,
+                     "⅚": 0.833,
+                     "⅞": 0.875,
+                   };
+                   let numericValue =
+                     unicodeFractions[value] || parseFloat(value);
+                   conversion = `${value} ${unit} = ${(
+                     numericValue * 15
+                   ).toFixed(1)} ml`;
+                 }
+
+                 if (conversion) {
+                   item.innerHTML = `<span class="hyper-hover" data-convert="${conversion}">${fullText}</span>`;
+                   console.log(
+                     "Successfully highlighted ingredient:",
+                     fullText
+                   );
+                 }
+               }
+             }
+           }
+         });
+         foundIngredients = true;
+         break; // Found ingredients, stop looking
+       }
+     }
+
+     if (foundIngredients) break; // Found ingredients, stop trying selectors
+   }
+
+   if (!foundIngredients) {
+     console.log("No ingredient lists found with cooking measurements");
+   }
+ }
 
 function processContainer(container) {
   if (!container) return;
