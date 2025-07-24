@@ -442,7 +442,11 @@ function processTextNode(textNode) {
                  }
 
                  if (conversion) {
-                   item.innerHTML = `<span class="hyper-hover" data-convert="${conversion}">${fullText}</span>`;
+                   const measurementText = `${value} ${unit}`;
+                   item.innerHTML = fullText.replace(
+                     measurementText,
+                     `<span class="hyper-hover" data-convert="${conversion}">${measurementText}</span>`
+                   );
                    console.log(
                      "Successfully highlighted ingredient:",
                      fullText
