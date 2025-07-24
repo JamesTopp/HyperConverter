@@ -6,6 +6,11 @@ const conversions = [
     convert: (val) => `${(val * 0.393701).toFixed(2)} in`
   },
   {
+    name: "millimeters",
+    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(mm|millimeters?|millimetres?)\\b",
+    convert: (val) => `${(val * 0.0393701).toFixed(2)} in`
+  },
+  {
     name: "meters", 
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(m|meters?)\\b",
     convert: (val) => `${(val * 3.28084).toFixed(2)} ft`
