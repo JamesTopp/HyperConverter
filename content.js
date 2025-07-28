@@ -258,17 +258,17 @@ style.textContent = `
 }
   
 .hyper-hover::after {
-  content: '' !important;
-  position: absolute !important;
-  bottom: -1px !important;
-  right: -1px !important;
-  width: 6px !important;
-  height: 6px !important;
-  background-color: #FFC8A2 !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
-  clip-path: polygon(0% 0%, 0% 100%, 100% 100%) !important;
-}
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0px !important;
+    left: 0px !important;
+    width: 6px !important;
+    height: 6px !important;
+    background-color: #FFC8A2 !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    clip-path: polygon(0% 0%, 0% 100%, 100% 100%) !important;
+  }
   
   .hyper-hover:hover {
     background-color: #FFEFE6 !important;
