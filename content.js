@@ -268,12 +268,6 @@ style.textContent = `
     z-index: 1 !important;
     clip-path: polygon(0% 0%, 0% 100%, 100% 100%) !important;
   }
-
-  .hyper-hover.internal-wrap::after {
-  bottom: 0px !important;
-  left: auto !important;
-  right: 2px !important;
-}
   
   .hyper-hover:hover {
     background-color: #FFEFE6 !important;
@@ -334,37 +328,6 @@ function processTextNode(textNode) {
     const span = document.createElement("span");
     span.className = "hyper-hover";
     span.textContent = fullMatch;
-
-    // After creating the span element, replace the detection code with this:
-    setTimeout(() => {
-      console.log("Checking span:", span.textContent);
-
-      // Get the actual height of the span
-      const actualHeight = span.getBoundingClientRect().height;
-
-      // Create a test span with the same text but forced to one line
-      const testSpan = document.createElement("span");
-      testSpan.style.position = "absolute";
-      testSpan.style.visibility = "hidden";
-      testSpan.style.whiteSpace = "nowrap";
-      testSpan.style.font = window.getComputedStyle(span).font;
-      testSpan.textContent = span.textContent;
-      document.body.appendChild(testSpan);
-
-      const singleLineHeight = testSpan.getBoundingClientRect().height;
-      document.body.removeChild(testSpan);
-
-      console.log("Actual height:", actualHeight);
-      console.log("Single line height:", singleLineHeight);
-
-      // If actual height is significantly more than single line, text is wrapped
-      if (actualHeight > singleLineHeight * 1.3) {
-        span.classList.add("internal-wrap");
-        console.log("🎯 ADDED internal-wrap class to:", span.textContent);
-      } else {
-        console.log("No wrapping detected for:", span.textContent);
-      }
-    }, 100);
 
     // Find which conversion matched and calculate result
     let conversionResult = null;
