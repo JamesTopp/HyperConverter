@@ -512,6 +512,16 @@ document.addEventListener("mouseover", function(e) {
       showTooltip(e, convertText);
     }
   }
+}, {capture: true, passive: false});
+
+// Add a backup mouseenter listener for stubborn elements
+document.addEventListener("mouseenter", function(e) {
+  if (e.target && e.target.classList && e.target.classList.contains("hyper-hover")) {
+    const convertText = e.target.dataset.convert;
+    if (convertText) {
+      showTooltip(e, convertText);
+    }
+  }
 }, true);
 
 document.addEventListener("mouseout", function(e) {
