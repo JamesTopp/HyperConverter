@@ -250,11 +250,12 @@ Object.assign(tooltip.style, {
 const style = document.createElement("style");
 style.textContent = `
   .hyper-hover {
-    position: relative !important;
-    cursor: help !important;
-    background-color: transparent !important;
-    border: none !important;
-  }
+  position: relative !important;
+  cursor: help !important;
+  background-color: transparent !important;
+  border: none !important;
+  display: inline-block !important;
+}
   
 .hyper-hover::after {
   content: '' !important;
