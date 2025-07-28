@@ -264,8 +264,8 @@ style.textContent = `
     width: 0 !important;
     height: 0 !important;
     border-style: solid !important;
-    border-width: 6px 0 0 6px !important;
-    border-color: #FFC8A2 transparent transparent transparent !important;
+    border-width: 0 0 6px 6px !important;
+    border-color: transparent transparent #FFC8A2 transparent !important;
     pointer-events: none !important;
     z-index: 1 !important;
   }
