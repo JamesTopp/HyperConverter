@@ -283,13 +283,7 @@ style.textContent = `
 
 document.head.appendChild(style);
 document.body.appendChild(tooltip);
-// Create tooltip element with basic properties
-Object.assign(tooltip.style, {
-  position: "absolute",
-  zIndex: "2147483647", 
-  pointerEvents: "none",
-  display: "none"
-});
+
 function showTooltip(e, text) {
   tooltip.textContent = text;
   tooltip.style.display = "block";
