@@ -335,24 +335,36 @@ function processTextNode(textNode) {
     span.className = "hyper-hover";
     span.textContent = fullMatch;
 
-    // After creating the span element, add this:
+    // After creating the span element, replace the detection code with this:
     setTimeout(() => {
       console.log("Checking span:", span.textContent);
-      const range = document.createRange();
-      range.selectNodeContents(span);
-      const rects = range.getClientRects();
 
-      console.log("Number of rects:", rects.length);
-      console.log("Rects:", rects);
+      // Get the actual height of the span
+      const actualHeight = span.getBoundingClientRect().height;
 
-      // If getClientRects returns more than 1 rectangle, the text is wrapped
-      if (rects.length > 1) {
+      // Create a test span with the same text but forced to one line
+      const testSpan = document.createElement("span");
+      testSpan.style.position = "absolute";
+      testSpan.style.visibility = "hidden";
+      testSpan.style.whiteSpace = "nowrap";
+      testSpan.style.font = window.getComputedStyle(span).font;
+      testSpan.textContent = span.textContent;
+      document.body.appendChild(testSpan);
+
+      const singleLineHeight = testSpan.getBoundingClientRect().height;
+      document.body.removeChild(testSpan);
+
+      console.log("Actual height:", actualHeight);
+      console.log("Single line height:", singleLineHeight);
+
+      // If actual height is significantly more than single line, text is wrapped
+      if (actualHeight > singleLineHeight * 1.3) {
         span.classList.add("internal-wrap");
         console.log("🎯 ADDED internal-wrap class to:", span.textContent);
       } else {
         console.log("No wrapping detected for:", span.textContent);
       }
-    }, 100); // Increased timeout to 100ms
+    }, 100);
 
     // Find which conversion matched and calculate result
     let conversionResult = null;
