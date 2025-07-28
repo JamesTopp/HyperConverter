@@ -231,7 +231,7 @@ const tooltip = document.createElement("div");
 tooltip.id = "hyper-converter-tooltip";
 Object.assign(tooltip.style, {
   position: "absolute",
-  background: "#FFFFFF",
+  background: "#FFEFE6",  
   color: "#2D2D2D",
   padding: "8px 12px",
   borderRadius: "8px",
@@ -256,16 +256,16 @@ style.textContent = `
     border: none !important;
   }
   
-  .hyper-hover::after {
+ .hyper-hover::after {
     content: '' !important;
     position: absolute !important;
     bottom: 0px !important;
-    left: 0px !important;
+    right: 0px !important;
     width: 0 !important;
     height: 0 !important;
     border-style: solid !important;
-    border-width: 0 0 6px 6px !important;
-    border-color: transparent transparent #FFC8A2 transparent !important;
+    border-width: 0 6px 6px 0 !important;
+    border-color: transparent #FFC8A2 transparent transparent !important;
     pointer-events: none !important;
     z-index: 1 !important;
   }
