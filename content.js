@@ -506,26 +506,34 @@ function processContainer(container) {
 }
 
 document.addEventListener("mouseover", function(e) {
-  if (e.target && e.target.classList && e.target.classList.contains("hyper-hover")) {
-    const convertText = e.target.dataset.convert;
+  let target = e.target;
+  
+  // First check if the target itself has hyper-hover
+  if (target && target.classList && target.classList.contains("hyper-hover")) {
+    const convertText = target.dataset.convert;
     if (convertText) {
       showTooltip(e, convertText);
+      return;
     }
   }
-}, {capture: true, passive: false});
-
-// Add a backup mouseenter listener for stubborn elements
-document.addEventListener("mouseenter", function(e) {
-  if (e.target && e.target.classList && e.target.classList.contains("hyper-hover")) {
-    const convertText = e.target.dataset.convert;
+  
+  // If not, check if any child elements have hyper-hover (for buttons)
+  const hyperHoverChild = target.querySelector('.hyper-hover');
+  if (hyperHoverChild) {
+    const convertText = hyperHoverChild.dataset.convert;
     if (convertText) {
       showTooltip(e, convertText);
+      return;
     }
   }
 }, true);
 
 document.addEventListener("mouseout", function(e) {
-  if (e.target && e.target.classList && e.target.classList.contains("hyper-hover")) {
+  let target = e.target;
+  
+  // Check both the target and if it contains hyper-hover children
+  if ((target && target.classList && target.classList.contains("hyper-hover")) ||
+      target.querySelector('.hyper-hover')) {
     hideTooltip();
   }
 }, true);
