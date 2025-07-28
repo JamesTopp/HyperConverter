@@ -256,16 +256,16 @@ style.textContent = `
     border: none !important;
   }
   
- .hyper-hover::after {
+.hyper-hover::after {
     content: '' !important;
     position: absolute !important;
     bottom: 0px !important;
-    right: 0px !important;
+    left: 0px !important;
     width: 0 !important;
     height: 0 !important;
     border-style: solid !important;
-    border-width: 0 6px 6px 0 !important;
-    border-color: transparent #FFC8A2 transparent transparent !important;
+    border-width: 6px 0 0 6px !important;
+    border-color: #FFC8A2 transparent transparent transparent !important;
     pointer-events: none !important;
     z-index: 1 !important;
   }
