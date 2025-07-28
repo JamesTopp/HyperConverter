@@ -325,7 +325,7 @@ function processTextNode(textNode) {
   matches.forEach(match => {
     const fullMatch = match[0];
     const matchStart = match.index;
-    
+
     if (matchStart > lastIndex) {
       const beforeText = text.slice(lastIndex, matchStart);
       fragment.appendChild(document.createTextNode(beforeText));
@@ -335,18 +335,25 @@ function processTextNode(textNode) {
     span.className = "hyper-hover";
     span.textContent = fullMatch;
 
-    // Detect internal line wrapping after DOM insertion
-setTimeout(() => {
-  const range = document.createRange();
-  range.selectNodeContents(span);
-  const rects = range.getClientRects();
-  
-  // If getClientRects returns more than 1 rectangle, the text is wrapped
-  if (rects.length > 1) {
-    span.classList.add('internal-wrap');
-  }
-}, 0);
-    
+    // After creating the span element, add this:
+    setTimeout(() => {
+      console.log("Checking span:", span.textContent);
+      const range = document.createRange();
+      range.selectNodeContents(span);
+      const rects = range.getClientRects();
+
+      console.log("Number of rects:", rects.length);
+      console.log("Rects:", rects);
+
+      // If getClientRects returns more than 1 rectangle, the text is wrapped
+      if (rects.length > 1) {
+        span.classList.add("internal-wrap");
+        console.log("🎯 ADDED internal-wrap class to:", span.textContent);
+      } else {
+        console.log("No wrapping detected for:", span.textContent);
+      }
+    }, 100); // Increased timeout to 100ms
+
     // Find which conversion matched and calculate result
     let conversionResult = null;
     for (const conversion of conversions) {
@@ -355,7 +362,7 @@ setTimeout(() => {
       const testMatch = testRegex.exec(fullMatch);
       if (testMatch) {
         let numericValue = parseFloat(testMatch[1]);
-        
+
         if (!isNaN(numericValue)) {
           conversionResult = conversion.convert(numericValue);
           break;
@@ -364,8 +371,8 @@ setTimeout(() => {
     }
 
     if (conversionResult) {
-  span.dataset.convert = `${fullMatch} = ${conversionResult}`;
-} else {
+      span.dataset.convert = `${fullMatch} = ${conversionResult}`;
+    } else {
     }
     fragment.appendChild(span);
     lastIndex = matchStart + fullMatch.length;
