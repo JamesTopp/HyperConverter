@@ -328,6 +328,18 @@ function processTextNode(textNode) {
     const span = document.createElement("span");
     span.className = "hyper-hover";
     span.textContent = fullMatch;
+
+    // Detect internal line wrapping after DOM insertion
+setTimeout(() => {
+  const range = document.createRange();
+  range.selectNodeContents(span);
+  const rects = range.getClientRects();
+  
+  // If getClientRects returns more than 1 rectangle, the text is wrapped
+  if (rects.length > 1) {
+    span.classList.add('internal-wrap');
+  }
+}, 0);
     
     // Find which conversion matched and calculate result
     let conversionResult = null;
