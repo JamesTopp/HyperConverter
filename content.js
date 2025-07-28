@@ -268,6 +268,12 @@ style.textContent = `
     z-index: 1 !important;
     clip-path: polygon(0% 0%, 0% 100%, 100% 100%) !important;
   }
+
+  .hyper-hover.internal-wrap::after {
+  bottom: 0px !important;
+  left: auto !important;
+  right: 2px !important;
+}
   
   .hyper-hover:hover {
     background-color: #FFEFE6 !important;
