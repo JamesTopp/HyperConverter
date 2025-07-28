@@ -36,14 +36,61 @@ const conversions = [
   convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`
   },
   {
-    name: "inches",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(in|inch|inches?)\\b",
-    convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
+  name: "inches",
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\\d+(?:\\.\\d+)?)\\s?(in|inch|inches?)\\b",
+  convert: (val) => {
+    console.log("📏 Converting inches:", val);
+    
+    // Convert to string for processing
+    const valStr = String(val);
+    
+    // Handle Unicode fractions
+    const unicodeFractions = {
+      '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
+      '⅜': 0.375, '⅖': 0.4, '½': 0.5, '⅔': 0.667, '⅗': 0.6, 
+      '¾': 0.75, '⅘': 0.8, '⅚': 0.833, '⅞': 0.875
+    };
+    
+    let numericValue;
+    if (unicodeFractions[valStr]) {
+      numericValue = unicodeFractions[valStr];
+    } else if (valStr.includes('/')) {
+      // Handle text fractions like "3/4"
+      const [numerator, denominator] = valStr.split('/');
+      numericValue = parseFloat(numerator) / parseFloat(denominator);
+    } else {
+      numericValue = parseFloat(val);
+    }
+    
+    return `${(numericValue / 0.393701).toFixed(2)} cm`;
+  }
   },
   {
   name: "inches_symbol",
-  pattern: "(\\d+(?:\\.\\d+)?)\"",
-  convert: (val) => `${(val / 0.393701).toFixed(2)} cm`
+  pattern: "(\\d+(?:\\.\\d+)?|\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\"",
+  convert: (val) => {
+    console.log("📏 Converting inches symbol:", val);
+    
+    const valStr = String(val);
+    
+    const unicodeFractions = {
+      '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
+      '⅜': 0.375, '⅖': 0.4, '½': 0.5, '⅔': 0.667, '⅗': 0.6, 
+      '¾': 0.75, '⅘': 0.8, '⅚': 0.833, '⅞': 0.875
+    };
+    
+    let numericValue;
+    if (unicodeFractions[valStr]) {
+      numericValue = unicodeFractions[valStr];
+    } else if (valStr.includes('/')) {
+      const [numerator, denominator] = valStr.split('/');
+      numericValue = parseFloat(numerator) / parseFloat(denominator);
+    } else {
+      numericValue = parseFloat(val);
+    }
+    
+    return `${(numericValue / 0.393701).toFixed(2)} cm`;
+  }
   },
   {
   name: "feet_symbol", 
