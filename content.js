@@ -508,7 +508,7 @@ function processContainer(container) {
 document.addEventListener("mouseover", function(e) {
   let target = e.target;
   
-  // First check if the target itself has hyper-hover
+  // Check if target itself has hyper-hover
   if (target && target.classList && target.classList.contains("hyper-hover")) {
     const convertText = target.dataset.convert;
     if (convertText) {
@@ -517,13 +517,16 @@ document.addEventListener("mouseover", function(e) {
     }
   }
   
-  // If not, check if any child elements have hyper-hover (for buttons)
-  const hyperHoverChild = target.querySelector('.hyper-hover');
-  if (hyperHoverChild) {
-    const convertText = hyperHoverChild.dataset.convert;
-    if (convertText) {
-      showTooltip(e, convertText);
-      return;
+  // For buttons: check if we're hovering inside a button that contains a hyper-hover span
+  let buttonParent = target.closest('button, .a-button, [role="button"]');
+  if (buttonParent) {
+    const hyperHoverChild = buttonParent.querySelector('.hyper-hover');
+    if (hyperHoverChild) {
+      const convertText = hyperHoverChild.dataset.convert;
+      if (convertText) {
+        showTooltip(e, convertText);
+        return;
+      }
     }
   }
 }, true);
@@ -531,21 +534,18 @@ document.addEventListener("mouseover", function(e) {
 document.addEventListener("mouseout", function(e) {
   let target = e.target;
   
-  // Check both the target and if it contains hyper-hover children
-  if ((target && target.classList && target.classList.contains("hyper-hover")) ||
-      target.querySelector('.hyper-hover')) {
+  // Check if leaving a hyper-hover element
+  if (target && target.classList && target.classList.contains("hyper-hover")) {
+    hideTooltip();
+    return;
+  }
+  
+  // Check if leaving a button that contains hyper-hover
+  let buttonParent = target.closest('button, .a-button, [role="button"]');
+  if (buttonParent && buttonParent.querySelector('.hyper-hover')) {
     hideTooltip();
   }
 }, true);
-
-document.addEventListener("mousemove", function(e) {
-  if (tooltip.style.display === "block") {
-    const x = e.clientX + window.scrollX;
-    const y = e.clientY + window.scrollY;
-    tooltip.style.left = `${x + 15}px`;
-    tooltip.style.top = `${y - 35}px`;
-  }
-});
 
 chrome.storage.sync.get(['enabled'], (result) => {
   const isEnabled = result.enabled ?? true;
