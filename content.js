@@ -226,37 +226,61 @@ const conversions = [
 // Create combined regex pattern
 const combinedPattern = conversions.map(c => `(${c.pattern})`).join("|");
 
-// 🧰 Tooltip setup
-const tooltip = document.createElement("div");
-tooltip.id = "hyper-converter-tooltip";
-Object.assign(tooltip.style, {
-  position: "absolute",
-  background: "#333",
-  color: "#fff",
-  padding: "6px 10px",
-  borderRadius: "6px",
-  fontSize: "12px",
-  zIndex: "2147483647",
-  pointerEvents: "none",
-  display: "none",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-  maxWidth: "200px",
-  whiteSpace: "nowrap",
-  fontFamily: "Arial, sans-serif"
-});
+// Tooltip styling now handled in CSS
 
 // Inject CSS for highlighting
 const style = document.createElement("style");
 style.textContent = `
-  .hyper-hover {
-    border-bottom: 2px dashed #ff4444 !important;
-    cursor: help !important;
-    background-color: rgba(255, 68, 68, 0.1) !important;
-  }
-  .hyper-hover:hover {
-    background-color: rgba(255, 68, 68, 0.2) !important;
-  }
-`;
+  /* Updated CSS for polished, subtle unit highlighting */
+.hyper-hover {
+  position: relative !important;
+  cursor: help !important;
+  /* Remove old styling */
+  border-bottom: none !important;
+  background-color: transparent !important;
+}
+
+/* Small peach triangle indicator in bottom-left corner */
+.hyper-hover::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 0px !important;
+  left: 0px !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-style: solid !important;
+  border-width: 0 0 6px 6px !important;
+  border-color: transparent transparent #FFC8A2 transparent !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+/* Hover state - soft peach background */
+.hyper-hover:hover {
+  background-color: #FFEFE6 !important;
+  border-radius: 3px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+/* Updated tooltip styling - clean and minimal */
+#hyper-converter-tooltip {
+  position: absolute !important;
+  background: #FFFFFF !important;
+  color: #2D2D2D !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  display: none !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+  max-width: 200px !important;
+  white-space: nowrap !important;
+  font-family: Arial, sans-serif !important;
+  border: 1px solid #D8B4FE !important;
+  font-weight: 500 !important;
+}`;
+
 document.head.appendChild(style);
 document.body.appendChild(tooltip);
 
