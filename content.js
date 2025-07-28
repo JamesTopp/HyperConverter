@@ -231,30 +231,49 @@ const tooltip = document.createElement("div");
 tooltip.id = "hyper-converter-tooltip";
 Object.assign(tooltip.style, {
   position: "absolute",
-  background: "#333",
-  color: "#fff",
-  padding: "6px 10px",
-  borderRadius: "6px",
+  background: "#FFFFFF",
+  color: "#2D2D2D",
+  padding: "8px 12px",
+  borderRadius: "8px",
   fontSize: "12px",
   zIndex: "2147483647",
   pointerEvents: "none",
   display: "none",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
   maxWidth: "200px",
   whiteSpace: "nowrap",
-  fontFamily: "Arial, sans-serif"
+  fontFamily: "Arial, sans-serif",
+  border: "1px solid #FFC8A2",
+  fontWeight: "500"
 });
 
-// Inject CSS for highlighting
 const style = document.createElement("style");
 style.textContent = `
   .hyper-hover {
-    border-bottom: 2px dashed #ff4444 !important;
+    position: relative !important;
     cursor: help !important;
-    background-color: rgba(255, 68, 68, 0.1) !important;
+    background-color: transparent !important;
+    border: none !important;
   }
+  
+  .hyper-hover::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0px !important;
+    left: 0px !important;
+    width: 0 !important;
+    height: 0 !important;
+    border-style: solid !important;
+    border-width: 0 0 6px 6px !important;
+    border-color: transparent transparent #FFC8A2 transparent !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+  }
+  
   .hyper-hover:hover {
-    background-color: rgba(255, 68, 68, 0.2) !important;
+    background-color: #FFEFE6 !important;
+    border-radius: 3px !important;
+    transition: background-color 0.2s ease !important;
   }
 `;
 document.head.appendChild(style);
