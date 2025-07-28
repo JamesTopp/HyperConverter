@@ -243,7 +243,7 @@ Object.assign(tooltip.style, {
   maxWidth: "200px",
   whiteSpace: "nowrap",
   fontFamily: "Arial, sans-serif",
-  border: "1px solid #FFC8A2",
+  border: "none",
   fontWeight: "500"
 });
 
