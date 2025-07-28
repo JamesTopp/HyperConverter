@@ -259,15 +259,15 @@ style.textContent = `
 .hyper-hover::after {
     content: '' !important;
     position: absolute !important;
-    bottom: 0px !important;
-    left: 0px !important;
-    width: 0 !important;
-    height: 0 !important;
-    border-style: solid !important;
-    border-width: 6px 6px 0 0 !important;
-    border-color: transparent transparent transparent #FFC8A2 !important;
+    bottom: 1px !important;
+    left: 1px !important;
+    width: 4px !important;
+    height: 4px !important;
+    background-color: #FFC8A2 !important;
+    transform: rotate(45deg) !important;
     pointer-events: none !important;
     z-index: 1 !important;
+    clip-path: polygon(0% 0%, 0% 100%, 100% 100%) !important;
   }
   
   .hyper-hover:hover {
