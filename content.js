@@ -274,12 +274,6 @@ style.textContent = `
     border-radius: 3px !important;
     transition: background-color 0.2s ease !important;
   }
-
-  .hyper-hover.line-wrapped::after {
-  bottom: -6px !important;
-  left: auto !important; 
-  right: 0px !important;
-}
 `;
 document.head.appendChild(style);
 document.body.appendChild(tooltip);
@@ -335,25 +329,6 @@ function processTextNode(textNode) {
     span.className = "hyper-hover";
     span.textContent = fullMatch;
     
-// Check for line wrapping after DOM update
-setTimeout(() => {
-  const rect = span.getBoundingClientRect();
-  const temp = document.createElement('span');
-  temp.style.visibility = 'hidden';
-  temp.style.position = 'absolute';
-  temp.style.whiteSpace = 'nowrap';
-  temp.style.font = window.getComputedStyle(span).font;
-  temp.textContent = span.textContent;
-  document.body.appendChild(temp);
-  
-  const singleLineWidth = temp.getBoundingClientRect().width;
-  document.body.removeChild(temp);
-  
-  if (singleLineWidth > rect.width * 1.2) {
-    span.classList.add('line-wrapped');
-  }
-}, 0);
-
     // Find which conversion matched and calculate result
     let conversionResult = null;
     for (const conversion of conversions) {
