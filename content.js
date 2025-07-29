@@ -478,6 +478,78 @@ function processAllRecipesIngredients(container) {
   }
 }
 
+// Simple fix for split measurements (like "1/64 <em>inch</em>")
+function processSplitMeasurements(container) {
+ if (!container) return;
+ 
+ // Build unit pattern from existing conversions to cover all units
+ const unitWords = [];
+ conversions.forEach(conv => {
+   const pattern = conv.pattern;
+   // Extract unit words from patterns
+   if (pattern.includes('inch')) unitWords.push('inch', 'inches');
+   if (pattern.includes('feet')) unitWords.push('ft', 'feet');
+   if (pattern.includes('cm')) unitWords.push('cm', 'centimeters', 'centimetres');
+   if (pattern.includes('mm')) unitWords.push('mm', 'millimeters', 'millimetres');
+   if (pattern.includes('meters')) unitWords.push('m', 'meters', 'metres');
+   if (pattern.includes('kg')) unitWords.push('kg', 'kilograms', 'kgs');
+   if (pattern.includes('grams')) unitWords.push('g', 'grams');
+   if (pattern.includes('liters')) unitWords.push('l', 'liters', 'litres');
+   if (pattern.includes('pounds')) unitWords.push('lb', 'lbs', 'pounds');
+   if (pattern.includes('ounce')) unitWords.push('oz', 'ounce', 'ounces');
+   if (pattern.includes('gallons')) unitWords.push('gal', 'gallons');
+   if (pattern.includes('cup')) unitWords.push('cup', 'cups');
+   if (pattern.includes('tbsp')) unitWords.push('tbsp', 'tablespoons');
+   if (pattern.includes('tsp')) unitWords.push('tsp', 'teaspoons', 'teaspoon');
+   if (pattern.includes('fahrenheit')) unitWords.push('fahrenheit');
+   if (pattern.includes('celsius')) unitWords.push('celsius');
+ });
+ 
+ const unitPattern = new RegExp(`^(${[...new Set(unitWords)].join('|')})$`, 'i');
+ 
+ // Look for fraction patterns followed by formatted units
+ const elements = container.querySelectorAll('em, strong, b, i');
+ 
+ elements.forEach(element => {
+   const unitText = element.textContent.trim();
+   
+   // Check if this element contains a unit word
+   if (unitPattern.test(unitText)) {
+     
+     // Look at the text immediately before this element
+     const prevNode = element.previousSibling;
+     if (prevNode && prevNode.nodeType === 3) { // text node
+       const prevText = prevNode.textContent.trim();
+       
+       // Check if previous text ends with a fraction or number
+       const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)\s*$/);
+       if (match) {
+         const fullMeasurement = match[1] + ' ' + unitText;
+         
+         // Wrap the unit element with our highlighting
+         if (!element.classList.contains('hyper-hover')) {
+           element.classList.add('hyper-hover');
+           
+           // Find the right conversion
+           for (const conversion of conversions) {
+             const testRegex = new RegExp(conversion.pattern, "gi");
+             const testMatch = testRegex.exec(fullMeasurement);
+             if (testMatch) {
+               const numericValue = parseFloat(testMatch[1]);
+               if (!isNaN(numericValue)) {
+                 const result = conversion.convert(numericValue);
+                 element.dataset.convert = `${fullMeasurement} = ${result}`;
+                 break;
+               }
+             }
+           }
+         }
+       }
+     }
+   }
+ });
+}
+
 function processContainer(container) {
   if (!container) return;
   
@@ -552,12 +624,14 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
   
   if (isEnabled) {
     processContainer(document.body);
+    processSplitMeasurements(document.body);
     processAllRecipesIngredients(document.body);
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === 1) {
             processContainer(node);
+            processSplitMeasurements(node);
           }
         });
       });
