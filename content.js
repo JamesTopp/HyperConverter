@@ -30,9 +30,9 @@ const conversions = [
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(l|liters?|litres?)\\b",
     convert: (val) => `${(val * 0.264172).toFixed(2)} gal`
   },
-  {
+ {
   name: "celsius",
-  pattern: "(\\d+(?:\\.\\d+)?)\\s?(°\\s?c|degrees?\\s?c|celsius)\\b",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?(°\\s?c|degrees?\\s?c|degrees?\\s?celsius|celsius)\\b",
   convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`
   },
   {
@@ -119,7 +119,7 @@ const conversions = [
   },
   {
   name: "fahrenheit", 
-  pattern: "(\\d+(?:\\.\\d+)?)\\s?(°\\s?f|degrees?\\s?f|fahrenheit)\\b",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?(°\\s?f|degrees?\\s?f|degrees?\\s?fahrenheit|fahrenheit)\\b",
   convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`
   },
   {
@@ -547,8 +547,8 @@ document.addEventListener("mouseout", function(e) {
   }
 }, true);
 
-chrome.storage.sync.get(['enabled'], (result) => {
-  const isEnabled = result.enabled ?? true;
+chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
+  const isEnabled = result.enabled !== false && !result.globallyDisabled;
   
   if (isEnabled) {
     processContainer(document.body);
