@@ -481,7 +481,6 @@ function processAllRecipesIngredients(container) {
 function processContainer(container) {
   if (!container) return;
   
-  // Get all text nodes first
   const walker = document.createTreeWalker(
     container,
     NodeFilter.SHOW_TEXT,
@@ -503,137 +502,7 @@ function processContainer(container) {
     textNodes.push(node);
   }
 
-  // Group adjacent text nodes that might contain split measurements
-  const processedNodes = new Set();
-  
-  textNodes.forEach(textNode => {
-    if (processedNodes.has(textNode)) return;
-    
-    // Get the parent element to check for adjacent text
-    const parent = textNode.parentNode;
-    if (!parent) return;
-    
-    // Collect all text content from the parent element
-    let fullText = '';
-    let nodeMap = [];
-    
-    // Walk through all child nodes of the parent
-    Array.from(parent.childNodes).forEach(child => {
-      if (child.nodeType === Node.TEXT_NODE) {
-        fullText += child.textContent;
-        nodeMap.push({
-          node: child,
-          start: fullText.length - child.textContent.length,
-          end: fullText.length
-        });
-      } else if (child.nodeType === Node.ELEMENT_NODE) {
-        // Include text from inline elements like <em>, <strong>, <b>, <i>
-        const inlineText = child.textContent;
-        fullText += inlineText;
-        nodeMap.push({
-          element: child,
-          start: fullText.length - inlineText.length,
-          end: fullText.length
-        });
-      }
-    });
-    
-    // Now check for measurements in the full text
-    const regex = new RegExp(combinedPattern, "gi");
-    const matches = [...fullText.matchAll(regex)];
-    
-    if (matches.length === 0) {
-      // No matches, process individual text node normally
-      processTextNode(textNode);
-      return;
-    }
-    
-    // Mark all text nodes in this parent as processed
-    nodeMap.forEach(item => {
-      if (item.node) processedNodes.add(item.node);
-    });
-    
-    // Process each match
-    matches.forEach(match => {
-      const fullMatch = match[0];
-      const matchStart = match.index;
-      const matchEnd = matchStart + fullMatch.length;
-      
-      // Find which conversion matched and calculate result
-      let conversionResult = null;
-      for (const conversion of conversions) {
-        const testRegex = new RegExp(conversion.pattern, "gi");
-        testRegex.lastIndex = 0;
-        const testMatch = testRegex.exec(fullMatch);
-        if (testMatch) {
-          let numericValue = parseFloat(testMatch[1]);
-          if (!isNaN(numericValue)) {
-            conversionResult = conversion.convert(numericValue);
-            break;
-          }
-        }
-      }
-      
-      if (!conversionResult) return;
-      
-      // Find the best place to insert the highlight
-      // Prefer text nodes, but fall back to wrapping elements
-      for (const item of nodeMap) {
-        if (item.start <= matchStart && item.end >= matchEnd) {
-          if (item.node) {
-            // The match is entirely within a text node
-            processTextNodeWithMatch(item.node, fullMatch, conversionResult, matchStart - item.start);
-          } else if (item.element) {
-            // The match spans an element, wrap the element
-            wrapElementWithHighlight(item.element, fullMatch, conversionResult);
-          }
-          break;
-        }
-      }
-    });
-  });
-}
-
-// Helper function to process a text node with a specific match
-function processTextNodeWithMatch(textNode, matchText, conversionResult, offsetInNode) {
-  const text = textNode.textContent;
-  const matchStart = offsetInNode;
-  const matchEnd = matchStart + matchText.length;
-  
-  if (matchStart < 0 || matchEnd > text.length) return;
-  
-  const fragment = document.createDocumentFragment();
-  
-  // Add text before match
-  if (matchStart > 0) {
-    fragment.appendChild(document.createTextNode(text.slice(0, matchStart)));
-  }
-  
-  // Add highlighted match
-  const span = document.createElement("span");
-  span.className = "hyper-hover";
-  span.textContent = matchText;
-  span.dataset.convert = `${matchText} = ${conversionResult}`;
-  fragment.appendChild(span);
-  
-  // Add text after match
-  if (matchEnd < text.length) {
-    fragment.appendChild(document.createTextNode(text.slice(matchEnd)));
-  }
-  
-  try {
-    textNode.parentNode.replaceChild(fragment, textNode);
-  } catch (e) {
-    console.warn("Could not replace text node:", e);
-  }
-}
-
-// Helper function to wrap an element with highlighting
-function wrapElementWithHighlight(element, matchText, conversionResult) {
-  if (element.classList.contains("hyper-hover")) return;
-  
-  element.classList.add("hyper-hover");
-  element.dataset.convert = `${matchText} = ${conversionResult}`;
+  textNodes.forEach(processTextNode);
 }
 
 document.addEventListener("mouseover", function(e) {
