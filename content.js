@@ -37,7 +37,7 @@ const conversions = [
   },
   {
   name: "inches",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\\d+(?:\\.\\d+)?)\\s?(in|inch|inches?)\\b",
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\\d+(?:\\.\\d+)?)\\s*(?:inch|inches?)\\b",
   convert: (val) => {
     console.log("📏 Converting inches:", val);
     
