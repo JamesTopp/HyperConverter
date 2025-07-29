@@ -1,4 +1,3 @@
- <script>
         // Extension toggle functionality
         let extensionEnabled = true;
         let globallyDisabled = false;
@@ -207,4 +206,3 @@
             // Replace with your website/social media
             chrome.tabs.create({url: 'https://your-website.com'});
         });
-    </script>
