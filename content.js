@@ -519,12 +519,14 @@ function processSplitMeasurements(container) {
       // Look at the text immediately before this element
       const prevNode = element.previousSibling;
       if (prevNode && prevNode.nodeType === 3) { // text node
-        const prevText = prevNode.textContent.trim();
+        const prevText = prevNode.textContent;
         
-        // Check if previous text ends with a fraction or number
-        const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)\s*$/);
+        // Check if previous text ends with a fraction or number (preserve trailing spaces)
+        const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)(\s*)$/);
         if (match) {
-          const fullMeasurement = match[1] + ' ' + unitText;
+          const numberPart = match[1];
+          const spaceBetween = match[2];
+          const fullMeasurement = numberPart + ' ' + unitText;
           
           // Find the right conversion first
           let conversionResult = null;
@@ -547,9 +549,8 @@ function processSplitMeasurements(container) {
             wrapper.dataset.convert = `${fullMeasurement} = ${conversionResult}`;
             
             // Update the previous text node to only include text before the number
-            const numberStartIndex = prevText.lastIndexOf(match[1]);
+            const numberStartIndex = prevText.lastIndexOf(numberPart + spaceBetween);
             const beforeNumber = prevText.substring(0, numberStartIndex);
-            const numberPart = match[1];
             
             // Replace previous text node with the part before the number
             if (beforeNumber) {
@@ -558,12 +559,21 @@ function processSplitMeasurements(container) {
               prevNode.remove();
             }
             
-            // Add the number to the wrapper
-            wrapper.appendChild(document.createTextNode(numberPart + ' '));
+            // Add the number and space to the wrapper
+            wrapper.appendChild(document.createTextNode(numberPart + spaceBetween));
             
             // Move the unit element into the wrapper
             const unitClone = element.cloneNode(true);
             wrapper.appendChild(unitClone);
+            
+            // Check if there's a text node after the element and preserve its leading space
+            const nextNode = element.nextSibling;
+            if (nextNode && nextNode.nodeType === 3 && nextNode.textContent.startsWith(' ')) {
+              // Add the space after the wrapper
+              const spaceAfter = document.createTextNode(' ');
+              element.parentNode.insertBefore(spaceAfter, nextNode);
+              nextNode.textContent = nextNode.textContent.substring(1);
+            }
             
             // Replace the original unit element with our wrapper
             element.parentNode.replaceChild(wrapper, element);
