@@ -3,10 +3,14 @@
   "name": "HyperConverter",
   "version": "1.0",
   "description": "Automatically converts units on any webpage.",
-  "permissions": ["storage", "scripting"],
+  "permissions": ["storage", "scripting", "tabs"],
   "host_permissions": ["<all_urls>"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
   "action": {
     "default_popup": "popup.html",
+    "default_title": "HyperConverter",
     "default_icon": {
       "16": "icon.png",
       "48": "icon.png",
