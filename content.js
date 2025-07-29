@@ -521,12 +521,10 @@ function processSplitMeasurements(container) {
       if (prevNode && prevNode.nodeType === 3) { // text node
         const prevText = prevNode.textContent;
         
-        // Check if previous text ends with a fraction or number (preserve trailing spaces)
-        const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)(\s*)$/);
+        // Check if previous text ends with a fraction or number
+        const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)\s*$/);
         if (match) {
-          const numberPart = match[1];
-          const spaceBetween = match[2];
-          const fullMeasurement = numberPart + ' ' + unitText;
+          const fullMeasurement = match[1] + ' ' + unitText;
           
           // Find the right conversion first
           let conversionResult = null;
@@ -543,40 +541,11 @@ function processSplitMeasurements(container) {
           }
           
           if (conversionResult) {
-            // Create a wrapper span that encompasses both the number and unit
-            const wrapper = document.createElement('span');
-            wrapper.className = 'hyper-hover';
-            wrapper.dataset.convert = `${fullMeasurement} = ${conversionResult}`;
-            
-            // Update the previous text node to only include text before the number
-            const numberStartIndex = prevText.lastIndexOf(numberPart + spaceBetween);
-            const beforeNumber = prevText.substring(0, numberStartIndex);
-            
-            // Replace previous text node with the part before the number
-            if (beforeNumber) {
-              prevNode.textContent = beforeNumber;
-            } else {
-              prevNode.remove();
+            // Just add highlighting to the unit element (simpler approach)
+            if (!element.classList.contains('hyper-hover')) {
+              element.classList.add('hyper-hover');
+              element.dataset.convert = `${fullMeasurement} = ${conversionResult}`;
             }
-            
-            // Add the number and space to the wrapper
-            wrapper.appendChild(document.createTextNode(numberPart + spaceBetween));
-            
-            // Move the unit element into the wrapper
-            const unitClone = element.cloneNode(true);
-            wrapper.appendChild(unitClone);
-            
-            // Check if there's a text node after the element and preserve its leading space
-            const nextNode = element.nextSibling;
-            if (nextNode && nextNode.nodeType === 3 && nextNode.textContent.startsWith(' ')) {
-              // Add the space after the wrapper
-              const spaceAfter = document.createTextNode(' ');
-              element.parentNode.insertBefore(spaceAfter, nextNode);
-              nextNode.textContent = nextNode.textContent.substring(1);
-            }
-            
-            // Replace the original unit element with our wrapper
-            element.parentNode.replaceChild(wrapper, element);
           }
         }
       }
