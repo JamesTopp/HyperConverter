@@ -143,20 +143,21 @@ const conversions = [
       return `${(numericValue * 0.393701).toFixed(2)} in`;
     },
   },
- {
-  name: "dimensions_x_complete",
-  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:in\\b|inch|inches?)\\b",
+{
+  name: "dimensions_x_debug",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(in\\b|inch|inches)\\b",
   convert: (val, fullMatch) => {
-    // Extract both numbers from the match
+    console.log("🔍 Dimension function called:", val, fullMatch);
+    
     const dimensionMatch = fullMatch.match(/(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
     if (dimensionMatch) {
       const width = parseFloat(dimensionMatch[1]);
       const height = parseFloat(dimensionMatch[2]);
       const widthCm = (width / 0.393701).toFixed(1);
       const heightCm = (height / 0.393701).toFixed(1);
-      return `${width}" = ${widthCm} cm\\n${height}" = ${heightCm} cm`;
+      return `${width}" = ${widthCm} cm, ${height}" = ${heightCm} cm`;
     }
-    return `${(parseFloat(val) / 0.393701).toFixed(2)} cm`;
+    return null;
   }
 },
   {
