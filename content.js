@@ -3,225 +3,319 @@ const conversions = [
   {
     name: "centimeters",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(cm|centimeters?|centimetres?)\\b",
-    convert: (val) => `${(val * 0.393701).toFixed(2)} in`
+    convert: (val) => `${(val * 0.393701).toFixed(2)} in`,
   },
   {
     name: "millimeters",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(mm|millimeters?|millimetres?)\\b",
-    convert: (val) => `${(val * 0.0393701).toFixed(2)} in`
+    convert: (val) => `${(val * 0.0393701).toFixed(2)} in`,
   },
   {
-    name: "meters", 
+    name: "meters",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(m|meters?)\\b",
-    convert: (val) => `${(val * 3.28084).toFixed(2)} ft`
+    convert: (val) => `${(val * 3.28084).toFixed(2)} ft`,
   },
   {
     name: "kilograms",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(kg|kilograms?|kgs?)\\b",
-    convert: (val) => `${(val * 2.20462).toFixed(2)} lb`
+    convert: (val) => `${(val * 2.20462).toFixed(2)} lb`,
   },
   {
     name: "grams",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(g|grams?)\\b",
-    convert: (val) => `${(val * 0.035274).toFixed(2)} oz`
+    convert: (val) => `${(val * 0.035274).toFixed(2)} oz`,
   },
-  
+
   {
     name: "liters",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(l|liters?|litres?)\\b",
-    convert: (val) => `${(val * 0.264172).toFixed(2)} gal`
-  },
- {
-  name: "celsius",
-  pattern: "(\\d+(?:\\.\\d+)?)\\s?(°\\s?c|degrees?\\s?c|degrees?\\s?celsius|celsius)\\b",
-  convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`
+    convert: (val) => `${(val * 0.264172).toFixed(2)} gal`,
   },
   {
-  name: "inches",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\\d+(?:\\.\\d+)?)\\s*(?:inch|inches?)\\b",
-  convert: (val) => {
-    console.log("📏 Converting inches:", val);
-    
-    // Convert to string for processing
-    const valStr = String(val);
-    
-    // Handle Unicode fractions
-    const unicodeFractions = {
-      '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
-      '⅜': 0.375, '⅖': 0.4, '½': 0.5, '⅔': 0.667, '⅗': 0.6, 
-      '¾': 0.75, '⅘': 0.8, '⅚': 0.833, '⅞': 0.875
-    };
-    
-    let numericValue;
-    if (unicodeFractions[valStr]) {
-      numericValue = unicodeFractions[valStr];
-    } else if (valStr.includes('/')) {
-      // Handle text fractions like "3/4"
-      const [numerator, denominator] = valStr.split('/');
-      numericValue = parseFloat(numerator) / parseFloat(denominator);
-    } else {
-      numericValue = parseFloat(val);
-    }
-    
-    return `${(numericValue / 0.393701).toFixed(2)} cm`;
-  }
+    name: "celsius",
+    pattern:
+      "(\\d+(?:\\.\\d+)?)\\s?(°\\s?c|degrees?\\s?c|degrees?\\s?celsius|celsius)\\b",
+    convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`,
   },
   {
-  name: "inches_symbol",
-  pattern: "(\\d+(?:\\.\\d+)?|\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\"",
-  convert: (val) => {
-    console.log("📏 Converting inches symbol:", val);
-    
-    const valStr = String(val);
-    
-    const unicodeFractions = {
-      '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
-      '⅜': 0.375, '⅖': 0.4, '½': 0.5, '⅔': 0.667, '⅗': 0.6, 
-      '¾': 0.75, '⅘': 0.8, '⅚': 0.833, '⅞': 0.875
-    };
-    
-    let numericValue;
-    if (unicodeFractions[valStr]) {
-      numericValue = unicodeFractions[valStr];
-    } else if (valStr.includes('/')) {
-      const [numerator, denominator] = valStr.split('/');
-      numericValue = parseFloat(numerator) / parseFloat(denominator);
-    } else {
-      numericValue = parseFloat(val);
-    }
-    
-    return `${(numericValue / 0.393701).toFixed(2)} cm`;
-  }
+    name: "inches",
+    pattern:
+      "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\\d+(?:\\.\\d+)?)\\s*(?:inch|inches?)\\b",
+    convert: (val) => {
+      console.log("📏 Converting inches:", val);
+
+      // Convert to string for processing
+      const valStr = String(val);
+
+      // Handle Unicode fractions
+      const unicodeFractions = {
+        "⅛": 0.125,
+        "⅙": 0.167,
+        "⅕": 0.2,
+        "¼": 0.25,
+        "⅓": 0.333,
+        "⅜": 0.375,
+        "⅖": 0.4,
+        "½": 0.5,
+        "⅔": 0.667,
+        "⅗": 0.6,
+        "¾": 0.75,
+        "⅘": 0.8,
+        "⅚": 0.833,
+        "⅞": 0.875,
+      };
+
+      let numericValue;
+      if (unicodeFractions[valStr]) {
+        numericValue = unicodeFractions[valStr];
+      } else if (valStr.includes("/")) {
+        // Handle text fractions like "3/4"
+        const [numerator, denominator] = valStr.split("/");
+        numericValue = parseFloat(numerator) / parseFloat(denominator);
+      } else {
+        numericValue = parseFloat(val);
+      }
+
+      return `${(numericValue / 0.393701).toFixed(2)} cm`;
+    },
   },
   {
-  name: "feet_symbol", 
-  pattern: "(\\d+(?:\\.\\d+)?)'",
-  convert: (val) => `${(val / 3.28084).toFixed(2)} m`
+    name: "inches_symbol",
+    pattern: '(\\d+(?:\\.\\d+)?|\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)"',
+    convert: (val) => {
+      console.log("📏 Converting inches symbol:", val);
+
+      const valStr = String(val);
+
+      const unicodeFractions = {
+        "⅛": 0.125,
+        "⅙": 0.167,
+        "⅕": 0.2,
+        "¼": 0.25,
+        "⅓": 0.333,
+        "⅜": 0.375,
+        "⅖": 0.4,
+        "½": 0.5,
+        "⅔": 0.667,
+        "⅗": 0.6,
+        "¾": 0.75,
+        "⅘": 0.8,
+        "⅚": 0.833,
+        "⅞": 0.875,
+      };
+
+      let numericValue;
+      if (unicodeFractions[valStr]) {
+        numericValue = unicodeFractions[valStr];
+      } else if (valStr.includes("/")) {
+        const [numerator, denominator] = valStr.split("/");
+        numericValue = parseFloat(numerator) / parseFloat(denominator);
+      } else {
+        numericValue = parseFloat(val);
+      }
+
+      return `${(numericValue / 0.393701).toFixed(2)} cm`;
+    },
+  },
+  // Add these new patterns to your conversions array, right after the existing "inches" and other patterns:
+
+  {
+    name: "inches_hyphenated",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:inch|inches?)\\b",
+    convert: (val) => {
+      const numericValue = parseFloat(val);
+      return `${(numericValue / 0.393701).toFixed(2)} cm`;
+    },
+  },
+  {
+    name: "feet_hyphenated",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:ft|feet)\\b",
+    convert: (val) => {
+      const numericValue = parseFloat(val);
+      return `${(numericValue / 3.28084).toFixed(2)} m`;
+    },
+  },
+  {
+    name: "cm_hyphenated",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:cm|centimeters?|centimetres?)\\b",
+    convert: (val) => {
+      const numericValue = parseFloat(val);
+      return `${(numericValue * 0.393701).toFixed(2)} in`;
+    },
+  },
+  {
+    name: "dimensions_x_format",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)(?=\\s|$|[^\\d])",
+    convert: (val) => {
+      // Just convert the first dimension for now
+      const numericValue = parseFloat(val);
+      return `${(numericValue / 0.393701).toFixed(2)} cm (width)`;
+    },
+  },
+  {
+    name: "feet_symbol",
+    pattern: "(\\d+(?:\\.\\d+)?)'",
+    convert: (val) => `${(val / 3.28084).toFixed(2)} m`,
   },
   {
     name: "feet",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
-    convert: (val) => `${(val / 3.28084).toFixed(2)} m`
+    convert: (val) => `${(val / 3.28084).toFixed(2)} m`,
   },
   {
     name: "pounds",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(lb|lbs|pounds?)\\b",
-    convert: (val) => `${(val / 2.20462).toFixed(2)} kg`
+    convert: (val) => `${(val / 2.20462).toFixed(2)} kg`,
   },
   {
-  name: "ounces",
-  pattern: "(\\d+(?:\\.\\d+)?)\\s?(oz|ounce|ounces)\\b",
-  convert: (val) => `${(val / 0.035274).toFixed(2)} g`
+    name: "ounces",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?(oz|ounce|ounces)\\b",
+    convert: (val) => `${(val / 0.035274).toFixed(2)} g`,
   },
   {
     name: "gallons",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(gal|gallons?)\\b",
-    convert: (val) => `${(val / 0.264172).toFixed(2)} L`
+    convert: (val) => `${(val / 0.264172).toFixed(2)} L`,
   },
   {
-  name: "fahrenheit", 
-  pattern: "(\\d+(?:\\.\\d+)?)\\s?(°\\s?f|degrees?\\s?f|degrees?\\s?fahrenheit|fahrenheit)\\b",
-  convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`
+    name: "fahrenheit",
+    pattern:
+      "(\\d+(?:\\.\\d+)?)\\s?(°\\s?f|degrees?\\s?f|degrees?\\s?fahrenheit|fahrenheit)\\b",
+    convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`,
   },
   {
-  name: "cups",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(cup|cups?)\\b",  
-  convert: (val) => {
-  console.log("🥄 Converting cups:", val);
-  
-  // Convert to string for processing
-  const valStr = String(val);
-  
-  // Handle Unicode fractions
-  const unicodeFractions = {
-    '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
-    '⅜': 0.375, '⅖': 0.4, '⅔': 0.667, '⅗': 0.6, '¾': 0.75,
-    '⅘': 0.8, '⅚': 0.833, '⅞': 0.875
-  };
-  
-  let numericValue;
-  if (unicodeFractions[valStr]) {
-    numericValue = unicodeFractions[valStr];
-  } else if (valStr.includes('/')) {
-    // Handle text fractions like "1/3"
-    const [numerator, denominator] = valStr.split('/');
-    numericValue = parseFloat(numerator) / parseFloat(denominator);
-  } else {
-    numericValue = parseFloat(val);
-  }
-  
-  return `${(numericValue * 237).toFixed(0)} ml`;
-  }
+    name: "cups",
+    pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(cup|cups?)\\b",
+    convert: (val) => {
+      console.log("🥄 Converting cups:", val);
+
+      // Convert to string for processing
+      const valStr = String(val);
+
+      // Handle Unicode fractions
+      const unicodeFractions = {
+        "⅛": 0.125,
+        "⅙": 0.167,
+        "⅕": 0.2,
+        "¼": 0.25,
+        "⅓": 0.333,
+        "⅜": 0.375,
+        "⅖": 0.4,
+        "⅔": 0.667,
+        "⅗": 0.6,
+        "¾": 0.75,
+        "⅘": 0.8,
+        "⅚": 0.833,
+        "⅞": 0.875,
+      };
+
+      let numericValue;
+      if (unicodeFractions[valStr]) {
+        numericValue = unicodeFractions[valStr];
+      } else if (valStr.includes("/")) {
+        // Handle text fractions like "1/3"
+        const [numerator, denominator] = valStr.split("/");
+        numericValue = parseFloat(numerator) / parseFloat(denominator);
+      } else {
+        numericValue = parseFloat(val);
+      }
+
+      return `${(numericValue * 237).toFixed(0)} ml`;
+    },
   },
   {
-  name: "tablespoons",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tbsp|tablespoons?)\\b",  
-  convert: (val) => {
-  console.log("🥄 Converting tablespoons:", val);
-  
-  // Convert to string for processing
-  const valStr = String(val);
-  
-  // Handle Unicode fractions
-  const unicodeFractions = {
-    '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
-    '⅜': 0.375, '⅖': 0.4, '⅔': 0.667, '⅗': 0.6, '¾': 0.75,
-    '⅘': 0.8, '⅚': 0.833, '⅞': 0.875, '½': 0.5
-  };
-  
-  let numericValue;
-  if (unicodeFractions[valStr]) {
-    numericValue = unicodeFractions[valStr];
-  } else if (valStr.includes('/')) {
-    const [numerator, denominator] = valStr.split('/');
-    numericValue = parseFloat(numerator) / parseFloat(denominator);
-  } else if (valStr === '½') {
-    numericValue = 0.5;
-  } else if (valStr === '¼') {
-    numericValue = 0.25;
-  } else if (valStr === '¾') {
-    numericValue = 0.75;
-  } else {
-    numericValue = parseFloat(val);
-  }
-  
-  return `${(numericValue * 15).toFixed(1)} ml`;
-  }
+    name: "tablespoons",
+    pattern:
+      "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tbsp|tablespoons?)\\b",
+    convert: (val) => {
+      console.log("🥄 Converting tablespoons:", val);
+
+      // Convert to string for processing
+      const valStr = String(val);
+
+      // Handle Unicode fractions
+      const unicodeFractions = {
+        "⅛": 0.125,
+        "⅙": 0.167,
+        "⅕": 0.2,
+        "¼": 0.25,
+        "⅓": 0.333,
+        "⅜": 0.375,
+        "⅖": 0.4,
+        "⅔": 0.667,
+        "⅗": 0.6,
+        "¾": 0.75,
+        "⅘": 0.8,
+        "⅚": 0.833,
+        "⅞": 0.875,
+        "½": 0.5,
+      };
+
+      let numericValue;
+      if (unicodeFractions[valStr]) {
+        numericValue = unicodeFractions[valStr];
+      } else if (valStr.includes("/")) {
+        const [numerator, denominator] = valStr.split("/");
+        numericValue = parseFloat(numerator) / parseFloat(denominator);
+      } else if (valStr === "½") {
+        numericValue = 0.5;
+      } else if (valStr === "¼") {
+        numericValue = 0.25;
+      } else if (valStr === "¾") {
+        numericValue = 0.75;
+      } else {
+        numericValue = parseFloat(val);
+      }
+
+      return `${(numericValue * 15).toFixed(1)} ml`;
+    },
   },
   {
-  name: "teaspoons",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tsp|teaspoons?|teaspoon)\\b",  
-  convert: (val) => {
-  console.log("🥄 Converting teaspoons:", val);
-  // Convert to string for processing
-  const valStr = String(val);
-  
-  // Handle Unicode fractions
-  const unicodeFractions = {
-    '⅛': 0.125, '⅙': 0.167, '⅕': 0.2, '¼': 0.25, '⅓': 0.333,
-    '⅜': 0.375, '⅖': 0.4, '⅔': 0.667, '⅗': 0.6, '¾': 0.75,
-    '⅘': 0.8, '⅚': 0.833, '⅞': 0.875, '½': 0.5
-  };
-  
-  let numericValue;
-  if (unicodeFractions[valStr]) {
-    numericValue = unicodeFractions[valStr];
-  } else if (valStr.includes('/')) {
-    const [numerator, denominator] = valStr.split('/');
-    numericValue = parseFloat(numerator) / parseFloat(denominator);
-  } else if (valStr === '½') {
-    numericValue = 0.5;
-  } else if (valStr === '¼') {
-    numericValue = 0.25;
-  } else if (valStr === '¾') {
-    numericValue = 0.75;
-  } else {
-    numericValue = parseFloat(val);
-  }
-  
-  return `${(numericValue * 5).toFixed(1)} ml`;
-}
-  }
+    name: "teaspoons",
+    pattern:
+      "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tsp|teaspoons?|teaspoon)\\b",
+    convert: (val) => {
+      console.log("🥄 Converting teaspoons:", val);
+      // Convert to string for processing
+      const valStr = String(val);
+
+      // Handle Unicode fractions
+      const unicodeFractions = {
+        "⅛": 0.125,
+        "⅙": 0.167,
+        "⅕": 0.2,
+        "¼": 0.25,
+        "⅓": 0.333,
+        "⅜": 0.375,
+        "⅖": 0.4,
+        "⅔": 0.667,
+        "⅗": 0.6,
+        "¾": 0.75,
+        "⅘": 0.8,
+        "⅚": 0.833,
+        "⅞": 0.875,
+        "½": 0.5,
+      };
+
+      let numericValue;
+      if (unicodeFractions[valStr]) {
+        numericValue = unicodeFractions[valStr];
+      } else if (valStr.includes("/")) {
+        const [numerator, denominator] = valStr.split("/");
+        numericValue = parseFloat(numerator) / parseFloat(denominator);
+      } else if (valStr === "½") {
+        numericValue = 0.5;
+      } else if (valStr === "¼") {
+        numericValue = 0.25;
+      } else if (valStr === "¾") {
+        numericValue = 0.75;
+      } else {
+        numericValue = parseFloat(val);
+      }
+
+      return `${(numericValue * 5).toFixed(1)} ml`;
+    },
+  },
 ];
 
 // Create combined regex pattern
