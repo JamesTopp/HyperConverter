@@ -25,7 +25,62 @@ const conversions = [
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(g|grams?)\\b",
     convert: (val) => `${(val * 0.035274).toFixed(2)} oz`,
   },
-
+  {
+    name: "inches_hyphenated",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:inch|inches?)\\b",
+    convert: (val) => {
+      const numericValue = parseFloat(val);
+      return `${(numericValue / 0.393701).toFixed(2)} cm`;
+    },
+  },
+  {
+    name: "feet_hyphenated",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:ft|feet)\\b",
+    convert: (val) => {
+      const numericValue = parseFloat(val);
+      return `${(numericValue / 3.28084).toFixed(2)} m`;
+    },
+  },
+  {
+    name: "cm_hyphenated",
+    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:cm|centimeters?|centimetres?)\\b",
+    convert: (val) => {
+      const numericValue = parseFloat(val);
+      return `${(numericValue * 0.393701).toFixed(2)} in`;
+    },
+  },
+{
+  name: "dimensions_inch_format",
+  pattern: "(\\d+)\\s?x\\s?(\\d+)\\s?Inch\\b",
+  convert: (val, fullMatch) => {
+    console.log("📐 'Inch' format:", fullMatch);
+    const match = fullMatch.match(/(\\d+)\\s?x\\s?(\\d+)/);
+    if (match) {
+      const w = parseInt(match[1]);
+      const h = parseInt(match[2]);
+      const wCm = (w / 0.393701).toFixed(1);
+      const hCm = (h / 0.393701).toFixed(1);
+      return `${w}" = ${wCm} cm, ${h}" = ${hCm} cm`;
+    }
+    return null;
+  }
+},
+{
+  name: "dimensions_in_format",
+  pattern: "(\\d+)\\s?x\\s?(\\d+)\\s?in\\b",
+  convert: (val, fullMatch) => {
+    console.log("📐 'in' format:", fullMatch);
+    const match = fullMatch.match(/(\\d+)\\s?x\\s?(\\d+)/);
+    if (match) {
+      const w = parseInt(match[1]);
+      const h = parseInt(match[2]);
+      const wCm = (w / 0.393701).toFixed(1);
+      const hCm = (h / 0.393701).toFixed(1);
+      return `${w}" = ${wCm} cm, ${h}" = ${hCm} cm`;
+    }
+    return null;
+  }
+},
   {
     name: "liters",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(l|liters?|litres?)\\b",
@@ -117,49 +172,6 @@ const conversions = [
       return `${(numericValue / 0.393701).toFixed(2)} cm`;
     },
   },
-  // Add these new patterns to your conversions array, right after the existing "inches" and other patterns:
-
-  {
-    name: "inches_hyphenated",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:inch|inches?)\\b",
-    convert: (val) => {
-      const numericValue = parseFloat(val);
-      return `${(numericValue / 0.393701).toFixed(2)} cm`;
-    },
-  },
-  {
-    name: "feet_hyphenated",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:ft|feet)\\b",
-    convert: (val) => {
-      const numericValue = parseFloat(val);
-      return `${(numericValue / 3.28084).toFixed(2)} m`;
-    },
-  },
-  {
-    name: "cm_hyphenated",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:cm|centimeters?|centimetres?)\\b",
-    convert: (val) => {
-      const numericValue = parseFloat(val);
-      return `${(numericValue * 0.393701).toFixed(2)} in`;
-    },
-  },
-{
-  name: "dimensions_x_specific",
-  pattern: "\\b(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:in\\b|inch\\b|inches\\b)",
-  convert: (val, fullMatch) => {
-    console.log("🎯 Dimension pattern caught:", fullMatch);
-    
-    const numbers = fullMatch.match(/\\b(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
-    if (numbers && numbers.length >= 3) {
-      const width = parseFloat(numbers[1]);
-      const height = parseFloat(numbers[2]);
-      const widthCm = (width / 0.393701).toFixed(1);
-      const heightCm = (height / 0.393701).toFixed(1);
-      return `${width}" = ${widthCm} cm, ${height}" = ${heightCm} cm`;
-    }
-    return null; // Let other patterns handle it
-  }
-},
   {
     name: "feet_symbol",
     pattern: "(\\d+(?:\\.\\d+)?)'",
