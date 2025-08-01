@@ -515,11 +515,10 @@ function processTableMeasurements(container) {
             const style = document.createElement('style');
             style.id = 'hyper-converter-table-styles';
             style.textContent = `
-              dd.hyper-hover {
-                border-bottom: 2px dashed #e74c3c !important;
-                cursor: help !important;
-              }
-            `;
+            dd.hyper-hover {
+              cursor: help !important;
+            }
+          `;
             document.head.appendChild(style);
           }
         }
