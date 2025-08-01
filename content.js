@@ -144,14 +144,21 @@ const conversions = [
     },
   },
   {
-    name: "dimensions_x_format",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)(?=\\s|$|[^\\d])",
-    convert: (val) => {
-      // Just convert the first dimension for now
-      const numericValue = parseFloat(val);
-      return `${(numericValue / 0.393701).toFixed(2)} cm (width)`;
-    },
-  },
+  name: "dimensions_x_simple",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:inch|inches?)\\b",
+  convert: (val, fullMatch) => {
+    // Extract both numbers from the match
+    const dimensionMatch = fullMatch.match(/(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
+    if (dimensionMatch) {
+      const width = parseFloat(dimensionMatch[1]);
+      const height = parseFloat(dimensionMatch[2]);
+      const widthCm = (width / 0.393701).toFixed(1);
+      const heightCm = (height / 0.393701).toFixed(1);
+      return `${width}" = ${widthCm} cm, ${height}" = ${heightCm} cm`;
+    }
+    return `${(parseFloat(val) / 0.393701).toFixed(2)} cm`;
+  }
+},
   {
     name: "feet_symbol",
     pattern: "(\\d+(?:\\.\\d+)?)'",
