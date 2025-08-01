@@ -144,20 +144,20 @@ const conversions = [
     },
   },
 {
-  name: "dimensions_x_debug",
-  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(in\\b|inch|inches)\\b",
+  name: "dimensions_x_specific",
+  pattern: "\\b(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:in\\b|inch\\b|inches\\b)",
   convert: (val, fullMatch) => {
-    console.log("🔍 Dimension function called:", val, fullMatch);
+    console.log("🎯 Dimension pattern caught:", fullMatch);
     
-    const dimensionMatch = fullMatch.match(/(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
-    if (dimensionMatch) {
-      const width = parseFloat(dimensionMatch[1]);
-      const height = parseFloat(dimensionMatch[2]);
+    const numbers = fullMatch.match(/\\b(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
+    if (numbers && numbers.length >= 3) {
+      const width = parseFloat(numbers[1]);
+      const height = parseFloat(numbers[2]);
       const widthCm = (width / 0.393701).toFixed(1);
       const heightCm = (height / 0.393701).toFixed(1);
       return `${width}" = ${widthCm} cm, ${height}" = ${heightCm} cm`;
     }
-    return null;
+    return null; // Let other patterns handle it
   }
 },
   {
