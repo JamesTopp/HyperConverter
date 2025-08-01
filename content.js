@@ -143,23 +143,6 @@ const conversions = [
       return `${(numericValue * 0.393701).toFixed(2)} in`;
     },
   },
-{
-  name: "dimensions_x_specific",
-  pattern: "\\b(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:in\\b|inch\\b|inches\\b)",
-  convert: (val, fullMatch) => {
-    console.log("🎯 Dimension pattern caught:", fullMatch);
-    
-    const numbers = fullMatch.match(/\\b(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
-    if (numbers && numbers.length >= 3) {
-      const width = parseFloat(numbers[1]);
-      const height = parseFloat(numbers[2]);
-      const widthCm = (width / 0.393701).toFixed(1);
-      const heightCm = (height / 0.393701).toFixed(1);
-      return `${width}" = ${widthCm} cm, ${height}" = ${heightCm} cm`;
-    }
-    return null; // Let other patterns handle it
-  }
-},
   {
     name: "feet_symbol",
     pattern: "(\\d+(?:\\.\\d+)?)'",
@@ -323,7 +306,39 @@ const conversions = [
 
       return `${(numericValue * 5).toFixed(1)} ml`;
     },
+  },
+  {
+  name: "dimensions_inch_format",
+  pattern: "(\\d+)\\s?x\\s?(\\d+)\\s?Inch\\b",
+  convert: (val, fullMatch) => {
+    console.log("📐 'Inch' format:", fullMatch);
+    const match = fullMatch.match(/(\\d+)\\s?x\\s?(\\d+)/);
+    if (match) {
+      const w = parseInt(match[1]);
+      const h = parseInt(match[2]);
+      const wCm = (w / 0.393701).toFixed(1);
+      const hCm = (h / 0.393701).toFixed(1);
+      return `${w}" = ${wCm} cm, ${h}" = ${hCm} cm`;
+    }
+    return null;
   }
+},
+{
+  name: "dimensions_in_format",
+  pattern: "(\\d+)\\s?x\\s?(\\d+)\\s?in\\b",
+  convert: (val, fullMatch) => {
+    console.log("📐 'in' format:", fullMatch);
+    const match = fullMatch.match(/(\\d+)\\s?x\\s?(\\d+)/);
+    if (match) {
+      const w = parseInt(match[1]);
+      const h = parseInt(match[2]);
+      const wCm = (w / 0.393701).toFixed(1);
+      const hCm = (h / 0.393701).toFixed(1);
+      return `${w}" = ${wCm} cm, ${h}" = ${hCm} cm`;
+    }
+    return null;
+  }
+}
 ];
 
 // Create combined regex pattern
