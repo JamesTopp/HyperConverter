@@ -143,9 +143,9 @@ const conversions = [
       return `${(numericValue * 0.393701).toFixed(2)} in`;
     },
   },
-  {
-  name: "dimensions_x_simple",
-  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:inch|inches?)\\b",
+ {
+  name: "dimensions_x_complete",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:in\\b|inch|inches?)\\b",
   convert: (val, fullMatch) => {
     // Extract both numbers from the match
     const dimensionMatch = fullMatch.match(/(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
@@ -154,7 +154,7 @@ const conversions = [
       const height = parseFloat(dimensionMatch[2]);
       const widthCm = (width / 0.393701).toFixed(1);
       const heightCm = (height / 0.393701).toFixed(1);
-      return `${width}" = ${widthCm} cm, ${height}" = ${heightCm} cm`;
+      return `${width}" = ${widthCm} cm\\n${height}" = ${heightCm} cm`;
     }
     return `${(parseFloat(val) / 0.393701).toFixed(2)} cm`;
   }
@@ -322,7 +322,7 @@ const conversions = [
 
       return `${(numericValue * 5).toFixed(1)} ml`;
     },
-  },
+  }
 ];
 
 // Create combined regex pattern
