@@ -479,107 +479,34 @@ function processAllRecipesIngredients(container) {
   }
 }
 
-// Process table-based measurements (like Home Depot product dimensions)
+// Debug version to see what elements exist
 function processTableMeasurements(container) {
   console.log("🏠 Looking for table-based measurements (Home Depot style)");
   
-  // Home Depot specific selectors + general table selectors
-  const homeDepotSelectors = [
-    'dd[class*="hdca-product-nav__content"]', // Home Depot product info
-    '.acl-dt', // Home Depot table cells
-    '[class*="acl-dt"]', // Variations of HD table cells
-    'td', 'th', '.table-cell', '[class*="cell"]', '[class*="dimension"]' // General selectors
-  ];
+  // Test different selectors to see what exists
+  console.log("All dd elements:", container.querySelectorAll('dd').length);
+  console.log("All dt elements:", container.querySelectorAll('dt').length);
+  console.log("All divs:", container.querySelectorAll('div').length);
+  console.log("Elements with 'acl':", container.querySelectorAll('[class*="acl"]').length);
+  console.log("Elements with 'hdca':", container.querySelectorAll('[class*="hdca"]').length);
   
-  const allCells = [];
-  homeDepotSelectors.forEach(selector => {
-    try {
-      const cells = container.querySelectorAll(selector);
-      allCells.push(...cells);
-    } catch(e) {
-      // Skip invalid selectors
+  // Look for elements containing the specific numbers we can see
+  const allElements = container.querySelectorAll('*');
+  let foundNumbers = [];
+  
+  allElements.forEach(el => {
+    const text = el.textContent.trim();
+    if (text === '22.24' || text === '47.24' || text === '92.59' || text === '55.87') {
+      foundNumbers.push({
+        text: text,
+        tagName: el.tagName,
+        className: el.className,
+        parent: el.parentElement ? el.parentElement.tagName : 'none'
+      });
     }
   });
   
-  console.log("Found", allCells.length, "potential table cells");
-  
-  // Look for cells containing numbers that might be measurements
-  allCells.forEach(cell => {
-    const cellText = cell.textContent.trim();
-    console.log("Checking cell:", cellText);
-    
-    // Check if this cell contains a number (including decimals)
-    const numberMatch = cellText.match(/^(\d+(?:\.\d+)?)$/);
-    if (numberMatch) {
-      const numberValue = numberMatch[1];
-      console.log("🔍 Found potential measurement number:", numberValue);
-      
-      // Look for unit indicators in the same element's siblings or parents
-      const elementText = cell.textContent;
-      const parentText = cell.parentElement ? cell.parentElement.textContent : '';
-      const siblingTexts = Array.from(cell.parentElement?.children || []).map(el => el.textContent);
-      
-      console.log("Parent text:", parentText);
-      console.log("Sibling texts:", siblingTexts);
-      
-      // Check for unit indicators in various places
-      let foundUnit = null;
-      let unitType = null;
-      
-      // Check parent element text for unit clues
-      if (parentText.includes('(in inches)') || parentText.includes('inches')) {
-        foundUnit = 'inches';
-        unitType = 'length';
-      } else if (parentText.includes('(in lbs)') || parentText.includes('lbs')) {
-        foundUnit = 'pounds';
-        unitType = 'weight';
-      } else if (parentText.includes('Depth') || parentText.includes('Width') || parentText.includes('Height')) {
-        foundUnit = 'inches'; // Default assumption for dimensions
-        unitType = 'length';
-      } else if (parentText.includes('Weight')) {
-        foundUnit = 'pounds'; // Default assumption for weight
-        unitType = 'weight';
-      }
-      
-      // Also check previous/next elements for unit clues
-      const prevElement = cell.previousElementSibling;
-      const nextElement = cell.nextElementSibling;
-      
-      if (prevElement && (prevElement.textContent.includes('inches') || prevElement.textContent.includes('(in inches)'))) {
-        foundUnit = 'inches';
-        unitType = 'length';
-      }
-      if (nextElement && (nextElement.textContent.includes('inches') || nextElement.textContent.includes('(in inches)'))) {
-        foundUnit = 'inches';
-        unitType = 'length';
-      }
-      
-      console.log("Found unit:", foundUnit, "Type:", unitType);
-      
-      if (foundUnit && unitType) {
-        // Create conversion based on unit type
-        let conversion = null;
-        const numVal = parseFloat(numberValue);
-        
-        if (foundUnit === 'inches') {
-          conversion = `${numberValue} inches = ${(numVal / 0.393701).toFixed(2)} cm`;
-        } else if (foundUnit === 'pounds') {
-          conversion = `${numberValue} lbs = ${(numVal / 2.20462).toFixed(2)} kg`;
-        } else if (foundUnit === 'feet') {
-          conversion = `${numberValue} feet = ${(numVal / 3.28084).toFixed(2)} m`;
-        }
-        
-        if (conversion) {
-          // Add highlighting to the number cell
-          if (!cell.classList.contains('hyper-hover')) {
-            cell.classList.add('hyper-hover');
-            cell.dataset.convert = conversion;
-            console.log("✅ Added table conversion:", conversion);
-          }
-        }
-      }
-    }
-  });
+  console.log("Found target numbers:", foundNumbers);
 }
 
 // Listen for clicks on accordion/dropdown triggers (add this after the processTableMeasurements function)
