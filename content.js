@@ -479,44 +479,130 @@ function processAllRecipesIngredients(container) {
   }
 }
 
-// Enhanced debug version to see what elements exist
+// Working version for Home Depot table-based measurements
 function processTableMeasurements(container) {
   console.log("🏠 Looking for table-based measurements (Home Depot style)");
   
-  // Test different selectors to see what exists
-  console.log("All dd elements:", container.querySelectorAll('dd').length);
-  console.log("All dt elements:", container.querySelectorAll('dt').length);
-  console.log("All divs:", container.querySelectorAll('div').length);
-  console.log("Elements with 'acl':", container.querySelectorAll('[class*="acl"]').length);
-  console.log("Elements with 'hdca':", container.querySelectorAll('[class*="hdca"]').length);
+  // Target DD elements in Home Depot's definition lists
+  const ddElements = container.querySelectorAll('dl[class*="acl-dl"] dd');
+  console.log(`Found ${ddElements.length} DD elements in definition lists`);
   
-  // Look for elements containing the specific numbers we can see
-  const allElements = container.querySelectorAll('*');
-  let foundNumbers = [];
-  
-  allElements.forEach(el => {
-    const text = el.textContent.trim();
-    if (text === '22.24' || text === '47.24' || text === '92.59' || text === '55.87') {
-      const elementInfo = {
-        text: text,
-        tagName: el.tagName,
-        className: el.className,
-        parentTag: el.parentElement ? el.parentElement.tagName : 'none',
-        parentClass: el.parentElement ? el.parentElement.className : 'none'
-      };
-      foundNumbers.push(elementInfo);
+  ddElements.forEach(dd => {
+    const text = dd.textContent.trim();
+    
+    // Check if this DD contains only a number (like "22.24", "47.24", etc.)
+    const numberMatch = text.match(/^\d+(\.\d+)?$/);
+    
+    if (numberMatch) {
+      const numericValue = parseFloat(text);
+      console.log(`📊 Found potential measurement number: ${text}`);
       
-      // Log each found element individually for better visibility
-      console.log(`📍 Found number "${text}":`, 
-        `Tag: ${elementInfo.tagName}`, 
-        `Class: "${elementInfo.className}"`, 
-        `Parent: ${elementInfo.parentTag}`, 
-        `Parent Class: "${elementInfo.parentClass}"`
-      );
+      // Look for unit context in nearby elements
+      const unitContext = findUnitContext(dd);
+      
+      if (unitContext) {
+        const conversionResult = convertTableMeasurement(numericValue, unitContext.unit);
+        
+        if (conversionResult) {
+          console.log(`✅ Converting: ${text} ${unitContext.unit} = ${conversionResult}`);
+          
+          // Create tooltip for this measurement
+          dd.classList.add('hyper-hover');
+          dd.dataset.convert = `${text} ${unitContext.unit} = ${conversionResult}`;
+          
+          // Add our CSS styling if not already added
+          if (!document.querySelector('#hyper-converter-table-styles')) {
+            const style = document.createElement('style');
+            style.id = 'hyper-converter-table-styles';
+            style.textContent = `
+              dd.hyper-hover {
+                border-bottom: 2px dashed #e74c3c !important;
+                cursor: help !important;
+              }
+            `;
+            document.head.appendChild(style);
+          }
+        }
+      }
     }
   });
+}
+
+// Helper function to find unit context near a number element
+function findUnitContext(numberElement) {
+  // Check previous sibling (DT element might contain the label/unit)
+  const prevSibling = numberElement.previousElementSibling;
+  if (prevSibling && prevSibling.tagName === 'DT') {
+    const unit = extractUnit(prevSibling.textContent);
+    if (unit) return { unit, source: 'previous-dt' };
+  }
   
-  console.log(`Found ${foundNumbers.length} target numbers total`);
+  // Check parent DL for headers or patterns
+  const dl = numberElement.closest('dl');
+  if (dl) {
+    // Look for any DT element that might indicate units
+    const allDTs = dl.querySelectorAll('dt');
+    for (const dt of allDTs) {
+      const unit = extractUnit(dt.textContent);
+      if (unit) return { unit, source: 'dl-header' };
+    }
+  }
+  
+  // Check nearby text for unit indicators
+  const siblings = Array.from(numberElement.parentElement.children);
+  for (const sibling of siblings) {
+    const unit = extractUnit(sibling.textContent);
+    if (unit) return { unit, source: 'sibling' };
+  }
+  
+  return null;
+}
+
+// Helper function to extract unit from text
+function extractUnit(text) {
+  const lowerText = text.toLowerCase();
+  
+  // Common measurement units in product specs
+  if (lowerText.includes('inch') || lowerText.includes('in.') || lowerText.includes('"')) {
+    return 'inches';
+  }
+  if (lowerText.includes('feet') || lowerText.includes('ft.') || lowerText.includes("'")) {
+    return 'feet';
+  }
+  if (lowerText.includes('cm') || lowerText.includes('centimeter')) {
+    return 'cm';
+  }
+  if (lowerText.includes('meter') || lowerText.includes('metre')) {
+    return 'meters';
+  }
+  if (lowerText.includes('lb') || lowerText.includes('pound')) {
+    return 'pounds';
+  }
+  if (lowerText.includes('kg') || lowerText.includes('kilogram')) {
+    return 'kg';
+  }
+  
+  return null;
+}
+
+// Helper function to convert table measurements
+function convertTableMeasurement(value, unit) {
+  switch (unit) {
+    case 'inches':
+      return `${(value * 2.54).toFixed(2)} cm`;
+    case 'feet':
+      return `${(value * 0.3048).toFixed(2)} m`;
+    case 'cm':
+      return `${(value / 2.54).toFixed(2)} inches`;
+    case 'meters':
+      return `${(value * 3.28084).toFixed(2)} feet`;
+    case 'pounds':
+      return `${(value * 0.453592).toFixed(2)} kg`;
+    case 'kg':
+      return `${(value / 0.453592).toFixed(2)} lbs`;
+    default:
+      return null;
+  }
 }
 
 // Listen for clicks on accordion/dropdown triggers (add this after the processTableMeasurements function)
