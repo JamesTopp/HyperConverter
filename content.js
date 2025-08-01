@@ -143,15 +143,73 @@ const conversions = [
       return `${(numericValue * 0.393701).toFixed(2)} in`;
     },
   },
-  {
-    name: "dimensions_x_format",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)(?=\\s|$|[^\\d])",
-    convert: (val) => {
-      // Just convert the first dimension for now
-      const numericValue = parseFloat(val);
-      return `${(numericValue / 0.393701).toFixed(2)} cm (width)`;
-    },
-  },
+  // Replace the existing "dimensions_x_format" pattern with these smarter versions:
+
+{
+  name: "dimensions_x_inches",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:inch|inches?)\\b",
+  convert: (val, fullMatch) => {
+    // Extract both numbers from the full match
+    const matches = fullMatch.match(/(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
+    if (matches && matches.length >= 3) {
+      const width = parseFloat(matches[1]);
+      const height = parseFloat(matches[2]);
+      const widthCm = (width / 0.393701).toFixed(1);
+      const heightCm = (height / 0.393701).toFixed(1);
+      return `${width}" = ${widthCm} cm\\n${height}" = ${heightCm} cm`;
+    }
+    return null;
+  }
+},
+{
+  name: "dimensions_x_cm", 
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)\\s?(?:cm|centimeters?)\\b",
+  convert: (val, fullMatch) => {
+    const matches = fullMatch.match(/(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
+    if (matches && matches.length >= 3) {
+      const width = parseFloat(matches[1]);
+      const height = parseFloat(matches[2]);
+      const widthIn = (width * 0.393701).toFixed(1);
+      const heightIn = (height * 0.393701).toFixed(1);
+      return `${width}cm = ${widthIn}"\\n${height}cm = ${heightIn}"`;
+    }
+    return null;
+  }
+},
+{
+  name: "range_inches",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(\\d+(?:\\.\\d+)?)\\s?(?:inch|inches?)\\b",
+  convert: (val, fullMatch) => {
+    const matches = fullMatch.match(/(\\d+(?:\\.\\d+)?)\\s?-\\s?(\\d+(?:\\.\\d+)?)/);
+    if (matches && matches.length >= 3) {
+      const min = parseFloat(matches[1]);
+      const max = parseFloat(matches[2]);
+      const minCm = (min / 0.393701).toFixed(1);
+      const maxCm = (max / 0.393701).toFixed(1);
+      return `${min}" = ${minCm} cm\\n${max}" = ${maxCm} cm`;
+    }
+    return null;
+  }
+},
+{
+  name: "standalone_dimensions_x",
+  pattern: "(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)(?=\\s|$|[^\\d])",
+  convert: (val, fullMatch) => {
+    // Only convert if NOT followed by a unit (to avoid conflicts with the above patterns)
+    if (fullMatch.match(/inch|cm|ft|feet/i)) return null;
+    
+    const matches = fullMatch.match(/(\\d+(?:\\.\\d+)?)\\s?x\\s?(\\d+(?:\\.\\d+)?)/);
+    if (matches && matches.length >= 3) {
+      const width = parseFloat(matches[1]);
+      const height = parseFloat(matches[2]);
+      // Assume inches for standalone dimensions (common on product sites)
+      const widthCm = (width / 0.393701).toFixed(1);
+      const heightCm = (height / 0.393701).toFixed(1);
+      return `${width}" = ${widthCm} cm\\n${height}" = ${heightCm} cm`;
+    }
+    return null;
+  }
+},
   {
     name: "feet_symbol",
     pattern: "(\\d+(?:\\.\\d+)?)'",
