@@ -483,119 +483,132 @@ function processAllRecipesIngredients(container) {
 function processTableMeasurements(container) {
   console.log("🏠 Looking for table-based measurements (Home Depot style)");
   
-  // Look for table cells containing numbers that might be measurements
-  const numberCells = container.querySelectorAll('td, th, .table-cell, [class*="cell"], [class*="dimension"]');
+  // Home Depot specific selectors + general table selectors
+  const homeDepotSelectors = [
+    'dd[class*="hdca-product-nav__content"]', // Home Depot product info
+    '.acl-dt', // Home Depot table cells
+    '[class*="acl-dt"]', // Variations of HD table cells
+    'td', 'th', '.table-cell', '[class*="cell"]', '[class*="dimension"]' // General selectors
+  ];
   
-  numberCells.forEach(cell => {
+  const allCells = [];
+  homeDepotSelectors.forEach(selector => {
+    try {
+      const cells = container.querySelectorAll(selector);
+      allCells.push(...cells);
+    } catch(e) {
+      // Skip invalid selectors
+    }
+  });
+  
+  console.log("Found", allCells.length, "potential table cells");
+  
+  // Look for cells containing numbers that might be measurements
+  allCells.forEach(cell => {
     const cellText = cell.textContent.trim();
+    console.log("Checking cell:", cellText);
     
     // Check if this cell contains a number (including decimals)
     const numberMatch = cellText.match(/^(\d+(?:\.\d+)?)$/);
     if (numberMatch) {
       const numberValue = numberMatch[1];
-      console.log("Found potential measurement number:", numberValue);
+      console.log("🔍 Found potential measurement number:", numberValue);
       
-      // Look for unit indicators in nearby cells
-      const unitPattern = /\(in\s+(inches?|in|lbs?|pounds?|feet?|ft|cm|centimeters?|mm|millimeters?|kg|kilograms?|g|grams?|oz|ounces?)\)/i;
+      // Look for unit indicators in the same element's siblings or parents
+      const elementText = cell.textContent;
+      const parentText = cell.parentElement ? cell.parentElement.textContent : '';
+      const siblingTexts = Array.from(cell.parentElement?.children || []).map(el => el.textContent);
       
-      // Check sibling cells (next/previous cells in same row)
-      const parentRow = cell.closest('tr, .row, [class*="row"]');
-      if (parentRow) {
-        const rowCells = parentRow.querySelectorAll('td, th, .table-cell, [class*="cell"]');
-        
-        rowCells.forEach(siblingCell => {
-          const siblingText = siblingCell.textContent.trim();
-          const unitMatch = siblingText.match(unitPattern);
-          
-          if (unitMatch) {
-            const unitName = unitMatch[1].toLowerCase();
-            console.log("Found unit indicator:", unitMatch[0], "for number:", numberValue);
-            
-            // Create conversion based on unit type
-            let conversion = null;
-            const numVal = parseFloat(numberValue);
-            
-            if (unitName.includes('inch') || unitName === 'in') {
-              conversion = `${numberValue} inches = ${(numVal / 0.393701).toFixed(2)} cm`;
-            } else if (unitName.includes('lb') || unitName.includes('pound')) {
-              conversion = `${numberValue} lbs = ${(numVal / 2.20462).toFixed(2)} kg`;
-            } else if (unitName.includes('feet') || unitName === 'ft') {
-              conversion = `${numberValue} feet = ${(numVal / 3.28084).toFixed(2)} m`;
-            } else if (unitName.includes('cm') || unitName.includes('centimeter')) {
-              conversion = `${numberValue} cm = ${(numVal * 0.393701).toFixed(2)} in`;
-            } else if (unitName.includes('mm') || unitName.includes('millimeter')) {
-              conversion = `${numberValue} mm = ${(numVal * 0.0393701).toFixed(2)} in`;
-            } else if (unitName.includes('kg') || unitName.includes('kilogram')) {
-              conversion = `${numberValue} kg = ${(numVal * 2.20462).toFixed(2)} lbs`;
-            } else if (unitName.includes('g') && !unitName.includes('kg')) {
-              conversion = `${numberValue} g = ${(numVal * 0.035274).toFixed(2)} oz`;
-            } else if (unitName.includes('oz') || unitName.includes('ounce')) {
-              conversion = `${numberValue} oz = ${(numVal / 0.035274).toFixed(2)} g`;
-            }
-            
-            if (conversion) {
-              // Add highlighting to the number cell
-              if (!cell.classList.contains('hyper-hover')) {
-                cell.classList.add('hyper-hover');
-                cell.dataset.convert = conversion;
-                console.log("Added table conversion:", conversion);
-              }
-            }
-          }
-        });
+      console.log("Parent text:", parentText);
+      console.log("Sibling texts:", siblingTexts);
+      
+      // Check for unit indicators in various places
+      let foundUnit = null;
+      let unitType = null;
+      
+      // Check parent element text for unit clues
+      if (parentText.includes('(in inches)') || parentText.includes('inches')) {
+        foundUnit = 'inches';
+        unitType = 'length';
+      } else if (parentText.includes('(in lbs)') || parentText.includes('lbs')) {
+        foundUnit = 'pounds';
+        unitType = 'weight';
+      } else if (parentText.includes('Depth') || parentText.includes('Width') || parentText.includes('Height')) {
+        foundUnit = 'inches'; // Default assumption for dimensions
+        unitType = 'length';
+      } else if (parentText.includes('Weight')) {
+        foundUnit = 'pounds'; // Default assumption for weight
+        unitType = 'weight';
       }
       
-      // Also check header cells above this cell (for column headers)
-      const cellIndex = Array.from(cell.parentNode.children).indexOf(cell);
-      const table = cell.closest('table, .table, [class*="table"]');
-      if (table) {
-        const headerRows = table.querySelectorAll('thead tr, .header-row, tr:first-child');
-        headerRows.forEach(headerRow => {
-          const headerCells = headerRow.querySelectorAll('th, td, .header-cell, [class*="header"]');
-          if (headerCells[cellIndex]) {
-            const headerText = headerCells[cellIndex].textContent.trim();
-            const headerUnitMatch = headerText.match(unitPattern);
-            
-            if (headerUnitMatch) {
-              const unitName = headerUnitMatch[1].toLowerCase();
-              console.log("Found unit in header:", headerUnitMatch[0], "for number:", numberValue);
-              
-              // Same conversion logic as above
-              let conversion = null;
-              const numVal = parseFloat(numberValue);
-              
-              if (unitName.includes('inch') || unitName === 'in') {
-                conversion = `${numberValue} inches = ${(numVal / 0.393701).toFixed(2)} cm`;
-              } else if (unitName.includes('lb') || unitName.includes('pound')) {
-                conversion = `${numberValue} lbs = ${(numVal / 2.20462).toFixed(2)} kg`;
-              } else if (unitName.includes('feet') || unitName === 'ft') {
-                conversion = `${numberValue} feet = ${(numVal / 3.28084).toFixed(2)} m`;
-              } else if (unitName.includes('cm') || unitName.includes('centimeter')) {
-                conversion = `${numberValue} cm = ${(numVal * 0.393701).toFixed(2)} in`;
-              } else if (unitName.includes('mm') || unitName.includes('millimeter')) {
-                conversion = `${numberValue} mm = ${(numVal * 0.0393701).toFixed(2)} in`;
-              } else if (unitName.includes('kg') || unitName.includes('kilogram')) {
-                conversion = `${numberValue} kg = ${(numVal * 2.20462).toFixed(2)} lbs`;
-              } else if (unitName.includes('g') && !unitName.includes('kg')) {
-                conversion = `${numberValue} g = ${(numVal * 0.035274).toFixed(2)} oz`;
-              } else if (unitName.includes('oz') || unitName.includes('ounce')) {
-                conversion = `${numberValue} oz = ${(numVal / 0.035274).toFixed(2)} g`;
-              }
-              
-              if (conversion) {
-                if (!cell.classList.contains('hyper-hover')) {
-                  cell.classList.add('hyper-hover');
-                  cell.dataset.convert = conversion;
-                  console.log("Added table conversion from header:", conversion);
-                }
-              }
-            }
+      // Also check previous/next elements for unit clues
+      const prevElement = cell.previousElementSibling;
+      const nextElement = cell.nextElementSibling;
+      
+      if (prevElement && (prevElement.textContent.includes('inches') || prevElement.textContent.includes('(in inches)'))) {
+        foundUnit = 'inches';
+        unitType = 'length';
+      }
+      if (nextElement && (nextElement.textContent.includes('inches') || nextElement.textContent.includes('(in inches)'))) {
+        foundUnit = 'inches';
+        unitType = 'length';
+      }
+      
+      console.log("Found unit:", foundUnit, "Type:", unitType);
+      
+      if (foundUnit && unitType) {
+        // Create conversion based on unit type
+        let conversion = null;
+        const numVal = parseFloat(numberValue);
+        
+        if (foundUnit === 'inches') {
+          conversion = `${numberValue} inches = ${(numVal / 0.393701).toFixed(2)} cm`;
+        } else if (foundUnit === 'pounds') {
+          conversion = `${numberValue} lbs = ${(numVal / 2.20462).toFixed(2)} kg`;
+        } else if (foundUnit === 'feet') {
+          conversion = `${numberValue} feet = ${(numVal / 3.28084).toFixed(2)} m`;
+        }
+        
+        if (conversion) {
+          // Add highlighting to the number cell
+          if (!cell.classList.contains('hyper-hover')) {
+            cell.classList.add('hyper-hover');
+            cell.dataset.convert = conversion;
+            console.log("✅ Added table conversion:", conversion);
           }
-        });
+        }
       }
     }
   });
 }
+
+// Listen for clicks on accordion/dropdown triggers (add this after the processTableMeasurements function)
+document.addEventListener('click', function(e) {
+  const target = e.target;
+  
+  // Check if clicked element might expand content (Home Depot specific + general)
+  if (target.matches('[class*="accordion"], [class*="dropdown"], [class*="expand"], [class*="toggle"], [class*="acl-accordion"], .acl-accordion-trigger, [aria-expanded]') ||
+      target.closest('[class*="accordion"], [class*="dropdown"], [class*="expand"], [class*="toggle"]')) {
+    
+    console.log("🏠 Accordion/dropdown clicked, will re-scan in 1000ms");
+    
+    // Re-scan after content loads (try multiple delays)
+    setTimeout(() => {
+      console.log("🏠 Re-scanning after accordion click...");
+      processTableMeasurements(document.body);
+    }, 500);
+    
+    setTimeout(() => {
+      console.log("🏠 Second re-scan after accordion click...");
+      processTableMeasurements(document.body);
+    }, 1000);
+    
+    setTimeout(() => {
+      console.log("🏠 Final re-scan after accordion click...");
+      processTableMeasurements(document.body);
+    }, 2000);
+  }
+}, true);
 
 // Simple fix for split measurements (like "1/64 <em>inch</em>")
 function processSplitMeasurements(container) {
