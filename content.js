@@ -479,7 +479,7 @@ function processAllRecipesIngredients(container) {
   }
 }
 
-// Debug version to see what elements exist
+// Enhanced debug version to see what elements exist
 function processTableMeasurements(container) {
   console.log("🏠 Looking for table-based measurements (Home Depot style)");
   
@@ -497,16 +497,26 @@ function processTableMeasurements(container) {
   allElements.forEach(el => {
     const text = el.textContent.trim();
     if (text === '22.24' || text === '47.24' || text === '92.59' || text === '55.87') {
-      foundNumbers.push({
+      const elementInfo = {
         text: text,
         tagName: el.tagName,
         className: el.className,
-        parent: el.parentElement ? el.parentElement.tagName : 'none'
-      });
+        parentTag: el.parentElement ? el.parentElement.tagName : 'none',
+        parentClass: el.parentElement ? el.parentElement.className : 'none'
+      };
+      foundNumbers.push(elementInfo);
+      
+      // Log each found element individually for better visibility
+      console.log(`📍 Found number "${text}":`, 
+        `Tag: ${elementInfo.tagName}`, 
+        `Class: "${elementInfo.className}"`, 
+        `Parent: ${elementInfo.parentTag}`, 
+        `Parent Class: "${elementInfo.parentClass}"`
+      );
     }
   });
   
-  console.log("Found target numbers:", foundNumbers);
+  console.log(`Found ${foundNumbers.length} target numbers total`);
 }
 
 // Listen for clicks on accordion/dropdown triggers (add this after the processTableMeasurements function)
