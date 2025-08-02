@@ -308,25 +308,18 @@ const conversions = [
     },
   },
 {
-  name: "dimensions_test",
+  name: "dimensions_simple_fix",
   pattern: "\\b\\d+\\s?x\\s?\\d+\\s?(?:Inch|in)\\b",
   convert: (val) => {
-    console.log("📐 Dimension test - val:", val, "type:", typeof val);
+    console.log("📐 Simple fix - val:", val, "type:", typeof val);
     
-    // Check if val is a string (the full match) or number (first capture group)
-    if (typeof val === 'string' && val.includes('x')) {
-      const numbers = val.match(/(\\d+)\\s?x\\s?(\\d+)/);
-      if (numbers) {
-        const w = parseInt(numbers[1]);
-        const h = parseInt(numbers[2]);
-        const wCm = (w / 0.393701).toFixed(1);
-        const hCm = (h / 0.393701).toFixed(1);
-        return `${w}" = ${wCm} cm, ${h}" = ${hCm} cm`;
-      }
+    // Since val is just the first number, let's make a basic conversion
+    if (typeof val === 'number' || !isNaN(parseInt(val))) {
+      const width = parseInt(val);
+      return `${width}" = ${(width / 0.393701).toFixed(1)} cm (width)`;
     }
     
-    // Fallback: if val is just a number, treat it as width
-    return `${val}" = ${(parseInt(val) / 0.393701).toFixed(1)} cm (width)`;
+    return `Debug: ${val}`;
   }
 }
 ];
