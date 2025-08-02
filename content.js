@@ -307,46 +307,24 @@ const conversions = [
       return `${(numericValue * 5).toFixed(1)} ml`;
     },
   },
-  {
-  name: "dimensions_inch_format",
-  pattern: "(\\d+)\\s?x\\s?(\\d+)\\s?Inch\\b",
-  convert: (val, fullMatch) => {
-    console.log("📐 'Inch' format:", fullMatch);
-    const match = fullMatch.match(/(\\d+)\\s?x\\s?(\\d+)/);
-    if (match) {
-      const w = parseInt(match[1]);
-      const h = parseInt(match[2]);
-      const wCm = (w / 0.393701).toFixed(1);
-      const hCm = (h / 0.393701).toFixed(1);
-      return `${w}" = ${wCm} cm, ${h}" = ${hCm} cm`;
-    }
-    return null;
-  }
-},
-{
-  name: "dimensions_in_format",
-  pattern: "(\\d+)\\s?x\\s?(\\d+)\\s?in\\b",
-  convert: (val, fullMatch) => {
-    console.log("📐 'in' format:", fullMatch);
-    const match = fullMatch.match(/(\\d+)\\s?x\\s?(\\d+)/);
-    if (match) {
-      const w = parseInt(match[1]);
-      const h = parseInt(match[2]);
-      const wCm = (w / 0.393701).toFixed(1);
-      const hCm = (h / 0.393701).toFixed(1);
-      return `${w}" = ${wCm} cm, ${h}" = ${hCm} cm`;
-    }
-    return null;
-  }
-},
-{
-  name: "debug_test",
-  pattern: "71 x 30 in",
+ {
+  name: "dimensions_complete",
+  pattern: "((\\d+)\\s?x\\s?(\\d+)\\s?(?:Inch|in))\\b",
   convert: (val) => {
-    console.log("🎯 DEBUG: Caught the exact VIVO pattern!");
-    return "TEST WORKED!";
+    console.log("📐 Complete dimension, val:", val);
+    
+    // val should be the full string like "55 x 24 Inch" or "71 x 30 in"
+    const numbers = val.match(/(\\d+)\\s?x\\s?(\\d+)/);
+    if (numbers && numbers.length >= 3) {
+      const w = parseInt(numbers[1]);
+      const h = parseInt(numbers[2]);
+      const wCm = (w / 0.393701).toFixed(1);
+      const hCm = (h / 0.393701).toFixed(1);
+      return `${w}" = ${wCm} cm, ${h}" = ${hCm} cm`;
+    }
+    return null;
   }
-}
+},
 ];
 
 // Create combined regex pattern
