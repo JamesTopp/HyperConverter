@@ -308,12 +308,27 @@ const conversions = [
     },
   },
 {
-  name: "dimensions_debug",
-  pattern: "\\b(\\d+)\\s?x\\s?\\d+\\s?(?:Inch|in)\\b",  // Added () around first \d+
-  convert: (val) => {
-    console.log("🔥 DIMENSION FUNCTION CALLED!");
-    console.log("🔥 val:", val);
-    return "TEST CONVERSION WORKED!";
+  name: "dimensions_complete",
+  pattern: "\\b(\\d+)\\s?x\\s?(\\d+)\\s?(?:Inch|in)\\b",
+  convert: (val, fullMatch) => {
+    console.log("🎯 Both dimensions - val:", val);
+    
+    // val is the first number (71), but we need both numbers
+    // Let's extract them from the full match
+    const match = fullMatch ? fullMatch.match(/(\d+)\s?x\s?(\d+)/) : null;
+    
+    if (match) {
+      const width = parseInt(match[1]);
+      const height = parseInt(match[2]);
+      const widthCm = (width / 0.393701).toFixed(1);
+      const heightCm = (height / 0.393701).toFixed(1);
+      
+      return `${width}" = ${widthCm} cm, ${height}" = ${heightCm} cm`;
+    }
+    
+    // Fallback: just convert the first number
+    const widthCm = (parseInt(val) / 0.393701).toFixed(1);
+    return `${val}" = ${widthCm} cm (width)`;
   }
 }
 ];
