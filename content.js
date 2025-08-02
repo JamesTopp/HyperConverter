@@ -338,6 +338,14 @@ const conversions = [
     }
     return null;
   }
+},
+{
+  name: "debug_test",
+  pattern: "71 x 30 in",
+  convert: (val) => {
+    console.log("🎯 DEBUG: Caught the exact VIVO pattern!");
+    return "TEST WORKED!";
+  }
 }
 ];
 
