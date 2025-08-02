@@ -308,18 +308,12 @@ const conversions = [
     },
   },
 {
-  name: "dimensions_simple_fix",
-  pattern: "\\b\\d+\\s?x\\s?\\d+\\s?(?:Inch|in)\\b",
+  name: "dimensions_debug",
+  pattern: "\\b(\\d+)\\s?x\\s?\\d+\\s?(?:Inch|in)\\b",  // Added () around first \d+
   convert: (val) => {
-    console.log("📐 Simple fix - val:", val, "type:", typeof val);
-    
-    // Since val is just the first number, let's make a basic conversion
-    if (typeof val === 'number' || !isNaN(parseInt(val))) {
-      const width = parseInt(val);
-      return `${width}" = ${(width / 0.393701).toFixed(1)} cm (width)`;
-    }
-    
-    return `Debug: ${val}`;
+    console.log("🔥 DIMENSION FUNCTION CALLED!");
+    console.log("🔥 val:", val);
+    return "TEST CONVERSION WORKED!";
   }
 }
 ];
