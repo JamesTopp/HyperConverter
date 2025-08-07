@@ -1,42 +1,5 @@
 // --- Conversion Definitions ---
 const conversions = [
-
-/**
- * Parses a string that may contain a number, a text fraction ("1/2"), or a Unicode fraction ("½").
- * @param {string} valueString The string to parse.
- * @returns {number} The parsed numeric value, or NaN if parsing fails.
- */
-function parseMeasurementValue(valueString) {
-  // Ensure we're working with a string to be safe
-  const valStr = String(valueString);
-
-  const unicodeFractions = {
-    "⅛": 0.125, "⅙": 0.167, "⅕": 0.2, "¼": 0.25, "⅓": 0.333, "⅜": 0.375,
-    "⅖": 0.4, "½": 0.5, "⅔": 0.667, "⅗": 0.6, "¾": 0.75, "⅘": 0.8,
-    "⅚": 0.833, "⅞": 0.875,
-  };
-
-  // 1. Check if it's a known Unicode fraction
-  if (unicodeFractions[valStr]) {
-    return unicodeFractions[valStr];
-  }
-
-  // 2. Check if it's a text fraction like "1/3"
-  if (valStr.includes("/")) {
-    const parts = valStr.split("/");
-    if (parts.length === 2) {
-      const numerator = parseFloat(parts[0]);
-      const denominator = parseFloat(parts[1]);
-      // Avoid division by zero and ensure both parts are valid numbers
-      if (denominator !== 0 && !isNaN(numerator) && !isNaN(denominator)) {
-        return numerator / denominator;
-      }
-    }
-  }
-
-  // 3. Otherwise, treat it as a standard decimal or integer
-  return parseFloat(valStr);
-},
   {
     name: "centimeters",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(cm|centimeters?|centimetres?)\\b",
@@ -299,18 +262,50 @@ function parseMeasurementValue(valueString) {
     },
   },
   {
-  name: "teaspoons",
-  pattern:
-    "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tsp|teaspoons?|teaspoon)\\b",
-  convert: (val) => {
-    const numericValue = parseMeasurementValue(val);
+    name: "teaspoons",
+    pattern:
+      "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tsp|teaspoons?|teaspoon)\\b",
+    convert: (val) => {
+      console.log("🥄 Converting teaspoons:", val);
+      // Convert to string for processing
+      const valStr = String(val);
 
-    if (isNaN(numericValue)) {
-      return null;
-    }
+      // Handle Unicode fractions
+      const unicodeFractions = {
+        "⅛": 0.125,
+        "⅙": 0.167,
+        "⅕": 0.2,
+        "¼": 0.25,
+        "⅓": 0.333,
+        "⅜": 0.375,
+        "⅖": 0.4,
+        "⅔": 0.667,
+        "⅗": 0.6,
+        "¾": 0.75,
+        "⅘": 0.8,
+        "⅚": 0.833,
+        "⅞": 0.875,
+        "½": 0.5,
+      };
 
-    return `${(numericValue * 5).toFixed(1)} ml`;
-  },
+      let numericValue;
+      if (unicodeFractions[valStr]) {
+        numericValue = unicodeFractions[valStr];
+      } else if (valStr.includes("/")) {
+        const [numerator, denominator] = valStr.split("/");
+        numericValue = parseFloat(numerator) / parseFloat(denominator);
+      } else if (valStr === "½") {
+        numericValue = 0.5;
+      } else if (valStr === "¼") {
+        numericValue = 0.25;
+      } else if (valStr === "¾") {
+        numericValue = 0.75;
+      } else {
+        numericValue = parseFloat(val);
+      }
+
+      return `${(numericValue * 5).toFixed(1)} ml`;
+    },
   },
 {
   name: "dimensions_complete",
