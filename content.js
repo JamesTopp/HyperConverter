@@ -1,35 +1,5 @@
 // --- Conversion Definitions ---
 const conversions = [
-  function parseMeasurementValue(valueString) {
-  // Ensure we're working with a string to be safe
-  const valStr = String(valueString);
-
-  const unicodeFractions = {
-    "⅛": 0.125, "⅙": 0.167, "⅕": 0.2, "¼": 0.25, "⅓": 0.333, "⅜": 0.375,
-    "⅖": 0.4, "½": 0.5, "⅔": 0.667, "⅗": 0.6, "¾": 0.75, "⅘": 0.8,
-    "⅚": 0.833, "⅞": 0.875,
-  };
-
-  // 1. Check if it's a known Unicode fraction
-  if (unicodeFractions[valStr]) {
-    return unicodeFractions[valStr];
-  }
-
-  // 2. Check if it's a text fraction like "1/3"
-  if (valStr.includes("/")) {
-    const parts = valStr.split("/");
-    if (parts.length === 2) {
-      const numerator = parseFloat(parts[0]);
-      const denominator = parseFloat(parts[1]);
-      if (denominator !== 0 && !isNaN(numerator) && !isNaN(denominator)) {
-        return numerator / denominator;
-      }
-    }
-  }
-
-  // 3. Otherwise, treat it as a standard number
-  return parseFloat(valStr);
-  },
   {
     name: "centimeters",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(cm|centimeters?|centimetres?)\\b",
@@ -205,18 +175,44 @@ const conversions = [
     convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`,
   },
   {
-  name: "cups",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(cup|cups?)\\b",
-  convert: (val) => {
-    const numericValue = parseMeasurementValue(val);
+    name: "cups",
+    pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(cup|cups?)\\b",
+    convert: (val) => {
+      console.log("🥄 Converting cups:", val);
 
-    // It's good practice to check if the parsing was successful
-    if (isNaN(numericValue)) {
-        return null; // or some other error handling
-    }
+      // Convert to string for processing
+      const valStr = String(val);
 
-    return `${(numericValue * 237).toFixed(0)} ml`;
-  },
+      // Handle Unicode fractions
+      const unicodeFractions = {
+        "⅛": 0.125,
+        "⅙": 0.167,
+        "⅕": 0.2,
+        "¼": 0.25,
+        "⅓": 0.333,
+        "⅜": 0.375,
+        "⅖": 0.4,
+        "⅔": 0.667,
+        "⅗": 0.6,
+        "¾": 0.75,
+        "⅘": 0.8,
+        "⅚": 0.833,
+        "⅞": 0.875,
+      };
+
+      let numericValue;
+      if (unicodeFractions[valStr]) {
+        numericValue = unicodeFractions[valStr];
+      } else if (valStr.includes("/")) {
+        // Handle text fractions like "1/3"
+        const [numerator, denominator] = valStr.split("/");
+        numericValue = parseFloat(numerator) / parseFloat(denominator);
+      } else {
+        numericValue = parseFloat(val);
+      }
+
+      return `${(numericValue * 237).toFixed(0)} ml`;
+    },
   },
   {
     name: "tablespoons",
