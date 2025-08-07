@@ -25,7 +25,6 @@ const conversions = [
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(g|grams?)\\b",
     convert: (val) => `${(val * 0.035274).toFixed(2)} oz`,
   },
-
   {
     name: "liters",
     pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(l|liters?|litres?)\\b",
@@ -310,8 +309,8 @@ const conversions = [
 {
   name: "dimensions_complete",
   pattern: "\\b(\\d+)\\s?x\\s?(\\d+)\\s?(?:Inch|in)\\b",
-  convert: (val, fullMatch) => {
-    console.log("🎯 Both dimensions - val:", val);
+    convert: (val) => {
+      console.log("🎯 Dimension conversion - val:", val, "type:", typeof val);
     
     // val is the first number (71), but we need both numbers
     // Let's extract them from the full match
