@@ -333,9 +333,6 @@ const conversions = [
 }
 ];
 
-// Create combined regex pattern
-const combinedPattern = conversions.map(c => `(${c.pattern})`).join("|");
-
 // 🧰 Tooltip setup
 const tooltip = document.createElement("div");
 tooltip.id = "hyper-converter-tooltip";
@@ -406,13 +403,16 @@ function hideTooltip() {
   tooltip.style.display = "none";
 }
 
-// 🔍 Improved Text Node Processor
+// This uses named capture groups based on the 'name' property in your objects.
+const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
+
+// Gemini Text Node Processing
 function processTextNode(textNode) {
   if (!textNode || textNode.nodeType !== 3) return;
-  
+
   const parent = textNode.parentNode;
-  if (!parent || 
-      parent.closest(".hyper-hover") || 
+  if (!parent ||
+      parent.closest(".hyper-hover") ||
       parent.closest("script, style, noscript") ||
       parent.closest("#hyper-converter-tooltip")) return;
 
@@ -421,7 +421,7 @@ function processTextNode(textNode) {
 
   const regex = new RegExp(combinedPattern, "gi");
   const matches = [...text.matchAll(regex)];
-  
+
   if (matches.length === 0) return;
 
   const fragment = document.createDocumentFragment();
@@ -430,40 +430,49 @@ function processTextNode(textNode) {
   matches.forEach(match => {
     const fullMatch = match[0];
     const matchStart = match.index;
+    const groups = match.groups;
 
     if (matchStart > lastIndex) {
       const beforeText = text.slice(lastIndex, matchStart);
       fragment.appendChild(document.createTextNode(beforeText));
     }
 
-    const span = document.createElement("span");
-    span.className = "hyper-hover";
-    span.textContent = fullMatch;
-
-    // Find which conversion matched and calculate result
-    let conversionResult = null;
-    for (const conversion of conversions) {
-      const testRegex = new RegExp(`^${conversion.pattern}$`, "i"); // Match the whole string
-      const testMatch = fullMatch.match(testRegex);
-
-      if (testMatch) {
-        // Pass the first captured group (the value) to the convert function.
-        // Also pass the fullMatch for complex cases like "71 x 41 Inch".
-        const valueToConvert = testMatch[1];
-        conversionResult = conversion.convert(valueToConvert, fullMatch);
-        
-        // If the conversion was successful, stop looking.
-        if (conversionResult) {
-          break;
-        }
+    // Find which named group captured a value.
+    let conversionName = null;
+    for (const key in groups) {
+      if (groups[key] !== undefined) {
+        conversionName = key;
+        break;
       }
     }
 
-    if (conversionResult) {
-      span.dataset.convert = `${fullMatch} = ${conversionResult}`;
+    if (conversionName) {
+      const conversion = conversions.find(c => c.name === conversionName);
+      if (conversion) {
+        // Now that we know the correct conversion, we need to extract the value.
+        // The first capture group *within* the pattern almost always holds the value.
+        const valueRegex = new RegExp(conversion.pattern, "i");
+        const valueMatch = fullMatch.match(valueRegex);
+
+        if (valueMatch && valueMatch[1]) {
+          const valueToConvert = valueMatch[1];
+          const conversionResult = conversion.convert(valueToConvert, fullMatch);
+
+          const span = document.createElement("span");
+          span.className = "hyper-hover";
+          span.textContent = fullMatch;
+          span.dataset.convert = `${fullMatch} = ${conversionResult}`;
+          fragment.appendChild(span);
+        } else {
+          // Could not extract a value, so just append the original text
+          fragment.appendChild(document.createTextNode(fullMatch));
+        }
+      }
     } else {
+      // Should not happen, but as a fallback, append the original text
+      fragment.appendChild(document.createTextNode(fullMatch));
     }
-    fragment.appendChild(span);
+    
     lastIndex = matchStart + fullMatch.length;
   });
 
@@ -471,10 +480,13 @@ function processTextNode(textNode) {
     fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
   }
 
-  try {
-    parent.replaceChild(fragment, textNode);
-  } catch (e) {
-    console.warn("Could not replace text node:", e);
+  // Check if fragment has children before replacing
+  if (fragment.hasChildNodes()) {
+    try {
+      parent.replaceChild(fragment, textNode);
+    } catch (e) {
+      console.warn("Could not replace text node:", e);
+    }
   }
 }
 function processAllRecipesIngredients(container) {
