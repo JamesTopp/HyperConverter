@@ -443,14 +443,17 @@ function processTextNode(textNode) {
     // Find which conversion matched and calculate result
     let conversionResult = null;
     for (const conversion of conversions) {
-      const testRegex = new RegExp(conversion.pattern, "gi");
-      testRegex.lastIndex = 0; // Reset regex state
-      const testMatch = testRegex.exec(fullMatch);
-      if (testMatch) {
-        let numericValue = parseFloat(testMatch[1]);
+      const testRegex = new RegExp(`^${conversion.pattern}$`, "i"); // Match the whole string
+      const testMatch = fullMatch.match(testRegex);
 
-        if (!isNaN(numericValue)) {
-          conversionResult = conversion.convert(numericValue);
+      if (testMatch) {
+        // Pass the first captured group (the value) to the convert function.
+        // Also pass the fullMatch for complex cases like "71 x 41 Inch".
+        const valueToConvert = testMatch[1];
+        conversionResult = conversion.convert(valueToConvert, fullMatch);
+        
+        // If the conversion was successful, stop looking.
+        if (conversionResult) {
           break;
         }
       }
