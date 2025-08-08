@@ -1,3 +1,8 @@
+const unicodeFractions = {
+  "⅛": 0.125, "⅙": 0.167, "⅕": 0.2, "¼": 0.25, "⅓": 0.333, "⅜": 0.375,
+  "⅖": 0.4, "½": 0.5, "⅔": 0.667, "⅗": 0.6, "¾": 0.75, "⅘": 0.8,
+  "⅚": 0.833, "⅞": 0.875,
+};
 // --- Conversion Definitions ---
 const conversions = [
   // --- HIGHEST PRIORITY: Combined & Special Formats ---
@@ -237,21 +242,22 @@ const conversions = [
 function parseMeasurementValue(valueString) {
   const valStr = String(valueString).toLowerCase().trim();
 
-  // Dictionary for Unicode fractions
-  const unicodeFractions = {
-    "⅛": 0.125, "⅙": 0.167, "⅕": 0.2, "¼": 0.25, "⅓": 0.333, "⅜": 0.375,
-    "⅖": 0.4, "½": 0.5, "⅔": 0.667, "⅗": 0.6, "¾": 0.75, "⅘": 0.8,
-    "⅚": 0.833, "⅞": 0.875,
-  };
+  // The unicodeFractions object is global, so we can directly use it here.
   if (unicodeFractions[valStr]) return unicodeFractions[valStr];
 
-  // Dictionary for spelled-out numbers and fractions
+  // Spelled-Out Dictionary
   const wordToNumber = {
+    // Numbers 0-19
     'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
     'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
     'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
     'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19,
+    // Tens
     'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
+    'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
+    // Large scale numbers
+    'hundred': 100, 'thousand': 1000, 'million': 1000000, 'billion': 1000000000,
+    // Articles and fractions
     'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
   };
   if (wordToNumber[valStr]) return wordToNumber[valStr];
