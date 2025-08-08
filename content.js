@@ -38,87 +38,28 @@ const conversions = [
     convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`,
   },
   {
-    name: "inches",
-    pattern:
-      "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\\d+(?:\\.\\d+)?)\\s*(?:inch|inches?)\\b",
-    convert: (val) => {
-      console.log("📏 Converting inches:", val);
-
-      // Convert to string for processing
-      const valStr = String(val);
-
-      // Handle Unicode fractions
-      const unicodeFractions = {
-        "⅛": 0.125,
-        "⅙": 0.167,
-        "⅕": 0.2,
-        "¼": 0.25,
-        "⅓": 0.333,
-        "⅜": 0.375,
-        "⅖": 0.4,
-        "½": 0.5,
-        "⅔": 0.667,
-        "⅗": 0.6,
-        "¾": 0.75,
-        "⅘": 0.8,
-        "⅚": 0.833,
-        "⅞": 0.875,
-      };
-
-      let numericValue;
-      if (unicodeFractions[valStr]) {
-        numericValue = unicodeFractions[valStr];
-      } else if (valStr.includes("/")) {
-        // Handle text fractions like "3/4"
-        const [numerator, denominator] = valStr.split("/");
-        numericValue = parseFloat(numerator) / parseFloat(denominator);
-      } else {
-        numericValue = parseFloat(val);
-      }
-
-      return `${(numericValue / 0.393701).toFixed(2)} cm`;
-    },
+  name: "inches",
+  pattern:
+    "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\\d+(?:\\.\\d+)?)\\s*(?:inch|inches?)\\b",
+  convert: (val) => {
+    const numericValue = parseMeasurementValue(val);
+    if (isNaN(numericValue)) {
+      return null;
+    }
+    return `${(numericValue / 0.393701).toFixed(2)} cm`;
+  },
   },
   {
-    name: "inches_symbol",
-    pattern: '(\\d+(?:\\.\\d+)?|\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)"',
-    convert: (val) => {
-      console.log("📏 Converting inches symbol:", val);
-
-      const valStr = String(val);
-
-      const unicodeFractions = {
-        "⅛": 0.125,
-        "⅙": 0.167,
-        "⅕": 0.2,
-        "¼": 0.25,
-        "⅓": 0.333,
-        "⅜": 0.375,
-        "⅖": 0.4,
-        "½": 0.5,
-        "⅔": 0.667,
-        "⅗": 0.6,
-        "¾": 0.75,
-        "⅘": 0.8,
-        "⅚": 0.833,
-        "⅞": 0.875,
-      };
-
-      let numericValue;
-      if (unicodeFractions[valStr]) {
-        numericValue = unicodeFractions[valStr];
-      } else if (valStr.includes("/")) {
-        const [numerator, denominator] = valStr.split("/");
-        numericValue = parseFloat(numerator) / parseFloat(denominator);
-      } else {
-        numericValue = parseFloat(val);
-      }
-
-      return `${(numericValue / 0.393701).toFixed(2)} cm`;
+  name: "inches_symbol",
+  pattern: '(\\d+(?:\\.\\d+)?|\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)"',
+  convert: (val) => {
+    const numericValue = parseMeasurementValue(val);
+    if (isNaN(numericValue)) {
+      return null;
+    }
+    return `${(numericValue / 0.393701).toFixed(2)} cm`;
     },
   },
-  // Add these new patterns to your conversions array, right after the existing "inches" and other patterns:
-
   {
     name: "inches_hyphenated",
     pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:inch|inches?)\\b",
@@ -175,93 +116,28 @@ const conversions = [
     convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`,
   },
   {
-    name: "cups",
-    pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(cup|cups?)\\b",
-    convert: (val) => {
-      console.log("🥄 Converting cups:", val);
-
-      // Convert to string for processing
-      const valStr = String(val);
-
-      // Handle Unicode fractions
-      const unicodeFractions = {
-        "⅛": 0.125,
-        "⅙": 0.167,
-        "⅕": 0.2,
-        "¼": 0.25,
-        "⅓": 0.333,
-        "⅜": 0.375,
-        "⅖": 0.4,
-        "⅔": 0.667,
-        "⅗": 0.6,
-        "¾": 0.75,
-        "⅘": 0.8,
-        "⅚": 0.833,
-        "⅞": 0.875,
-      };
-
-      let numericValue;
-      if (unicodeFractions[valStr]) {
-        numericValue = unicodeFractions[valStr];
-      } else if (valStr.includes("/")) {
-        // Handle text fractions like "1/3"
-        const [numerator, denominator] = valStr.split("/");
-        numericValue = parseFloat(numerator) / parseFloat(denominator);
-      } else {
-        numericValue = parseFloat(val);
-      }
-
-      return `${(numericValue * 237).toFixed(0)} ml`;
-    },
+  name: "cups",
+  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(cup|cups?)\\b",
+  convert: (val) => {
+    const numericValue = parseMeasurementValue(val);
+    if (isNaN(numericValue)) {
+      return null;
+    }
+    return `${(numericValue * 237).toFixed(0)} ml`;
+  },
   },
   {
-    name: "tablespoons",
-    pattern:
-      "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tbsp|tablespoons?)\\b",
-    convert: (val) => {
-      console.log("🥄 Converting tablespoons:", val);
-
-      // Convert to string for processing
-      const valStr = String(val);
-
-      // Handle Unicode fractions
-      const unicodeFractions = {
-        "⅛": 0.125,
-        "⅙": 0.167,
-        "⅕": 0.2,
-        "¼": 0.25,
-        "⅓": 0.333,
-        "⅜": 0.375,
-        "⅖": 0.4,
-        "⅔": 0.667,
-        "⅗": 0.6,
-        "¾": 0.75,
-        "⅘": 0.8,
-        "⅚": 0.833,
-        "⅞": 0.875,
-        "½": 0.5,
-      };
-
-      let numericValue;
-      if (unicodeFractions[valStr]) {
-        numericValue = unicodeFractions[valStr];
-      } else if (valStr.includes("/")) {
-        const [numerator, denominator] = valStr.split("/");
-        numericValue = parseFloat(numerator) / parseFloat(denominator);
-      } else if (valStr === "½") {
-        numericValue = 0.5;
-      } else if (valStr === "¼") {
-        numericValue = 0.25;
-      } else if (valStr === "¾") {
-        numericValue = 0.75;
-      } else {
-        numericValue = parseFloat(val);
-      }
-
-      return `${(numericValue * 15).toFixed(1)} ml`;
-    },
+  name: "tablespoons",
+  pattern:
+    "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tbsp|tablespoons?)\\b",
+  convert: (val) => {
+    const numericValue = parseMeasurementValue(val);
+    if (isNaN(numericValue)) {
+      return null;
+    }
+    return `${(numericValue * 15).toFixed(1)} ml`;
   },
-  // +++ THIS IS THE NEW 'teaspoons' OBJECT TO INSERT +++
+  },
   {
   name: "teaspoons",
   pattern:
