@@ -8,7 +8,7 @@ const conversions = [
   // --- HIGHEST PRIORITY: Combined & Special Formats ---
   {
     name: "feet_and_inches",
-    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:'|ft|feet)\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:"|in|inch|inches?)\\b`,
+    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:'|ft|feet)\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:"|in|inch|inches?)`,
     convert: (match) => {
       const feet = parseMeasurementValue(match[1]);
       const inches = parseMeasurementValue(match[2]);
@@ -21,34 +21,33 @@ const conversions = [
   },
   {
     name: "multi_dimensions",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*[xX]\\s*(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(cm|centimeters?|in|inch|inches?|"|ft|feet|'|m|meters?)\\b`,
+    pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(centimeters?|cm|inch|in|feet|ft|meters?|m)\\b`,
     convert: (match) => {
-        // SAFETY CHECK: Ensure all parts of the match exist before using them
         if (!match || !match[1] || !match[2] || !match[3]) return null;
 
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
-        const unit = match[3].toLowerCase(); // This line will no longer fail
+        const unit = match[3].toLowerCase();
 
         if (isNaN(val1) || isNaN(val2)) return null;
 
         let res1, res2;
-        if (unit.startsWith("in") || unit === '"') {
+        if (unit.startsWith("in")) {
             res1 = `${match[1]} in = ${(val1 * 2.54).toFixed(1)} cm`;
             res2 = `${match[2]} in = ${(val2 * 2.54).toFixed(1)} cm`;
-        } else if (unit.startsWith("cm")) {
+        } else if (unit.startsWith("centimeter") || unit.startsWith("cm")) {
             res1 = `${match[1]} cm = ${(val1 * 0.393701).toFixed(1)} in`;
             res2 = `${match[2]} cm = ${(val2 * 0.393701).toFixed(1)} in`;
-        } else if (unit.startsWith("ft") || unit === "'") {
+        } else if (unit.startsWith("feet") || unit.startsWith("ft")) {
             res1 = `${match[1]} ft = ${(val1 * 0.3048).toFixed(1)} m`;
             res2 = `${match[2]} ft = ${(val2 * 0.3048).toFixed(1)} m`;
-        } else if (unit.startsWith("m")) {
+        } else if (unit.startsWith("meter") || unit.startsWith("m")) {
             res1 = `${match[1]} m = ${(val1 * 3.28084).toFixed(1)} ft`;
             res2 = `${match[2]} m = ${(val2 * 3.28084).toFixed(1)} ft`;
         } else {
             return null;
         }
-        return `${res1}\n${res2}`; // Use \n for a line break
+        return `${res1}\n${res2}`;
     }
   },
   {
@@ -95,10 +94,30 @@ const conversions = [
     }
   },
 
+  // --- SYMBOL-BASED UNITS ---
+  {
+    name: "inches_symbol",
+    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})"`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 2.54).toFixed(2)} cm`;
+    },
+  },
+  {
+    name: "feet_symbol",
+    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})'`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 0.3048).toFixed(2)} m`;
+    },
+  },
+
   // --- STANDARD UNITS ---
   {
     name: "inches",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:inch|inches?|"|in)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:inch|inches|in)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -107,7 +126,7 @@ const conversions = [
   },
   {
     name: "feet",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:ft|feet|')\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:ft|feet)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -116,7 +135,7 @@ const conversions = [
   },
   {
     name: "centimeters",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:cm|centimeters?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:cm|centimeters?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -124,17 +143,8 @@ const conversions = [
     },
   },
   {
-    name: "meters",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:m|meters?)\\b`,
-    convert: (match) => {
-      const num = parseMeasurementValue(match[1]);
-      if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 3.28084).toFixed(2)} ft`;
-    },
-  },
-    {
     name: "millimeters",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:mm|millimeters?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:mm|millimeters?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -142,8 +152,17 @@ const conversions = [
     },
   },
   {
+    name: "meters",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:m|meters?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 3.28084).toFixed(2)} ft`;
+    },
+  },
+  {
     name: "pounds",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:lbs?|pounds?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:lbs?|pounds?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -152,16 +171,16 @@ const conversions = [
   },
   {
     name: "kilograms",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:kg|kilograms?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:kg|kilograms?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
       return `${match[0]} = ${(num * 2.20462).toFixed(2)} lb`;
     },
   },
-    {
+  {
     name: "ounces",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:oz|ounces?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:oz|ounces?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -170,7 +189,7 @@ const conversions = [
   },
   {
     name: "grams",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:g|grams?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:g|grams?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -179,7 +198,7 @@ const conversions = [
   },
   {
     name: "gallons",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:gal|gallons?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:gal|gallons?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -188,7 +207,7 @@ const conversions = [
   },
   {
     name: "liters",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:l|liters?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:l|liters?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -197,7 +216,7 @@ const conversions = [
   },
   {
     name: "cups",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:cups?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:cups?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -206,7 +225,7 @@ const conversions = [
   },
   {
     name: "tablespoons",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:tbsp|tablespoons?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:tbsp|tablespoons?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -215,7 +234,7 @@ const conversions = [
   },
   {
     name: "teaspoons",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:tsp|teaspoons?)\\b`,
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:tsp|teaspoons?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -362,14 +381,15 @@ function hideTooltip() {
 // This uses named capture groups based on the 'name' property in your objects.
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
-// Gemini Text Node Processing
+// Gemini text node processor
+
 function processTextNode(textNode) {
   if (!textNode || textNode.nodeType !== 3) return;
 
   const parent = textNode.parentNode;
+  // NEW SAFETY CHECK: Ignore inputs, textareas, and all editable elements.
   if (!parent ||
-      parent.closest(".hyper-hover") ||
-      parent.closest("script, style, noscript") ||
+      parent.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
       parent.closest("#hyper-converter-tooltip")) return;
 
   const text = textNode.textContent;
@@ -393,7 +413,6 @@ function processTextNode(textNode) {
       fragment.appendChild(document.createTextNode(beforeText));
     }
 
-    // Find which named group captured a value.
     let conversionName = null;
     for (const key in groups) {
       if (groups[key] !== undefined) {
@@ -405,32 +424,26 @@ function processTextNode(textNode) {
     if (conversionName) {
       const conversion = conversions.find(c => c.name === conversionName);
       if (conversion) {
-        // Now that we know the correct conversion, we need to extract the value.
-        // The first capture group *within* the pattern almost always holds the value.
         const valueRegex = new RegExp(conversion.pattern, "i");
         const valueMatch = fullMatch.match(valueRegex);
 
-        if (valueMatch) { // Check if we have a match at all
-          // Pass the ENTIRE array of captured parts to the convert function
+        if (valueMatch) {
           const conversionResult = conversion.convert(valueMatch);
 
-          if (conversionResult) { // Check if the conversion was successful
+          if (conversionResult) {
             const span = document.createElement("span");
             span.className = "hyper-hover";
             span.textContent = fullMatch;
-            span.dataset.convert = conversionResult; // The result is now the full tooltip text
+            span.dataset.convert = conversionResult;
             fragment.appendChild(span);
           } else {
-            // Conversion failed, just append the original text
             fragment.appendChild(document.createTextNode(fullMatch));
           }
         } else {
-          // Could not extract a value, so just append the original text
           fragment.appendChild(document.createTextNode(fullMatch));
         }
       }
     } else {
-      // Should not happen, but as a fallback, append the original text
       fragment.appendChild(document.createTextNode(fullMatch));
     }
     
@@ -441,7 +454,6 @@ function processTextNode(textNode) {
     fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
   }
 
-  // Check if fragment has children before replacing
   if (fragment.hasChildNodes()) {
     try {
       parent.replaceChild(fragment, textNode);
