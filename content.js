@@ -1,217 +1,275 @@
 // --- Conversion Definitions ---
 const conversions = [
+  // --- HIGHEST PRIORITY: Combined & Special Formats ---
   {
-    name: "centimeters",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(cm|centimeters?|centimetres?)\\b",
-    convert: (val) => `${(val * 0.393701).toFixed(2)} in`,
+    name: "feet_and_inches",
+    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:'|ft|feet)\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:"|in|inch|inches?)\\b`,
+    convert: (val, fullMatch) => {
+      const match = fullMatch.match(new RegExp(this.pattern));
+      const feet = parseMeasurementValue(match[1]);
+      const inches = parseMeasurementValue(match[2]);
+      if (isNaN(feet) || isNaN(inches)) return null;
+      
+      const totalInches = feet * 12 + inches;
+      const totalCm = totalInches * 2.54;
+      return `${totalCm.toFixed(1)} cm`;
+    }
   },
   {
-    name: "millimeters",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(mm|millimeters?|millimetres?)\\b",
-    convert: (val) => `${(val * 0.0393701).toFixed(2)} in`,
-  },
-  {
-    name: "meters",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(m|meters?)\\b",
-    convert: (val) => `${(val * 3.28084).toFixed(2)} ft`,
-  },
-  {
-    name: "kilograms",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(kg|kilograms?|kgs?)\\b",
-    convert: (val) => `${(val * 2.20462).toFixed(2)} lb`,
-  },
-  {
-    name: "grams",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(g|grams?)\\b",
-    convert: (val) => `${(val * 0.035274).toFixed(2)} oz`,
-  },
+    name: "multi_dimensions",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*[xX]\\s*(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(cm|centimeters?|in|inch|inches?|"|ft|feet|'|m|meters?)\\b`,
+    convert: (val, fullMatch) => {
+        const match = fullMatch.match(new RegExp(this.pattern, "i"));
+        if (!match) return null;
+        const val1 = parseMeasurementValue(match[1]);
+        const val2 = parseMeasurementValue(match[2]);
+        const unit = match[3].toLowerCase();
 
-  {
-    name: "liters",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(l|liters?|litres?)\\b",
-    convert: (val) => `${(val * 0.264172).toFixed(2)} gal`,
-  },
-  {
-    name: "celsius",
-    pattern:
-      "(\\d+(?:\\.\\d+)?)\\s?(°\\s?c|degrees?\\s?c|degrees?\\s?celsius|celsius)\\b",
-    convert: (val) => `${((val * 9) / 5 + 32).toFixed(1)} °F`,
-  },
-  {
-  name: "inches",
-  pattern:
-    "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\\d+(?:\\.\\d+)?)\\s*(?:inch|inches?)\\b",
-  convert: (val) => {
-    const numericValue = parseMeasurementValue(val);
-    if (isNaN(numericValue)) {
-      return null;
+        if (isNaN(val1) || isNaN(val2)) return null;
+
+        let res1, res2;
+        if (unit.startsWith("in") || unit === '"') {
+            res1 = `${match[1]} in = ${(val1 * 2.54).toFixed(1)} cm`;
+            res2 = `${match[2]} in = ${(val2 * 2.54).toFixed(1)} cm`;
+        } else if (unit.startsWith("cm")) {
+            res1 = `${match[1]} cm = ${(val1 * 0.393701).toFixed(1)} in`;
+            res2 = `${match[2]} cm = ${(val2 * 0.393701).toFixed(1)} in`;
+        } else if (unit.startsWith("ft") || unit === "'") {
+            res1 = `${match[1]} ft = ${(val1 * 0.3048).toFixed(1)} m`;
+            res2 = `${match[2]} ft = ${(val2 * 0.3048).toFixed(1)} m`;
+        } else if (unit.startsWith("m")) {
+            res1 = `${match[1]} m = ${(val1 * 3.28084).toFixed(1)} ft`;
+            res2 = `${match[2]} m = ${(val2 * 3.28084).toFixed(1)} ft`;
+        } else {
+            return null;
+        }
+        return `${res1}\n${res2}`; // Use \n for a line break
     }
-    return `${(numericValue / 0.393701).toFixed(2)} cm`;
-  },
   },
   {
-  name: "inches_symbol",
-  pattern: '(\\d+(?:\\.\\d+)?|\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)"',
-  convert: (val) => {
-    const numericValue = parseMeasurementValue(val);
-    if (isNaN(numericValue)) {
-      return null;
+    name: "ranges",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(?:-|to|–)\\s*(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(cm|centimeters?|in|inch|inches?|"|ft|feet|'|m|meters?|lbs?|pounds?|kg|kilograms?)\\b`,
+    convert: (val, fullMatch) => {
+        const match = fullMatch.match(new RegExp(this.pattern, "i"));
+        if (!match) return null;
+        const val1 = parseMeasurementValue(match[1]);
+        const val2 = parseMeasurementValue(match[2]);
+        const unit = match[3].toLowerCase();
+
+        if (isNaN(val1) || isNaN(val2)) return null;
+        
+        let res1, res2;
+        if (unit.startsWith("in") || unit === '"') {
+            res1 = `${(val1 * 2.54).toFixed(1)}`;
+            res2 = `${(val2 * 2.54).toFixed(1)} cm`;
+        } else if (unit.startsWith("cm")) {
+            res1 = `${(val1 * 0.393701).toFixed(1)}`;
+            res2 = `${(val2 * 0.393701).toFixed(1)} in`;
+        } else if (unit.startsWith("ft") || unit === "'") {
+            res1 = `${(val1 * 0.3048).toFixed(1)}`;
+            res2 = `${(val2 * 0.3048).toFixed(1)} m`;
+        } else if (unit.startsWith("m")) {
+            res1 = `${(val1 * 3.28084).toFixed(1)}`;
+            res2 = `${(val2 * 3.28084).toFixed(1)} ft`;
+        } else if (unit.startsWith("lb") || unit.startsWith("pound")) {
+            res1 = `${(val1 * 0.453592).toFixed(1)}`;
+            res2 = `${(val2 * 0.453592).toFixed(1)} kg`;
+        } else if (unit.startsWith("kg")) {
+            res1 = `${(val1 * 2.20462).toFixed(1)}`;
+            res2 = `${(val2 * 2.20462).toFixed(1)} lb`;
+        } else {
+            return null;
+        }
+        return `${match[1]}-${match[2]} ${unit} = ${res1}–${res2}`;
     }
-    return `${(numericValue / 0.393701).toFixed(2)} cm`;
-    },
   },
   {
-    name: "inches_hyphenated",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:inch|inches?)\\b",
+    name: "inches",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:inch|inches?|"|in)\\b`,
     convert: (val) => {
-      const numericValue = parseFloat(val);
-      return `${(numericValue / 0.393701).toFixed(2)} cm`;
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 2.54).toFixed(2)} cm`;
     },
-  },
-  {
-    name: "feet_hyphenated",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:ft|feet)\\b",
-    convert: (val) => {
-      const numericValue = parseFloat(val);
-      return `${(numericValue / 3.28084).toFixed(2)} m`;
-    },
-  },
-  {
-    name: "cm_hyphenated",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?-\\s?(?:cm|centimeters?|centimetres?)\\b",
-    convert: (val) => {
-      const numericValue = parseFloat(val);
-      return `${(numericValue * 0.393701).toFixed(2)} in`;
-    },
-  },
-  {
-    name: "feet_symbol",
-    pattern: "(\\d+(?:\\.\\d+)?)'",
-    convert: (val) => `${(val / 3.28084).toFixed(2)} m`,
   },
   {
     name: "feet",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(ft|feet)\\b",
-    convert: (val) => `${(val / 3.28084).toFixed(2)} m`,
-  },
-  {
-    name: "pounds",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(lb|lbs|pounds?)\\b",
-    convert: (val) => `${(val / 2.20462).toFixed(2)} kg`,
-  },
-  {
-    name: "ounces",
-    pattern: "(\\d+(?:\\.\\d+)?)\\s?(oz|ounce|ounces)\\b",
-    convert: (val) => `${(val / 0.035274).toFixed(2)} g`,
-  },
-  {
-    name: "gallons",
-    pattern: "(?<!\\d)(\\d+(?:\\.\\d+)?)\\s?(gal|gallons?)\\b",
-    convert: (val) => `${(val / 0.264172).toFixed(2)} L`,
-  },
-  {
-    name: "fahrenheit",
-    pattern:
-      "(\\d+(?:\\.\\d+)?)\\s?(°\\s?f|degrees?\\s?f|degrees?\\s?fahrenheit|fahrenheit)\\b",
-    convert: (val) => `${(((val - 32) * 5) / 9).toFixed(1)} °C`,
-  },
-  {
-  name: "cups",
-  pattern: "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(cup|cups?)\\b",
-  convert: (val) => {
-    const numericValue = parseMeasurementValue(val);
-    if (isNaN(numericValue)) {
-      return null;
-    }
-    return `${(numericValue * 237).toFixed(0)} ml`;
-  },
-  },
-  {
-  name: "tablespoons",
-  pattern:
-    "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tbsp|tablespoons?)\\b",
-  convert: (val) => {
-    const numericValue = parseMeasurementValue(val);
-    if (isNaN(numericValue)) {
-      return null;
-    }
-    return `${(numericValue * 15).toFixed(1)} ml`;
-  },
-  },
-  {
-  name: "teaspoons",
-  pattern:
-    "(\\d+(?:/\\d+)?|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\\s?(tsp|teaspoons?|teaspoon)\\b",
-  convert: (val) => {
-    const numericValue = parseMeasurementValue(val);
-
-    if (isNaN(numericValue)) {
-      return null;
-    }
-
-    return `${(numericValue * 5).toFixed(1)} ml`;
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:ft|feet|')\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 0.3048).toFixed(2)} m`;
     },
   },
   {
-  name: "dimensions_complete",
-  pattern: "\\b(\\d+)\\s?x\\s?(\\d+)\\s?(?:Inch|in)\\b",
-  convert: (val, fullMatch) => {
-    console.log("🎯 Both dimensions - val:", val);
-    
-    // val is the first number (71), but we need both numbers
-    // Let's extract them from the full match
-    const match = fullMatch ? fullMatch.match(/(\d+)\s?x\s?(\d+)/) : null;
-    
-    if (match) {
-      const width = parseInt(match[1]);
-      const height = parseInt(match[2]);
-      const widthCm = (width / 0.393701).toFixed(1);
-      const heightCm = (height / 0.393701).toFixed(1);
-      
-      return `${width}" = ${widthCm} cm, ${height}" = ${heightCm} cm`;
-    }
-    
-    // Fallback: just convert the first number
-    const widthCm = (parseInt(val) / 0.393701).toFixed(1);
-    return `${val}" = ${widthCm} cm (width)`;
-  }
-  }
+    name: "centimeters",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:cm|centimeters?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 0.393701).toFixed(2)} in`;
+    },
+  },
+  {
+    name: "meters",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:m|meters?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 3.28084).toFixed(2)} ft`;
+    },
+  },
+    {
+    name: "millimeters",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:mm|millimeters?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 0.0393701).toFixed(2)} in`;
+    },
+  },
+  {
+    name: "pounds",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:lbs?|pounds?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 0.453592).toFixed(2)} kg`;
+    },
+  },
+  {
+    name: "kilograms",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:kg|kilograms?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 2.20462).toFixed(2)} lb`;
+    },
+  },
+    {
+    name: "ounces",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:oz|ounces?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 28.3495).toFixed(2)} g`;
+    },
+  },
+  {
+    name: "grams",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:g|grams?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 0.035274).toFixed(2)} oz`;
+    },
+  },
+  {
+    name: "gallons",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:gal|gallons?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 3.78541).toFixed(2)} L`;
+    },
+  },
+  {
+    name: "liters",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:l|liters?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 0.264172).toFixed(2)} gal`;
+    },
+  },
+  {
+    name: "cups",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:cups?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 237).toFixed(0)} ml`;
+    },
+  },
+  {
+    name: "tablespoons",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:tbsp|tablespoons?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 14.787).toFixed(1)} ml`;
+    },
+  },
+  {
+    name: "teaspoons",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*(?:tsp|teaspoons?)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(num * 4.929).toFixed(1)} ml`;
+    },
+  },
+  {
+    name: "fahrenheit",
+    pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:°\\s?f|degrees?\\s?f|fahrenheit)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${(((num - 32) * 5) / 9).toFixed(1)} °C`;
+    },
+  },
+  {
+    name: "celsius",
+    pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:°\\s?c|degrees?\\s?c|celsius)\\b`,
+    convert: (val) => {
+      const num = parseMeasurementValue(val);
+      if (isNaN(num)) return null;
+      return `${((num * 9) / 5 + 32).toFixed(1)} °F`;
+    },
+  },
 ];
 
 /**
- * Parses a string that may contain a number, a text fraction ("1/2"), or a Unicode fraction ("½").
+ * Parses a string that may contain numbers, fractions, or spelled-out words.
  * @param {string} valueString The string to parse.
  * @returns {number} The parsed numeric value, or NaN if parsing fails.
  */
 function parseMeasurementValue(valueString) {
-  // Ensure we're working with a string to be safe
-  const valStr = String(valueString);
+  const valStr = String(valueString).toLowerCase().trim();
 
+  // Dictionary for Unicode fractions
   const unicodeFractions = {
     "⅛": 0.125, "⅙": 0.167, "⅕": 0.2, "¼": 0.25, "⅓": 0.333, "⅜": 0.375,
     "⅖": 0.4, "½": 0.5, "⅔": 0.667, "⅗": 0.6, "¾": 0.75, "⅘": 0.8,
     "⅚": 0.833, "⅞": 0.875,
   };
+  if (unicodeFractions[valStr]) return unicodeFractions[valStr];
 
-  // 1. Check if it's a known Unicode fraction
-  if (unicodeFractions[valStr]) {
-    return unicodeFractions[valStr];
-  }
-
-  // 2. Check if it's a text fraction like "1/3"
+  // Dictionary for spelled-out numbers and fractions
+  const wordToNumber = {
+    'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+    'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+    'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19,
+    'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
+    'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
+  };
+  if (wordToNumber[valStr]) return wordToNumber[valStr];
+  
+  // Handle "one and a half" patterns
+  if (valStr.match(/one and a half/)) return 1.5;
+  
+  // Handle text fractions like "1/3"
   if (valStr.includes("/")) {
     const parts = valStr.split("/");
     if (parts.length === 2) {
-      const numerator = parseFloat(parts[0]);
-      const denominator = parseFloat(parts[1]);
-      // Avoid division by zero and ensure both parts are valid numbers
-      if (denominator !== 0 && !isNaN(numerator) && !isNaN(denominator)) {
-        return numerator / denominator;
-      }
+      const num = parseFloat(parts[0]);
+      const den = parseFloat(parts[1]);
+      if (den !== 0 && !isNaN(num) && !isNaN(den)) return num / den;
     }
   }
 
-  // 3. Otherwise, treat it as a standard decimal or integer
+  // Handle standard numbers, including negatives
   return parseFloat(valStr);
 }
 
@@ -220,7 +278,7 @@ const tooltip = document.createElement("div");
 tooltip.id = "hyper-converter-tooltip";
 Object.assign(tooltip.style, {
   position: "absolute",
-  background: "#FFEFE6",  
+  background: "#FFEFE6",
   color: "#2D2D2D",
   padding: "8px 12px",
   borderRadius: "8px",
@@ -229,24 +287,25 @@ Object.assign(tooltip.style, {
   pointerEvents: "none",
   display: "none",
   boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-  maxWidth: "200px",
-  whiteSpace: "nowrap",
+  maxWidth: "300px", // Increased max-width for multi-line
+  whiteSpace: "pre-wrap", // Allows wrapping and respects newlines
   fontFamily: "Arial, sans-serif",
   border: "none",
-  fontWeight: "500"
+  fontWeight: "500",
+  lineHeight: "1.4", // Added for better multi-line readability
 });
 
 const style = document.createElement("style");
 style.textContent = `
   .hyper-hover {
-  position: relative !important;
-  cursor: help !important;
-  background-color: transparent !important;
-  border: none !important;
-  display: inline-block !important;
-}
+    position: relative !important;
+    cursor: help !important;
+    background-color: transparent !important;
+    border: none !important;
+    display: inline-block !important;
+  }
   
-.hyper-hover::after {
+  .hyper-hover::after {
     content: '' !important;
     position: absolute !important;
     bottom: 0px !important;
@@ -269,7 +328,8 @@ document.head.appendChild(style);
 document.body.appendChild(tooltip);
 
 function showTooltip(e, text) {
-  tooltip.textContent = text;
+  // NEW: Render line breaks for multi-line tooltips
+  tooltip.innerHTML = text.replace(/\n/g, '<br>');
   tooltip.style.display = "block";
   
   const x = e.clientX + window.scrollX;
