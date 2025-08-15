@@ -8,7 +8,7 @@ const conversions = [
   // --- HIGHEST PRIORITY: Multi-part patterns first ---
   {
     name: "feet_and_inches",
-    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:'|ft|feet)\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:"|in|inch|inches?)`,
+    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:'|ft|feet)\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:"|”|in|inch|inches?)`,
     convert: (match) => {
       const feet = parseMeasurementValue(match[1]);
       const inches = parseMeasurementValue(match[2]);
@@ -21,7 +21,7 @@ const conversions = [
   },
   {
     name: "multi_dimensions_symbol",
-    pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)"\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)"`,
+    pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)(?:"|”)\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)(?:"|”)`,
     convert: (match) => {
         if (!match || !match[1] || !match[2]) return null;
         const val1 = parseMeasurementValue(match[1]);
@@ -62,7 +62,7 @@ const conversions = [
   },
   {
     name: "ranges",
-    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(?:-|to|–)\\s*(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(cm|centimeters?|in|inch|inches?|"|ft|feet|'|m|meters?|lbs?|pounds?|kg|kilograms?)\\b`,
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(?:-|to|–)\\s*(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(cm|centimeters?|in|inch|inches?|"|”|ft|feet|'|m|meters?|lbs?|pounds?|kg|kilograms?)\\b`,
     convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         const val1 = parseMeasurementValue(match[1]);
@@ -71,7 +71,7 @@ const conversions = [
         if (isNaN(val1) || isNaN(val2)) return null;
         
         let res1, res2, resUnit;
-        if (unit.startsWith("in") || unit === '"') {
+        if (unit.startsWith("in") || unit === '"' || unit === '”') {
             res1 = (val1 * 2.54).toFixed(1); res2 = (val2 * 2.54).toFixed(1); resUnit = 'cm';
         } else if (unit.startsWith("cm")) {
             res1 = (val1 * 0.393701).toFixed(1); res2 = (val2 * 0.393701).toFixed(1); resUnit = 'in';
@@ -88,10 +88,10 @@ const conversions = [
     }
   },
 
-  // --- SYMBOL-BASED UNITS ---
+  // --- SYMBOL-BASED UNITS (Medium Priority) ---
   {
     name: "inches_symbol",
-    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})"`,
+    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|”)`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -108,7 +108,7 @@ const conversions = [
     },
   },
 
-  // --- STANDARD UNITS (Now with hyphen support) ---
+  // --- STANDARD UNITS (Lowest Priority) ---
   {
     name: "inches",
     pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:inch|inches|in)\\b`,
@@ -147,7 +147,8 @@ const conversions = [
   },
   {
     name: "meters",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:m|meters?)\\b`,
+    // FIX: Added (?<![a-zA-Z]) to prevent matching "am", "from", etc.
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])m\\b|meters?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -183,7 +184,8 @@ const conversions = [
   },
   {
     name: "grams",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:g|grams?)\\b`,
+    // FIX: Added (?<![a-zA-Z]) to prevent false positives
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])g\\b|grams?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -201,7 +203,8 @@ const conversions = [
   },
   {
     name: "liters",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:l|liters?)\\b`,
+    // FIX: Added (?<![a-zA-Z]) to prevent false positives
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])l\\b|liters?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
