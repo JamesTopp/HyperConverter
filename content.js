@@ -375,22 +375,36 @@ function hideTooltip() {
   tooltip.style.display = "none";
 }
 
-// This uses named capture groups based on the 'name' property in your objects.
+// This uses named capture groups based on the 'name' property in objects.
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
 // Gemini text node processor
-
 function processTextNode(textNode) {
   if (!textNode || textNode.nodeType !== 3) return;
 
   const parent = textNode.parentNode;
-  // NEW SAFETY CHECK: Ignore inputs, textareas, and all editable elements.
   if (!parent ||
       parent.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
       parent.closest("#hyper-converter-tooltip")) return;
 
-  const text = textNode.textContent;
+  let text = textNode.textContent;
   if (!text.trim()) return;
+
+  // --- NEW "TEXT STITCHING" LOGIC ---
+  let stitched = false;
+  let previousTextNode = null;
+  const prevSibling = textNode.previousSibling;
+
+  if (prevSibling && prevSibling.nodeType === 3) {
+    const prevText = prevSibling.textContent;
+    // Does the previous text look like the start of a dimension? (e.g., "55 x ")
+    if (prevText.match(/\b\d+(\.\d+)?\s*[xX]\s*$/)) {
+      text = prevText + text; // Stitch the text together
+      stitched = true;
+      previousTextNode = prevSibling;
+    }
+  }
+  // --- END OF NEW LOGIC ---
 
   const regex = new RegExp(combinedPattern, "gi");
   const matches = [...text.matchAll(regex)];
@@ -401,6 +415,11 @@ function processTextNode(textNode) {
   let lastIndex = 0;
 
   matches.forEach(match => {
+    // If we stitched text, we only care about matches that start at the beginning.
+    if (stitched && match.index !== 0) {
+      return;
+    }
+
     const fullMatch = match[0];
     const matchStart = match.index;
     const groups = match.groups;
@@ -453,7 +472,13 @@ function processTextNode(textNode) {
 
   if (fragment.hasChildNodes()) {
     try {
-      parent.replaceChild(fragment, textNode);
+      if (stitched && previousTextNode) {
+        // If we stitched, we need to replace BOTH the previous and current text nodes.
+        parent.removeChild(previousTextNode);
+        parent.replaceChild(fragment, textNode);
+      } else {
+        parent.replaceChild(fragment, textNode);
+      }
     } catch (e) {
       console.warn("Could not replace text node:", e);
     }
