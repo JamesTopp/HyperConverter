@@ -390,18 +390,27 @@ function processTextNode(textNode) {
   let text = textNode.textContent;
   if (!text.trim()) return;
 
-  // --- NEW "TEXT STITCHING" LOGIC ---
+  // --- NEW, SMARTER "TEXT STITCHING" LOGIC (Handles Sibling and Cousin nodes) ---
   let stitched = false;
   let previousTextNode = null;
-  const prevSibling = textNode.previousSibling;
+  
+  // Start by looking for an immediate previous sibling that is a text node
+  let p = textNode.previousSibling;
+  if (p && p.nodeType === 3) {
+      previousTextNode = p;
+  } 
+  // If not found, check if the previous sibling is an element (like <span>)
+  // and look for a text node as its last child. This finds the "cousin".
+  else if (p && p.nodeType === 1 && p.lastChild && p.lastChild.nodeType === 3) {
+      previousTextNode = p.lastChild;
+  }
 
-  if (prevSibling && prevSibling.nodeType === 3) {
-    const prevText = prevSibling.textContent;
-    // Does the previous text look like the start of a dimension? (e.g., "55 x ")
-    if (prevText.match(/\b\d+(\.\d+)?\s*[xX]\s*$/)) {
+  // If we found a valid previous text node, check if it looks like the start of a dimension.
+  if (previousTextNode) {
+    const prevText = previousTextNode.textContent;
+    if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/)) {
       text = prevText + text; // Stitch the text together
       stitched = true;
-      previousTextNode = prevSibling;
     }
   }
   // --- END OF NEW LOGIC ---
@@ -415,10 +424,7 @@ function processTextNode(textNode) {
   let lastIndex = 0;
 
   matches.forEach(match => {
-    // If we stitched text, we only care about matches that start at the beginning.
-    if (stitched && match.index !== 0) {
-      return;
-    }
+    if (stitched && match.index !== 0) return;
 
     const fullMatch = match[0];
     const matchStart = match.index;
@@ -449,24 +455,26 @@ function processTextNode(textNode) {
           if (conversionResult) {
             const span = document.createElement("span");
             span.className = "hyper-hover";
-            span.textContent = fullMatch;
+            // If we stitched, the span should contain the original, unstitched text
+            span.textContent = stitched ? textNode.textContent : fullMatch;
             span.dataset.convert = conversionResult;
             fragment.appendChild(span);
           } else {
-            fragment.appendChild(document.createTextNode(fullMatch));
+            fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
           }
         } else {
-          fragment.appendChild(document.createTextNode(fullMatch));
+          fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
         }
       }
     } else {
-      fragment.appendChild(document.createTextNode(fullMatch));
+      fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
     }
     
     lastIndex = matchStart + fullMatch.length;
   });
 
-  if (lastIndex < text.length) {
+  // Only append trailing text if we didn't stitch
+  if (!stitched && lastIndex < text.length) {
     fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
   }
 
@@ -474,7 +482,7 @@ function processTextNode(textNode) {
     try {
       if (stitched && previousTextNode) {
         // If we stitched, we need to replace BOTH the previous and current text nodes.
-        parent.removeChild(previousTextNode);
+        previousTextNode.parentNode.removeChild(previousTextNode);
         parent.replaceChild(fragment, textNode);
       } else {
         parent.replaceChild(fragment, textNode);
