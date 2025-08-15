@@ -378,7 +378,7 @@ function hideTooltip() {
 // This uses named capture groups based on the 'name' property in objects.
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
-// Gemini text node processor
+// Text node processor
 function processTextNode(textNode) {
   if (!textNode || textNode.nodeType !== 3) return;
 
