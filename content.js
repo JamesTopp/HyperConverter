@@ -13,13 +13,13 @@ const conversions = [
       const feet = parseMeasurementValue(match[1]);
       const inches = parseMeasurementValue(match[2]);
       if (isNaN(feet) || isNaN(inches)) return null;
+      
       const totalInches = feet * 12 + inches;
       const totalCm = totalInches * 2.54;
       return `${match[0]} = ${totalCm.toFixed(1)} cm`;
     }
   },
   {
-    // Handles formats like 48"x24" or 55"x28" (with straight or curly quotes)
     name: "multi_dimensions_symbol",
     pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)(?:"|”)\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)(?:"|”)`,
     convert: (match) => {
@@ -27,29 +27,9 @@ const conversions = [
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
         if (isNaN(val1) || isNaN(val2)) return null;
+
         const res1 = `${match[1]}" = ${(val1 * 2.54).toFixed(1)} cm`;
         const res2 = `${match[2]}" = ${(val2 * 2.54).toFixed(1)} cm`;
-        return `${res1}\n${res2}`;
-    }
-  },
-    {
-    // NEW: Handles formats like 63x27.5inch or 160x70cm
-    name: "multi_dimensions_no_space",
-    pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)[xX](-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)(inch|in|cm|centimeter)\\b`,
-    convert: (match) => {
-        if (!match || !match[1] || !match[2] || !match[3]) return null;
-        const val1 = parseMeasurementValue(match[1]);
-        const val2 = parseMeasurementValue(match[2]);
-        const unit = match[3].toLowerCase();
-        if (isNaN(val1) || isNaN(val2)) return null;
-        let res1, res2;
-        if (unit.startsWith("in")) {
-            res1 = `${match[1]} in = ${(val1 * 2.54).toFixed(1)} cm`;
-            res2 = `${match[2]} in = ${(val2 * 2.54).toFixed(1)} cm`;
-        } else if (unit.startsWith("c")) {
-            res1 = `${match[1]} cm = ${(val1 * 0.393701).toFixed(1)} in`;
-            res2 = `${match[2]} cm = ${(val2 * 0.393701).toFixed(1)} in`;
-        } else { return null; }
         return `${res1}\n${res2}`;
     }
   },
@@ -62,6 +42,7 @@ const conversions = [
         const val2 = parseMeasurementValue(match[2]);
         const unit = match[3].toLowerCase();
         if (isNaN(val1) || isNaN(val2)) return null;
+
         let res1, res2;
         if (unit.startsWith("in")) {
             res1 = `${match[1]} in = ${(val1 * 2.54).toFixed(1)} cm`;
@@ -79,7 +60,35 @@ const conversions = [
         return `${res1}\n${res2}`;
     }
   },
-  // ... The rest of the array remains largely the same
+  {
+    name: "ranges",
+    pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(?:-|to|–)\\s*(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(cm|centimeters?|in|inch|inches?|"|”|ft|feet|'|m|meters?|lbs?|pounds?|kg|kilograms?)\\b`,
+    convert: (match) => {
+        if (!match || !match[1] || !match[2] || !match[3]) return null;
+        const val1 = parseMeasurementValue(match[1]);
+        const val2 = parseMeasurementValue(match[2]);
+        const unit = match[3].toLowerCase();
+        if (isNaN(val1) || isNaN(val2)) return null;
+        
+        let res1, res2, resUnit;
+        if (unit.startsWith("in") || unit === '"' || unit === '”') {
+            res1 = (val1 * 2.54).toFixed(1); res2 = (val2 * 2.54).toFixed(1); resUnit = 'cm';
+        } else if (unit.startsWith("cm")) {
+            res1 = (val1 * 0.393701).toFixed(1); res2 = (val2 * 0.393701).toFixed(1); resUnit = 'in';
+        } else if (unit.startsWith("ft") || unit === "'") {
+            res1 = (val1 * 0.3048).toFixed(1); res2 = (val2 * 0.3048).toFixed(1); resUnit = 'm';
+        } else if (unit.startsWith("m")) {
+            res1 = (val1 * 3.28084).toFixed(1); res2 = (val2 * 3.28084).toFixed(1); resUnit = 'ft';
+        } else if (unit.startsWith("lb") || unit.startsWith("pound")) {
+            res1 = (val1 * 0.453592).toFixed(1); res2 = (val2 * 0.453592).toFixed(1); resUnit = 'kg';
+        } else if (unit.startsWith("kg")) {
+            res1 = (val1 * 2.20462).toFixed(1); res2 = (val2 * 2.20462).toFixed(1); resUnit = 'lb';
+        } else { return null; }
+        return `${match[0]} = ${res1}–${res2} ${resUnit}`;
+    }
+  },
+
+  // --- SYMBOL-BASED UNITS (Medium Priority) ---
   {
     name: "inches_symbol",
     pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|”)`,
@@ -98,6 +107,8 @@ const conversions = [
       return `${match[0]} = ${(num * 0.3048).toFixed(2)} m`;
     },
   },
+
+  // --- STANDARD UNITS (Lowest Priority) ---
   {
     name: "inches",
     pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:inch|inches|in)\\b`,
@@ -108,12 +119,141 @@ const conversions = [
     },
   },
   {
+    name: "feet",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:ft|feet)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 0.3048).toFixed(2)} m`;
+    },
+  },
+  {
     name: "centimeters",
     pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:cm|centimeters?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
       return `${match[0]} = ${(num * 0.393701).toFixed(2)} in`;
+    },
+  },
+  {
+    name: "millimeters",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:mm|millimeters?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 0.0393701).toFixed(2)} in`;
+    },
+  },
+  {
+    name: "meters",
+    // FIX: Added (?<![a-zA-Z]) to prevent matching "am", "from", etc.
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])m\\b|meters?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 3.28084).toFixed(2)} ft`;
+    },
+  },
+  {
+    name: "pounds",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:lbs?|pounds?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 0.453592).toFixed(2)} kg`;
+    },
+  },
+  {
+    name: "kilograms",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:kg|kilograms?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 2.20462).toFixed(2)} lb`;
+    },
+  },
+  {
+    name: "ounces",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:oz|ounces?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 28.3495).toFixed(2)} g`;
+    },
+  },
+  {
+    name: "grams",
+    // FIX: Added (?<![a-zA-Z]) to prevent false positives
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])g\\b|grams?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 0.035274).toFixed(2)} oz`;
+    },
+  },
+  {
+    name: "gallons",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:gal|gallons?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 3.78541).toFixed(2)} L`;
+    },
+  },
+  {
+    name: "liters",
+    // FIX: Added (?<![a-zA-Z]) to prevent false positives
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])l\\b|liters?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 0.264172).toFixed(2)} gal`;
+    },
+  },
+  {
+    name: "cups",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:cups?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 237).toFixed(0)} ml`;
+    },
+  },
+  {
+    name: "tablespoons",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:tbsp|tablespoons?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 14.787).toFixed(1)} ml`;
+    },
+  },
+  {
+    name: "teaspoons",
+    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+(?: and a half)?)\\s*-?\\s*(?:tsp|teaspoons?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * 4.929).toFixed(1)} ml`;
+    },
+  },
+  {
+    name: "fahrenheit",
+    pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:°\\s?f|degrees?\\s?f|fahrenheit)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(((num - 32) * 5) / 9).toFixed(1)} °C`;
+    },
+  },
+  {
+    name: "celsius",
+    pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:°\\s?c|degrees?\\s?c|celsius)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${((num * 9) / 5 + 32).toFixed(1)} °F`;
     },
   },
 ];
@@ -240,58 +380,49 @@ const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join(
 
 // Text node processor
 function findAndReplaceAllMeasurements(container) {
-  const replacements = [];
+  const replacements = []; // This is our "to-do list"
 
-  // --- PASS 1: READ and FIND all non-overlapping measurements ---
+  // --- PASS 1: READ and FIND all measurements ---
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   let node;
   while (node = walker.nextNode()) {
+    // Skip nodes we should never touch
     if (!node.textContent.trim() || node.parentNode.closest('.hyper-hover, script, style, noscript, input, textarea, [contenteditable="true"]')) {
       continue;
     }
 
-    const text = node.textContent;
     const regex = new RegExp(combinedPattern, 'gi');
-    
-    // Find all possible matches in this text node
-    const allMatches = [...text.matchAll(regex)];
-    
-    // --- NEW: Anti-overlap logic ---
-    // Sort matches by starting position to process them in order
-    allMatches.sort((a, b) => a.index - b.index);
+    const matches = [...node.textContent.matchAll(regex)];
 
-    let lastIndex = 0;
-    for (const match of allMatches) {
-      // If this match starts before the last one ended, it's an overlap, so skip it.
-      if (match.index < lastIndex) {
-        continue;
-      }
-
+    matches.forEach(match => {
+      const fullMatch = match[0];
       const conversion = conversions.find(c => match.groups[c.name] !== undefined);
+      
       if (conversion) {
         const valueRegex = new RegExp(conversion.pattern, "i");
-        const valueMatch = match[0].match(valueRegex);
+        const valueMatch = fullMatch.match(valueRegex);
 
         if (valueMatch) {
           const conversionResult = conversion.convert(valueMatch);
           if (conversionResult) {
+            // Add a new item to our "to-do list"
             replacements.push({
               textNode: node,
               match: match,
               conversionResult: conversionResult,
             });
-            // The next valid match must start after this one ends.
-            lastIndex = match.index + match[0].length;
           }
         }
       }
-    }
+    });
   }
 
   // --- PASS 2: WRITE all changes to the page ---
+  // We process the to-do list in reverse order to avoid DOM issues
   for (const rep of replacements.reverse()) {
     const { textNode, match, conversionResult } = rep;
     
+    // Check if the node is still valid before we try to change it
     if (!document.body.contains(textNode)) continue;
 
     const span = document.createElement('span');
@@ -303,6 +434,7 @@ function findAndReplaceAllMeasurements(container) {
     range.setStart(textNode, match.index);
     range.setEnd(textNode, match.index + match[0].length);
     
+    // Surround the matched text with our new span
     try {
       range.surroundContents(span);
     } catch (e) {
