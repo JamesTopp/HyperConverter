@@ -4,8 +4,10 @@ const unicodeFractions = {
   "⅚": 0.833, "⅞": 0.875,
 };
 // --- Conversion Definitions ---
+// +++ REPLACE your entire conversions array with this more robust version +++
+
 const conversions = [
-  // --- HIGHEST PRIORITY: Combined & Special Formats ---
+  // --- HIGHEST PRIORITY: Multi-part patterns first ---
   {
     name: "feet_and_inches",
     pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:'|ft|feet)\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:"|in|inch|inches?)`,
@@ -20,15 +22,29 @@ const conversions = [
     }
   },
   {
+    // NEW: Handles formats like 48"x24"
+    name: "multi_dimensions_symbol",
+    pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)"\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)"`,
+    convert: (match) => {
+        if (!match || !match[1] || !match[2]) return null;
+        const val1 = parseMeasurementValue(match[1]);
+        const val2 = parseMeasurementValue(match[2]);
+        if (isNaN(val1) || isNaN(val2)) return null;
+
+        const res1 = `${match[1]}" = ${(val1 * 2.54).toFixed(1)} cm`;
+        const res2 = `${match[2]}" = ${(val2 * 2.54).toFixed(1)} cm`;
+        return `${res1}\n${res2}`;
+    }
+  },
+  {
+    // Handles formats like 55 x 24 inches
     name: "multi_dimensions",
     pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(centimeters?|cm|inch|in|feet|ft|meters?|m)\\b`,
     convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[3]) return null;
-
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
         const unit = match[3].toLowerCase();
-
         if (isNaN(val1) || isNaN(val2)) return null;
 
         let res1, res2;
@@ -44,9 +60,7 @@ const conversions = [
         } else if (unit.startsWith("meter") || unit.startsWith("m")) {
             res1 = `${match[1]} m = ${(val1 * 3.28084).toFixed(1)} ft`;
             res2 = `${match[2]} m = ${(val2 * 3.28084).toFixed(1)} ft`;
-        } else {
-            return null;
-        }
+        } else { return null; }
         return `${res1}\n${res2}`;
     }
   },
@@ -55,11 +69,9 @@ const conversions = [
     pattern: `(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(?:-|to|–)\\s*(-?[\\d\\w\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(cm|centimeters?|in|inch|inches?|"|ft|feet|'|m|meters?|lbs?|pounds?|kg|kilograms?)\\b`,
     convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[3]) return null;
-        
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
         const unit = match[3].toLowerCase();
-
         if (isNaN(val1) || isNaN(val2)) return null;
         
         let res1, res2, resUnit;
@@ -87,9 +99,7 @@ const conversions = [
             res1 = (val1 * 2.20462).toFixed(1);
             res2 = (val2 * 2.20462).toFixed(1);
             resUnit = 'lb';
-        } else {
-            return null;
-        }
+        } else { return null; }
         return `${match[0]} = ${res1}–${res2} ${resUnit}`;
     }
   },
