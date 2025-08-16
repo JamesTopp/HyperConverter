@@ -390,46 +390,27 @@ function processTextNode(textNode) {
   let text = textNode.textContent;
   if (!text.trim()) return;
 
-  // --- FINAL "TEXT STITCHING" LOGIC using a DOM Walker ---
+  // --- NEW, SMARTER "TEXT STITCHING" LOGIC (Handles Sibling and Cousin nodes) ---
   let stitched = false;
-  let previousNodeToRemove = null;
-
-  // This function walks backwards from a node to find the previous non-empty text node.
-  function findPreviousTextNode(node) {
-    let currentNode = node;
-    while (currentNode = currentNode.previousSibling) {
-      if (currentNode.nodeType === 3 && currentNode.textContent.trim()) {
-        return currentNode; // Found a sibling text node
-      }
-      if (currentNode.nodeType === 1) {
-        // If it's an element, look inside it for the last text node.
-        const walker = document.createTreeWalker(currentNode, NodeFilter.SHOW_TEXT);
-        let lastTextNode = null;
-        let n;
-        while (n = walker.nextNode()) {
-          if (n.textContent.trim()) {
-            lastTextNode = n;
-          }
-        }
-        if (lastTextNode) return lastTextNode; // Found text inside a sibling element
-      }
-    }
-    // If no sibling was found, go up to the parent and try again from there.
-    if (node.parentNode) {
-      return findPreviousTextNode(node.parentNode);
-    }
-    return null;
+  let previousTextNode = null;
+  
+  // Start by looking for an immediate previous sibling that is a text node
+  let p = textNode.previousSibling;
+  if (p && p.nodeType === 3) {
+      previousTextNode = p;
+  } 
+  // If not found, check if the previous sibling is an element (like <span>)
+  // and look for a text node as its last child. This finds the "cousin".
+  else if (p && p.nodeType === 1 && p.lastChild && p.lastChild.nodeType === 3) {
+      previousTextNode = p.lastChild;
   }
 
-  const previousTextNode = findPreviousTextNode(textNode);
-
+  // If we found a valid previous text node, check if it looks like the start of a dimension.
   if (previousTextNode) {
     const prevText = previousTextNode.textContent;
-    // Check if the previous text ends with a pattern like "55 x "
-    if (prevText.match(/(?:\s|^)\d+(\.\d+)?\s*[xX]\s*$/)) {
+    if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/)) {
       text = prevText + text; // Stitch the text together
       stitched = true;
-      previousNodeToRemove = previousTextNode;
     }
   }
   // --- END OF NEW LOGIC ---
@@ -474,33 +455,38 @@ function processTextNode(textNode) {
           if (conversionResult) {
             const span = document.createElement("span");
             span.className = "hyper-hover";
-            span.textContent = fullMatch;
+            // If we stitched, the span should contain the original, unstitched text
+            span.textContent = stitched ? textNode.textContent : fullMatch;
             span.dataset.convert = conversionResult;
             fragment.appendChild(span);
           } else {
-            fragment.appendChild(document.createTextNode(fullMatch));
+            fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
           }
         } else {
-          fragment.appendChild(document.createTextNode(fullMatch));
+          fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
         }
       }
     } else {
-      fragment.appendChild(document.createTextNode(fullMatch));
+      fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
     }
     
     lastIndex = matchStart + fullMatch.length;
   });
-  
-  if (lastIndex < text.length) {
+
+  // Only append trailing text if we didn't stitch
+  if (!stitched && lastIndex < text.length) {
     fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
   }
 
   if (fragment.hasChildNodes()) {
     try {
-      if (stitched && previousNodeToRemove) {
-        previousNodeToRemove.parentNode.removeChild(previousNodeToRemove);
+      if (stitched && previousTextNode) {
+        // If we stitched, we need to replace BOTH the previous and current text nodes.
+        previousTextNode.parentNode.removeChild(previousTextNode);
+        parent.replaceChild(fragment, textNode);
+      } else {
+        parent.replaceChild(fragment, textNode);
       }
-      parent.replaceChild(fragment, textNode);
     } catch (e) {
       console.warn("Could not replace text node:", e);
     }
