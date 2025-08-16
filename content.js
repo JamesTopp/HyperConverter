@@ -853,3 +853,32 @@ document.addEventListener("mouseout", function(e) {
     hideTooltip();
   }
 }, true);
+
+chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
+  const isEnabled = result.enabled !== false && !result.globallyDisabled;
+  
+  if (isEnabled) {
+    processContainer(document.body);
+    processSplitMeasurements(document.body);
+    processAllRecipesIngredients(document.body);
+    processTableMeasurements(document.body);
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) {
+            processContainer(node);
+            processSplitMeasurements(node);
+            processTableMeasurements(node);
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    console.log("🚀 HyperConverter initialized");
+  }
+});
