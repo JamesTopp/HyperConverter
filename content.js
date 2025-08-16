@@ -13,13 +13,13 @@ const conversions = [
       const feet = parseMeasurementValue(match[1]);
       const inches = parseMeasurementValue(match[2]);
       if (isNaN(feet) || isNaN(inches)) return null;
+      
       const totalInches = feet * 12 + inches;
       const totalCm = totalInches * 2.54;
       return `${match[0]} = ${totalCm.toFixed(1)} cm`;
     }
   },
   {
-    // Handles formats like 48"x24" or 55"x28" (with straight or curly quotes)
     name: "multi_dimensions_symbol",
     pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)(?:"|”)\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)(?:"|”)`,
     convert: (match) => {
@@ -27,29 +27,9 @@ const conversions = [
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
         if (isNaN(val1) || isNaN(val2)) return null;
+
         const res1 = `${match[1]}" = ${(val1 * 2.54).toFixed(1)} cm`;
         const res2 = `${match[2]}" = ${(val2 * 2.54).toFixed(1)} cm`;
-        return `${res1}\n${res2}`;
-    }
-  },
-    {
-    // NEW: Handles formats like 63x27.5inch or 160x70cm
-    name: "multi_dimensions_no_space",
-    pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)[xX](-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)(inch|in|cm|centimeter)\\b`,
-    convert: (match) => {
-        if (!match || !match[1] || !match[2] || !match[3]) return null;
-        const val1 = parseMeasurementValue(match[1]);
-        const val2 = parseMeasurementValue(match[2]);
-        const unit = match[3].toLowerCase();
-        if (isNaN(val1) || isNaN(val2)) return null;
-        let res1, res2;
-        if (unit.startsWith("in")) {
-            res1 = `${match[1]} in = ${(val1 * 2.54).toFixed(1)} cm`;
-            res2 = `${match[2]} in = ${(val2 * 2.54).toFixed(1)} cm`;
-        } else if (unit.startsWith("c")) {
-            res1 = `${match[1]} cm = ${(val1 * 0.393701).toFixed(1)} in`;
-            res2 = `${match[2]} cm = ${(val2 * 0.393701).toFixed(1)} in`;
-        } else { return null; }
         return `${res1}\n${res2}`;
     }
   },
@@ -62,6 +42,7 @@ const conversions = [
         const val2 = parseMeasurementValue(match[2]);
         const unit = match[3].toLowerCase();
         if (isNaN(val1) || isNaN(val2)) return null;
+
         let res1, res2;
         if (unit.startsWith("in")) {
             res1 = `${match[1]} in = ${(val1 * 2.54).toFixed(1)} cm`;
@@ -399,58 +380,49 @@ const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join(
 
 // Text node processor
 function findAndReplaceAllMeasurements(container) {
-  const replacements = [];
+  const replacements = []; // This is our "to-do list"
 
-  // --- PASS 1: READ and FIND all non-overlapping measurements ---
+  // --- PASS 1: READ and FIND all measurements ---
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   let node;
   while (node = walker.nextNode()) {
+    // Skip nodes we should never touch
     if (!node.textContent.trim() || node.parentNode.closest('.hyper-hover, script, style, noscript, input, textarea, [contenteditable="true"]')) {
       continue;
     }
 
-    const text = node.textContent;
     const regex = new RegExp(combinedPattern, 'gi');
-    
-    // Find all possible matches in this text node
-    const allMatches = [...text.matchAll(regex)];
-    
-    // --- NEW: Anti-overlap logic ---
-    // Sort matches by starting position to process them in order
-    allMatches.sort((a, b) => a.index - b.index);
+    const matches = [...node.textContent.matchAll(regex)];
 
-    let lastIndex = 0;
-    for (const match of allMatches) {
-      // If this match starts before the last one ended, it's an overlap, so skip it.
-      if (match.index < lastIndex) {
-        continue;
-      }
-
+    matches.forEach(match => {
+      const fullMatch = match[0];
       const conversion = conversions.find(c => match.groups[c.name] !== undefined);
+      
       if (conversion) {
         const valueRegex = new RegExp(conversion.pattern, "i");
-        const valueMatch = match[0].match(valueRegex);
+        const valueMatch = fullMatch.match(valueRegex);
 
         if (valueMatch) {
           const conversionResult = conversion.convert(valueMatch);
           if (conversionResult) {
+            // Add a new item to our "to-do list"
             replacements.push({
               textNode: node,
               match: match,
               conversionResult: conversionResult,
             });
-            // The next valid match must start after this one ends.
-            lastIndex = match.index + match[0].length;
           }
         }
       }
-    }
+    });
   }
 
   // --- PASS 2: WRITE all changes to the page ---
+  // We process the to-do list in reverse order to avoid DOM issues
   for (const rep of replacements.reverse()) {
     const { textNode, match, conversionResult } = rep;
     
+    // Check if the node is still valid before we try to change it
     if (!document.body.contains(textNode)) continue;
 
     const span = document.createElement('span');
@@ -462,6 +434,7 @@ function findAndReplaceAllMeasurements(container) {
     range.setStart(textNode, match.index);
     range.setEnd(textNode, match.index + match[0].length);
     
+    // Surround the matched text with our new span
     try {
       range.surroundContents(span);
     } catch (e) {
