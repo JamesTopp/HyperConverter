@@ -379,97 +379,133 @@ function hideTooltip() {
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
 // Text node processor
-function findAndReplaceAllMeasurements(container) {
-  const replacements = []; // This is our "to-do list"
+function processTextNode(textNode) {
+  if (!textNode || textNode.nodeType !== 3) return;
 
-  // --- PASS 1: READ and FIND all measurements ---
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-  let node;
-  while (node = walker.nextNode()) {
-    // Skip nodes we should never touch
-    if (!node.textContent.trim() || node.parentNode.closest('.hyper-hover, script, style, noscript, input, textarea, [contenteditable="true"]')) {
-      continue;
+  const parent = textNode.parentNode;
+  if (!parent ||
+      parent.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
+      parent.closest("#hyper-converter-tooltip")) return;
+
+  let text = textNode.textContent;
+  if (!text.trim()) return;
+
+  // --- FINAL "TEXT STITCHING" LOGIC using a DOM Walker ---
+  let stitched = false;
+  let previousNodeToRemove = null;
+
+  // This function walks backwards from a node to find the previous non-empty text node.
+  function findPreviousTextNode(node) {
+    let currentNode = node;
+    while (currentNode = currentNode.previousSibling) {
+      if (currentNode.nodeType === 3 && currentNode.textContent.trim()) {
+        return currentNode; // Found a sibling text node
+      }
+      if (currentNode.nodeType === 1) {
+        // If it's an element, look inside it for the last text node.
+        const walker = document.createTreeWalker(currentNode, NodeFilter.SHOW_TEXT);
+        let lastTextNode = null;
+        let n;
+        while (n = walker.nextNode()) {
+          if (n.textContent.trim()) {
+            lastTextNode = n;
+          }
+        }
+        if (lastTextNode) return lastTextNode; // Found text inside a sibling element
+      }
+    }
+    // If no sibling was found, go up to the parent and try again from there.
+    if (node.parentNode) {
+      return findPreviousTextNode(node.parentNode);
+    }
+    return null;
+  }
+
+  const previousTextNode = findPreviousTextNode(textNode);
+
+  if (previousTextNode) {
+    const prevText = previousTextNode.textContent;
+    // Check if the previous text ends with a pattern like "55 x "
+    if (prevText.match(/(?:\s|^)\d+(\.\d+)?\s*[xX]\s*$/)) {
+      text = prevText + text; // Stitch the text together
+      stitched = true;
+      previousNodeToRemove = previousTextNode;
+    }
+  }
+  // --- END OF NEW LOGIC ---
+
+  const regex = new RegExp(combinedPattern, "gi");
+  const matches = [...text.matchAll(regex)];
+
+  if (matches.length === 0) return;
+
+  const fragment = document.createDocumentFragment();
+  let lastIndex = 0;
+
+  matches.forEach(match => {
+    if (stitched && match.index !== 0) return;
+
+    const fullMatch = match[0];
+    const matchStart = match.index;
+    const groups = match.groups;
+
+    if (matchStart > lastIndex) {
+      const beforeText = text.slice(lastIndex, matchStart);
+      fragment.appendChild(document.createTextNode(beforeText));
     }
 
-    const regex = new RegExp(combinedPattern, 'gi');
-    const matches = [...node.textContent.matchAll(regex)];
+    let conversionName = null;
+    for (const key in groups) {
+      if (groups[key] !== undefined) {
+        conversionName = key;
+        break;
+      }
+    }
 
-    matches.forEach(match => {
-      const fullMatch = match[0];
-      const conversion = conversions.find(c => match.groups[c.name] !== undefined);
-      
+    if (conversionName) {
+      const conversion = conversions.find(c => c.name === conversionName);
       if (conversion) {
         const valueRegex = new RegExp(conversion.pattern, "i");
         const valueMatch = fullMatch.match(valueRegex);
 
         if (valueMatch) {
           const conversionResult = conversion.convert(valueMatch);
+
           if (conversionResult) {
-            // Add a new item to our "to-do list"
-            replacements.push({
-              textNode: node,
-              match: match,
-              conversionResult: conversionResult,
-            });
+            const span = document.createElement("span");
+            span.className = "hyper-hover";
+            span.textContent = fullMatch;
+            span.dataset.convert = conversionResult;
+            fragment.appendChild(span);
+          } else {
+            fragment.appendChild(document.createTextNode(fullMatch));
           }
+        } else {
+          fragment.appendChild(document.createTextNode(fullMatch));
         }
       }
-    });
+    } else {
+      fragment.appendChild(document.createTextNode(fullMatch));
+    }
+    
+    lastIndex = matchStart + fullMatch.length;
+  });
+  
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
   }
 
-  // --- PASS 2: WRITE all changes to the page ---
-  // We process the to-do list in reverse order to avoid DOM issues
-  for (const rep of replacements.reverse()) {
-    const { textNode, match, conversionResult } = rep;
-    
-    // Check if the node is still valid before we try to change it
-    if (!document.body.contains(textNode)) continue;
-
-    const span = document.createElement('span');
-    span.className = 'hyper-hover';
-    span.textContent = match[0];
-    span.dataset.convert = conversionResult;
-
-    const range = document.createRange();
-    range.setStart(textNode, match.index);
-    range.setEnd(textNode, match.index + match[0].length);
-    
-    // Surround the matched text with our new span
+  if (fragment.hasChildNodes()) {
     try {
-      range.surroundContents(span);
+      if (stitched && previousNodeToRemove) {
+        previousNodeToRemove.parentNode.removeChild(previousNodeToRemove);
+      }
+      parent.replaceChild(fragment, textNode);
     } catch (e) {
-      console.warn("Could not replace text content:", e);
+      console.warn("Could not replace text node:", e);
     }
   }
 }
-
-// Update your observer and initial run to use the new system
-chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
-  const isEnabled = result.enabled !== false && !result.globallyDisabled;
-  
-  if (isEnabled) {
-    // Initial run on the whole body
-    findAndReplaceAllMeasurements(document.body);
-    
-    // Run on any new content that gets added to the page
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) { // It's an element
-            findAndReplaceAllMeasurements(node);
-          }
-        });
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
-    console.log("🚀 HyperConverter initialized with new two-pass system");
-  }
-});
 function processAllRecipesIngredients(container) {
   console.log("🚀 FUNCTION CALLED!");
   console.log("🥄 Looking for AllRecipes ingredients");
@@ -810,6 +846,33 @@ function processSplitMeasurements(container) {
       }
     }
   });
+}
+
+function processContainer(container) {
+  if (!container) return;
+  
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        if (node.parentNode?.closest(".hyper-hover") ||
+            node.parentNode?.closest("script, style, noscript") ||
+            node.parentNode?.closest("#hyper-converter-tooltip")) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    textNodes.push(node);
+  }
+
+  textNodes.forEach(processTextNode);
 }
 
 document.addEventListener("mouseover", function(e) {
