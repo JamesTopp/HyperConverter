@@ -373,13 +373,79 @@ function hideTooltip() {
 
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
+// --- SPECIALIZED PARSERS (RE-INTEGRATED) ---
+
+function processAllRecipesIngredients(container) {
+  const ingredientLists = container.querySelectorAll('.mm-recipes-structured-ingredients__list ul');
+  ingredientLists.forEach(list => {
+    // Mark this list so the general parser ignores it
+    list.classList.add('hyper-converter-processed');
+
+    const listItems = list.querySelectorAll('li');
+    listItems.forEach(item => {
+      const fullText = item.textContent.trim();
+      const match = fullText.match(new RegExp(combinedPattern, 'i'));
+      
+      if (match) {
+        const conversion = conversions.find(c => match.groups[c.name] !== undefined);
+        if (conversion) {
+          const valueRegex = new RegExp(conversion.pattern, "i");
+          const valueMatch = match[0].match(valueRegex);
+          if (valueMatch) {
+            const conversionResult = conversion.convert(valueMatch);
+            if (conversionResult) {
+              item.innerHTML = item.innerHTML.replace(match[0], 
+                `<span class="hyper-hover" data-convert="${conversionResult}">${match[0]}</span>`
+              );
+            }
+          }
+        }
+      }
+    });
+  });
+}
+
+function processTableMeasurements(container) {
+  const ddElements = container.querySelectorAll('dl[class*="acl-dl"] dd');
+  ddElements.forEach(dd => {
+    const text = dd.textContent.trim();
+    if (text.match(/^\d+(\.\d+)?$/)) {
+      const numericValue = parseFloat(text);
+      const dt = dd.previousElementSibling;
+      if (dt && dt.tagName === 'DT') {
+        const label = dt.textContent.toLowerCase();
+        let unit = null;
+        if (label.includes('in.')) unit = 'in';
+        else if (label.includes('cm')) unit = 'cm';
+        // Add more units as needed
+
+        if (unit) {
+          let conversionResult = '';
+          if (unit === 'in') conversionResult = `${numericValue} in = ${(numericValue * 2.54).toFixed(1)} cm`;
+          if (unit === 'cm') conversionResult = `${numericValue} cm = ${(numericValue * 0.393701).toFixed(1)} in`;
+          
+          if (conversionResult) {
+            dd.classList.add('hyper-hover');
+            dd.dataset.convert = conversionResult;
+            // Mark as processed
+            dd.closest('dl').classList.add('hyper-converter-processed');
+          }
+        }
+      }
+    }
+  });
+}
+
+// --- MAIN GENERIC PARSER (TWO-PASS SYSTEM) ---
+
 function findAndReplaceAllMeasurements(container) {
   const replacements = [];
 
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   let node;
   while (node = walker.nextNode()) {
-    if (!node.textContent.trim() || node.parentNode.closest('.hyper-hover, script, style, noscript, input, textarea, [contenteditable="true"]')) {
+    // NEW: Now ignores elements marked by specialized parsers
+    if (!node.textContent.trim() || node.parentNode.closest('.hyper-hover, .hyper-converter-processed, script, style, noscript, input, textarea, [contenteditable="true"]')) {
       continue;
     }
 
@@ -438,6 +504,14 @@ function findAndReplaceAllMeasurements(container) {
   }
 }
 
+// --- INITIALIZATION & EVENT LISTENERS ---
+
+function runAllProcessors(container) {
+  processAllRecipesIngredients(container);
+  processTableMeasurements(container);
+  findAndReplaceAllMeasurements(container); // General parser runs last
+}
+
 document.addEventListener("mouseover", function(e) {
   const target = e.target.closest(".hyper-hover");
   if (target && target.dataset.convert) {
@@ -456,13 +530,13 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
   const isEnabled = result.enabled !== false && !result.globallyDisabled;
   
   if (isEnabled) {
-    findAndReplaceAllMeasurements(document.body);
+    runAllProcessors(document.body);
     
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === 1) {
-            findAndReplaceAllMeasurements(node);
+            runAllProcessors(node);
           }
         });
       });
@@ -473,6 +547,6 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
       subtree: true
     });
 
-    console.log("🚀 HyperConverter initialized with new two-pass system");
+    console.log("🚀 HyperConverter initialized with Hybrid System");
   }
 });
