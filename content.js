@@ -19,21 +19,21 @@ const conversions = [
       return `${match[0]} = ${totalCm.toFixed(1)} cm`;
     }
   },
- {
-  name: "multi_dimensions_symbol",
-  pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|"|")\\s*[xX×]\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|"|")`,
-  convert: (match) => {
-          console.log("multi_dimensions_symbol pattern tested on:", match[0]);
-      if (!match || !match[1] || !match[2]) return null;
-      const val1 = parseMeasurementValue(match[1]);
-      const val2 = parseMeasurementValue(match[2]);
-      if (isNaN(val1) || isNaN(val2)) return null;
+  {
+    name: "multi_dimensions_symbol", 
+    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|″|")\\s*[xX×]\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|″|")`,
+    convert: (match) => {
+        console.log("multi_dimensions_symbol pattern tested on:", match[0]);
+        if (!match || !match[1] || !match[2]) return null;
+        const val1 = parseMeasurementValue(match[1]);
+        const val2 = parseMeasurementValue(match[2]);
+        if (isNaN(val1) || isNaN(val2)) return null;
 
-      const res1 = `${match[1]}" = ${(val1 * 2.54).toFixed(1)} cm`;
-      const res2 = `${match[2]}" = ${(val2 * 2.54).toFixed(1)} cm`;
-      return `${res1}\n${res2}`;
-  }
-},
+        const res1 = `${match[1]}" = ${(val1 * 2.54).toFixed(1)} cm`;
+        const res2 = `${match[2]}" = ${(val2 * 2.54).toFixed(1)} cm`;
+        return `${res1}\n${res2}`;
+    }
+  },
   {
     name: "multi_dimensions",
     pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(centimeters?|cm|inch|in|feet|ft|meters?|m)\\b`,
