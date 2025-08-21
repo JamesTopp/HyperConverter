@@ -373,61 +373,57 @@ function hideTooltip() {
 
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
-// --- SPECIALIZED PARSERS (RE-INTEGRATED) ---
+// --- SPECIALIZED PARSERS (RE-INTEGRATED and UPGRADED) ---
 
 function processAllRecipesIngredients(container) {
-  const ingredientLists = container.querySelectorAll('.mm-recipes-structured-ingredients__list ul');
+  const ingredientLists = container.querySelectorAll('.mm-recipes-structured-ingredients__list ul, .ingredients-section ul');
   ingredientLists.forEach(list => {
-    // Mark this list so the general parser ignores it
-    list.classList.add('hyper-converter-processed');
-
+    // Check if we've already processed this to avoid infinite loops
+    if (list.classList.contains('hyper-converter-processed')) return;
+    
     const listItems = list.querySelectorAll('li');
     listItems.forEach(item => {
-      const fullText = item.textContent.trim();
-      const match = fullText.match(new RegExp(combinedPattern, 'i'));
-      
-      if (match) {
-        const conversion = conversions.find(c => match.groups[c.name] !== undefined);
-        if (conversion) {
-          const valueRegex = new RegExp(conversion.pattern, "i");
-          const valueMatch = match[0].match(valueRegex);
-          if (valueMatch) {
-            const conversionResult = conversion.convert(valueMatch);
-            if (conversionResult) {
-              item.innerHTML = item.innerHTML.replace(match[0], 
-                `<span class="hyper-hover" data-convert="${conversionResult}">${match[0]}</span>`
-              );
-            }
-          }
-        }
-      }
+      // Use the main engine to process the content of each list item
+      findAndReplaceAllMeasurements(item);
     });
+
+    // Mark this list so we don't process it again with the general parser
+    list.classList.add('hyper-converter-processed');
   });
 }
 
 function processTableMeasurements(container) {
   const ddElements = container.querySelectorAll('dl[class*="acl-dl"] dd');
   ddElements.forEach(dd => {
+    // Check if we've already processed this element's parent
+    if (dd.closest('.hyper-converter-processed')) return;
+    
     const text = dd.textContent.trim();
-    if (text.match(/^\d+(\.\d+)?$/)) {
+    if (text.match(/^-?\d+(\.\d+)?$/)) { // Handle optional negative sign
       const numericValue = parseFloat(text);
       const dt = dd.previousElementSibling;
       if (dt && dt.tagName === 'DT') {
         const label = dt.textContent.toLowerCase();
         let unit = null;
-        if (label.includes('in.')) unit = 'in';
+        if (label.includes('in.') || label.includes('inch')) unit = 'in';
         else if (label.includes('cm')) unit = 'cm';
-        // Add more units as needed
-
+        else if (label.includes('ft') || label.includes('feet')) unit = 'ft';
+        else if (label.includes('lb') || label.includes('pound')) unit = 'lb';
+        
         if (unit) {
-          let conversionResult = '';
-          if (unit === 'in') conversionResult = `${numericValue} in = ${(numericValue * 2.54).toFixed(1)} cm`;
-          if (unit === 'cm') conversionResult = `${numericValue} cm = ${(numericValue * 0.393701).toFixed(1)} in`;
+          // Construct the full measurement string and let the main engine handle it
+          const fullMeasurementText = `${numericValue} ${unit}`;
           
-          if (conversionResult) {
-            dd.classList.add('hyper-hover');
-            dd.dataset.convert = conversionResult;
-            // Mark as processed
+          // Create a temporary container to process this text
+          const tempContainer = document.createElement('div');
+          tempContainer.textContent = fullMeasurementText;
+          
+          findAndReplaceAllMeasurements(tempContainer);
+          
+          // If a conversion was made, update the original element
+          if (tempContainer.querySelector('.hyper-hover')) {
+            dd.innerHTML = tempContainer.innerHTML;
+            // Mark the parent so we don't process it again
             dd.closest('dl').classList.add('hyper-converter-processed');
           }
         }
@@ -444,7 +440,7 @@ function findAndReplaceAllMeasurements(container) {
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   let node;
   while (node = walker.nextNode()) {
-    // NEW: Now ignores elements marked by specialized parsers
+    // Now ignores elements marked by specialized parsers
     if (!node.textContent.trim() || node.parentNode.closest('.hyper-hover, .hyper-converter-processed, script, style, noscript, input, textarea, [contenteditable="true"]')) {
       continue;
     }
@@ -507,9 +503,12 @@ function findAndReplaceAllMeasurements(container) {
 // --- INITIALIZATION & EVENT LISTENERS ---
 
 function runAllProcessors(container) {
+  // Specialized parsers run first
   processAllRecipesIngredients(container);
   processTableMeasurements(container);
-  findAndReplaceAllMeasurements(container); // General parser runs last
+  
+  // General parser runs last on whatever is left
+  findAndReplaceAllMeasurements(container); 
 }
 
 document.addEventListener("mouseover", function(e) {
