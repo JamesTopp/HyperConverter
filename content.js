@@ -8,7 +8,7 @@ const conversions = [
   // --- HIGHEST PRIORITY: Multi-part patterns first ---
   {
     name: "feet_and_inches",
-    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:'|ft|feet)\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:"|”|in|inch|inches?)`,
+    pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:'|ft|feet)\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*(?:"|”|inches?|inch|in)`,
     convert: (match) => {
       const feet = parseMeasurementValue(match[1]);
       const inches = parseMeasurementValue(match[2]);
@@ -36,7 +36,7 @@ const conversions = [
   },
   {
     name: "multi_dimensions",
-    pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(centimeters?|cm|inches|inch|in|feet|ft|meters?|m)\\b`,
+    pattern: `(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*[xX]\\s*(-?[\\d\\.\\/½¼¾⅛⅙⅕⅓⅜⅖⅔⅗⅘⅚⅞]+)\\s*(centimeters?|cm|inches?|inch|in|feet|ft|meters?|m)\\b`,
     convert: (match) => {
       console.log("multi_dimensions pattern tested on:", match[0]);
         if (!match || !match[1] || !match[2] || !match[3]) return null;
