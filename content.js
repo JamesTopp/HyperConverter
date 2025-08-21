@@ -89,6 +89,24 @@ const conversions = [
         return `${match[0]} = ${res1}–${res2} ${resUnit}`;
     }
   },
+  {
+  name: "fraction_of_tablespoon",
+  pattern: `(\\d+\\/\\d+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?))\\s+of\\s+an?\\s+(tablespoons?|tbsp?)\\b`,
+  convert: (match) => {
+    const fraction = parseMeasurementValue(match[1]);
+    if (isNaN(fraction)) return null;
+    return `${match[0]} = ${(fraction * 14.787).toFixed(1)} ml`;
+  }
+},
+{
+  name: "fraction_of_teaspoon", 
+  pattern: `(\\d+\\/\\d+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?))\\s+of\\s+an?\\s+(teaspoons?|tsp?)\\b`,
+  convert: (match) => {
+    const fraction = parseMeasurementValue(match[1]);
+    if (isNaN(fraction)) return null;
+    return `${match[0]} = ${(fraction * 4.929).toFixed(1)} ml`;
+  }
+},
 
   // --- SYMBOL-BASED UNITS (Medium Priority) ---
   {
