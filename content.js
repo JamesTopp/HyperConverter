@@ -3,7 +3,7 @@ const unicodeFractions = {
   "⅖": 0.4, "½": 0.5, "⅔": 0.667, "⅗": 0.6, "¾": 0.75, "⅘": 0.8,
   "⅚": 0.833, "⅞": 0.875,
 };
-// --- Conversion Definitions ---
+// --- Conversion Definitions --- 
 const conversions = [
   // --- HIGHEST PRIORITY: Multi-part patterns first ---
   {
