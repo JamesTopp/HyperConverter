@@ -181,6 +181,7 @@ function hideTooltip() {
 
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
+<<<<<<< HEAD
 // --- SPECIALIZED PARSERS (RE-INTEGRATED and CORRECTED) ---
 
 function processAllRecipesIngredients(container) {
@@ -193,33 +194,79 @@ function processAllRecipesIngredients(container) {
       findAndReplaceInElement(item);
     });
     list.classList.add('hyper-converter-processed');
+=======
+// --- SPECIALIZED PARSERS (RE-INTEGRATED) ---
+
+function processAllRecipesIngredients(container) {
+  const ingredientLists = container.querySelectorAll('.mm-recipes-structured-ingredients__list ul');
+  ingredientLists.forEach(list => {
+    // Mark this list so the general parser ignores it
+    list.classList.add('hyper-converter-processed');
+
+    const listItems = list.querySelectorAll('li');
+    listItems.forEach(item => {
+      const fullText = item.textContent.trim();
+      const match = fullText.match(new RegExp(combinedPattern, 'i'));
+      
+      if (match) {
+        const conversion = conversions.find(c => match.groups[c.name] !== undefined);
+        if (conversion) {
+          const valueRegex = new RegExp(conversion.pattern, "i");
+          const valueMatch = match[0].match(valueRegex);
+          if (valueMatch) {
+            const conversionResult = conversion.convert(valueMatch);
+            if (conversionResult) {
+              item.innerHTML = item.innerHTML.replace(match[0], 
+                `<span class="hyper-hover" data-convert="${conversionResult}">${match[0]}</span>`
+              );
+            }
+          }
+        }
+      }
+    });
+>>>>>>> parent of e7a87e5 (update for same things)
   });
 }
 
 function processTableMeasurements(container) {
   const ddElements = container.querySelectorAll('dl[class*="acl-dl"] dd');
   ddElements.forEach(dd => {
+<<<<<<< HEAD
     if (dd.closest('.hyper-converter-processed')) return;
 
     const text = dd.textContent.trim();
     if (text.match(/^-?\d+(\.\d+)?$/)) {
+=======
+    const text = dd.textContent.trim();
+    if (text.match(/^\d+(\.\d+)?$/)) {
+>>>>>>> parent of e7a87e5 (update for same things)
       const numericValue = parseFloat(text);
       const dt = dd.previousElementSibling;
       if (dt && dt.tagName === 'DT') {
         const label = dt.textContent.toLowerCase();
         let unit = null;
-        if (label.includes('in.') || label.includes('inch')) unit = 'in';
+        if (label.includes('in.')) unit = 'in';
         else if (label.includes('cm')) unit = 'cm';
-        else if (label.includes('ft') || label.includes('feet')) unit = 'ft';
-        else if (label.includes('lb') || label.includes('pound')) unit = 'lb';
-        
+        // Add more units as needed
+
         if (unit) {
+<<<<<<< HEAD
           const fullMeasurementText = `${numericValue} ${unit}`;
           const tempDiv = document.createElement('div');
           tempDiv.textContent = fullMeasurementText;
           findAndReplaceInElement(tempDiv);
           if (tempDiv.querySelector('.hyper-hover')) {
             dd.innerHTML = tempDiv.innerHTML;
+=======
+          let conversionResult = '';
+          if (unit === 'in') conversionResult = `${numericValue} in = ${(numericValue * 2.54).toFixed(1)} cm`;
+          if (unit === 'cm') conversionResult = `${numericValue} cm = ${(numericValue * 0.393701).toFixed(1)} in`;
+          
+          if (conversionResult) {
+            dd.classList.add('hyper-hover');
+            dd.dataset.convert = conversionResult;
+            // Mark as processed
+>>>>>>> parent of e7a87e5 (update for same things)
             dd.closest('dl').classList.add('hyper-converter-processed');
           }
         }
@@ -235,7 +282,12 @@ function findAndReplaceInElement(element) {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
   let node;
   while (node = walker.nextNode()) {
+<<<<<<< HEAD
     if (!node.textContent.trim() || node.parentNode.closest('.hyper-hover, script, style, noscript, input, textarea, [contenteditable="true"]')) {
+=======
+    // NEW: Now ignores elements marked by specialized parsers
+    if (!node.textContent.trim() || node.parentNode.closest('.hyper-hover, .hyper-converter-processed, script, style, noscript, input, textarea, [contenteditable="true"]')) {
+>>>>>>> parent of e7a87e5 (update for same things)
       continue;
     }
 
@@ -284,6 +336,7 @@ function findAndReplaceInElement(element) {
 function runAllProcessors(container) {
   processAllRecipesIngredients(container);
   processTableMeasurements(container);
+<<<<<<< HEAD
   // The main parser is now only called within the specialized ones for their specific contexts,
   // or on new nodes that are not part of those special contexts.
   
@@ -295,6 +348,9 @@ function runAllProcessors(container) {
           findAndReplaceInElement(element);
       }
   }
+=======
+  findAndReplaceAllMeasurements(container); // General parser runs last
+>>>>>>> parent of e7a87e5 (update for same things)
 }
 
 document.addEventListener("mouseover", function(e) {
