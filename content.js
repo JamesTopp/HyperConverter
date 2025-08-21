@@ -19,9 +19,9 @@ const conversions = [
       return `${match[0]} = ${totalCm.toFixed(1)} cm`;
     }
   },
-  {
+ {
   name: "multi_dimensions_symbol",
-  pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|")\\s*[xX×]\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|")`,
+  pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|"|")\\s*[xX×]\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|"|")`,
   convert: (match) => {
       if (!match || !match[1] || !match[2]) return null;
       const val1 = parseMeasurementValue(match[1]);
