@@ -23,6 +23,7 @@ const conversions = [
   name: "multi_dimensions_symbol",
   pattern: `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|"|")\\s*[xX×]\\s*(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})(?:"|"|")`,
   convert: (match) => {
+          console.log("multi_dimensions_symbol pattern tested on:", match[0]);
       if (!match || !match[1] || !match[2]) return null;
       const val1 = parseMeasurementValue(match[1]);
       const val2 = parseMeasurementValue(match[2]);
