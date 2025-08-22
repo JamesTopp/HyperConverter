@@ -431,9 +431,6 @@ function getCompiledRegex() {
   
   return COMPILED_REGEX;
 }
-// TEMPORARY DEBUG - Remove after testing
-console.log("Unicode fractions in patterns:", Object.keys(unicodeFractions));
-console.log("Sample pattern test:", Object.keys(unicodeFractions).join('|'));
 
 /**
  * Parses a string that may contain numbers, fractions, or spelled-out words.
@@ -470,6 +467,22 @@ function parseMeasurementValue(valueString) {
     // Articles and fractions (now handled by measurementWords, but kept for safety)
     'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
   };
+  // TEMPORARY DEBUG - Add after unicodeFractions definition
+console.log("🔍 DEBUG: Unicode fractions defined:", !!unicodeFractions);
+console.log("🔍 DEBUG: Keys count:", Object.keys(unicodeFractions).length);
+console.log("🔍 DEBUG: Testing problematic chars:");
+console.log("¼ exists:", unicodeFractions.hasOwnProperty('¼'));
+console.log("⅓ exists:", unicodeFractions.hasOwnProperty('⅓')); 
+console.log("⅔ exists:", unicodeFractions.hasOwnProperty('⅔'));
+
+// temp debug Test the pattern compilation
+const testPattern = Object.keys(unicodeFractions).join('|');
+console.log("🔍 DEBUG: Joined pattern:", testPattern);
+
+// temp debug Test direct regex matching
+const directTest = new RegExp(`(${testPattern})\\s+(cup|cups)`, 'gi');
+console.log("🔍 DEBUG: Direct ¼ test:", "¼ cup".match(directTest));
+console.log("🔍 DEBUG: Direct ⅓ test:", "⅓ cup".match(directTest));
   if (wordToNumber[valStr]) return wordToNumber[valStr];
   
   // Handle complex phrases like "one and a half", "two and a quarter"
