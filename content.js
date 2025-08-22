@@ -360,9 +360,9 @@ const conversions = [
     return `${match[0]} = ${(num / CONVERSION_FACTORS.TSP_TO_ML).toFixed(2)} tsp`;
     },
   },
-  {
+ {
   name: "cups",
-  pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:cups?)\\b`,
+  pattern: `\\b(-?[\\d\\w\\.\\/]+|(${Object.keys(unicodeFractions).join('|')})|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:cups?)\\b`,
   convert: (match) => {
     const num = parseMeasurementValue(match[1]);
     if (isNaN(num)) return null;
@@ -687,6 +687,20 @@ const MAX_CACHE_SIZE = 1000;
 // UNIFIED PROCESSOR - Processes text nodes, split measurements, AllRecipes ingredients, and table measurements in a single DOM traversal for maximum performance
 function processUnified(container) {
   if (!container) return;
+  // Check the current state of Unicode in patterns
+console.log("🔍 CURRENT PATTERN DEBUG:");
+
+// Look at cups pattern specifically
+const cupsConversion = conversions.find(c => c.name === "cups");
+console.log("Cups pattern:", cupsConversion.pattern);
+
+// Check what createUniversalPattern() actually returns
+console.log("createUniversalPattern returns:", createUniversalPattern());
+
+// Check if the Unicode fractions are still getting pipe-wrapped
+const testPattern = createUniversalPattern();
+console.log("Unicode in pattern:", testPattern.includes("⅛|⅙|⅕"));
+console.log("Bad pipe wrapping:", testPattern.includes("|⅛|"));
   processTextNodes(container);
   processSpecialCases(container);
 }
