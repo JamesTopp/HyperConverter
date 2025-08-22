@@ -4,11 +4,23 @@ const unicodeFractions = {
   "⅚": 0.833, "⅞": 0.875,
 };
 
-// Helper function for creating fraction patterns
+// ===== CONSTANTS - Centralized conversion factors =====
+const CONVERSION_FACTORS = {
+  INCH_TO_CM: 2.54,
+  FOOT_TO_M: 0.3048,
+  LB_TO_KG: 0.453592,
+  OZ_TO_G: 28.3495,
+  GALLON_TO_L: 3.78541,
+  CUP_TO_ML: 237,
+  TBSP_TO_ML: 14.787,
+  TSP_TO_ML: 4.929,
+};
+
+// Helper function for creating fraction patterns  
 const createFractionPattern = () => `(\\d+\\/\\d+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third))`;
 const createNumberPattern = () => `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})`;
 
-// --- Conversion Definitions --- 
+// ===== OPTIMIZED CONVERSIONS ARRAY =====
 const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
   {
@@ -20,10 +32,11 @@ const conversions = [
       if (isNaN(feet) || isNaN(inches)) return null;
       
       const totalInches = feet * 12 + inches;
-      const totalCm = totalInches * 2.54;
+      const totalCm = totalInches * CONVERSION_FACTORS.INCH_TO_CM;
       return `${match[0]} = ${totalCm.toFixed(1)} cm`;
     }
   },
+  
   {
     name: "multi_dimensions_symbol", 
     pattern: `${createNumberPattern()}(?:"|″|")\\s*[xX×]\\s*${createNumberPattern()}(?:"|″|")`,
@@ -33,11 +46,12 @@ const conversions = [
         const val2 = parseMeasurementValue(match[2]);
         if (isNaN(val1) || isNaN(val2)) return null;
 
-        const res1 = `${match[1]}" = ${(val1 * 2.54).toFixed(1)} cm`;
-        const res2 = `${match[2]}" = ${(val2 * 2.54).toFixed(1)} cm`;
+        const res1 = `${match[1]}" = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+        const res2 = `${match[2]}" = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
         return `${res1}\n${res2}`;
     }
   },
+  
   {
     name: "multi_dimensions",
     pattern: `${createNumberPattern()}\\s*[xX×]\\s*${createNumberPattern()}\\s*(centimeters?|cm|inches?|inch|in|feet|ft|meters?|m)\\b`,
@@ -50,21 +64,22 @@ const conversions = [
 
         let res1, res2;
         if (unit.startsWith("in")) {
-            res1 = `${match[1]} in = ${(val1 * 2.54).toFixed(1)} cm`;
-            res2 = `${match[2]} in = ${(val2 * 2.54).toFixed(1)} cm`;
+            res1 = `${match[1]} in = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+            res2 = `${match[2]} in = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
         } else if (unit.startsWith("centimeter") || unit.startsWith("cm")) {
-            res1 = `${match[1]} cm = ${(val1 * 0.393701).toFixed(1)} in`;
-            res2 = `${match[2]} cm = ${(val2 * 0.393701).toFixed(1)} in`;
+            res1 = `${match[1]} cm = ${(val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+            res2 = `${match[2]} cm = ${(val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
         } else if (unit.startsWith("feet") || unit.startsWith("ft")) {
-            res1 = `${match[1]} ft = ${(val1 * 0.3048).toFixed(1)} m`;
-            res2 = `${match[2]} ft = ${(val2 * 0.3048).toFixed(1)} m`;
+            res1 = `${match[1]} ft = ${(val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+            res2 = `${match[2]} ft = ${(val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
         } else if (unit.startsWith("meter") || unit.startsWith("m")) {
-            res1 = `${match[1]} m = ${(val1 * 3.28084).toFixed(1)} ft`;
-            res2 = `${match[2]} m = ${(val2 * 3.28084).toFixed(1)} ft`;
+            res1 = `${match[1]} m = ${(val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+            res2 = `${match[2]} m = ${(val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
         } else { return null; }
         return `${res1}\n${res2}`;
     }
   },
+  
   {
     name: "ranges",
     pattern: `${createNumberPattern()}\\s*(?:-|to|–)\\s*${createNumberPattern()}\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|lbs?|pounds?|kg|kilograms?)\\b`,
@@ -77,21 +92,34 @@ const conversions = [
         
         let res1, res2, resUnit;
         if (unit.startsWith("in") || unit === '"' || unit === '"' || unit === '″') {
-            res1 = (val1 * 2.54).toFixed(1); res2 = (val2 * 2.54).toFixed(1); resUnit = 'cm';
+            res1 = (val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+            resUnit = 'cm';
         } else if (unit.startsWith("cm")) {
-            res1 = (val1 * 0.393701).toFixed(1); res2 = (val2 * 0.393701).toFixed(1); resUnit = 'in';
+            res1 = (val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+            resUnit = 'in';
         } else if (unit.startsWith("ft") || unit === "'") {
-            res1 = (val1 * 0.3048).toFixed(1); res2 = (val2 * 0.3048).toFixed(1); resUnit = 'm';
+            res1 = (val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
+            resUnit = 'm';
         } else if (unit.startsWith("m")) {
-            res1 = (val1 * 3.28084).toFixed(1); res2 = (val2 * 3.28084).toFixed(1); resUnit = 'ft';
+            res1 = (val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
+            resUnit = 'ft';
         } else if (unit.startsWith("lb") || unit.startsWith("pound")) {
-            res1 = (val1 * 0.453592).toFixed(1); res2 = (val2 * 0.453592).toFixed(1); resUnit = 'kg';
+            res1 = (val1 * CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
+            resUnit = 'kg';
         } else if (unit.startsWith("kg")) {
-            res1 = (val1 * 2.20462).toFixed(1); res2 = (val2 * 2.20462).toFixed(1); resUnit = 'lb';
+            res1 = (val1 / CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
+            resUnit = 'lb';
         } else { return null; }
         return `${match[0]} = ${res1}–${res2} ${resUnit}`;
     }
   },
+
   // ======= HIGH PRIORITY: "Fraction of" patterns =======
   {
     name: "fraction_of_tablespoon",
@@ -99,63 +127,70 @@ const conversions = [
     convert: (match) => {
       const fraction = parseMeasurementValue(match[1]);
       if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * 14.787).toFixed(1)} ml`;
+      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
     }
   },
+  
   {
     name: "fraction_of_teaspoon", 
     pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(teaspoons?|tsp?)\\b`,
     convert: (match) => {
       const fraction = parseMeasurementValue(match[1]);
       if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * 4.929).toFixed(1)} ml`;
+      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
     }
   },
+  
   {
     name: "fraction_of_cup",
     pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(cups?)\\b`,
     convert: (match) => {
       const fraction = parseMeasurementValue(match[1]);
       if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * 237).toFixed(0)} ml`;
+      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
     }
   },
+  
   {
     name: "fraction_of_inch",
     pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(inches?|inch|in)\\b`,
     convert: (match) => {
       const fraction = parseMeasurementValue(match[1]);
       if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * 2.54).toFixed(2)} cm`;
+      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
     }
   },
+  
   {
     name: "fraction_of_foot",
     pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(feet|foot|ft)\\b`,
     convert: (match) => {
       const fraction = parseMeasurementValue(match[1]);
       if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * 0.3048).toFixed(2)} m`;
+      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
     }
   },
+  
   {
     name: "fraction_of_pound",
     pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(pounds?|lbs?|lb)\\b`,
     convert: (match) => {
       const fraction = parseMeasurementValue(match[1]);
       if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * 0.453592).toFixed(2)} kg`;
+      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
     }
   },
+  
   {
     name: "fraction_of_ounce",
     pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(ounces?|oz)\\b`,
     convert: (match) => {
       const fraction = parseMeasurementValue(match[1]);
       if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * 28.3495).toFixed(2)} g`;
+      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} g`;
     }
   },
+
   // ======= MEDIUM PRIORITY: Symbol-based units =======
   {
     name: "inches_symbol",
@@ -163,145 +198,161 @@ const conversions = [
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 2.54).toFixed(2)} cm`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
     },
   },
+  
   {
     name: "feet_symbol",
     pattern: `${createNumberPattern()}'`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 0.3048).toFixed(2)} m`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
     },
   },
-  // ======= STANDARD PRIORITY: Regular units with enhanced word support =======
+
+  // ======= STANDARD PRIORITY: Regular units (FIXED - No lookbehinds) =======
   {
     name: "inches",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:inches?|inch|in)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:inches?|inch|in)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 2.54).toFixed(2)} cm`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
     },
   },
+  
   {
     name: "feet",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:feet|foot|ft)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:feet|foot|ft)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 0.3048).toFixed(2)} m`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
     },
   },
+  
   {
     name: "centimeters",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:centimeters?|cm)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:centimeters?|cm)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 0.393701).toFixed(2)} in`;
+      return `${match[0]} = ${(num / CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} in`;
     },
   },
+  
   {
     name: "millimeters",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:millimeters?|mm)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:millimeters?|mm)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
       return `${match[0]} = ${(num * 0.0393701).toFixed(2)} in`;
     },
   },
+  
   {
     name: "meters",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])m\\b|meters?)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:meters?|m)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 3.28084).toFixed(2)} ft`;
+      return `${match[0]} = ${(num / CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} ft`;
     },
   },
+  
   {
     name: "pounds",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 0.453592).toFixed(2)} kg`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
     },
   },
+  
   {
     name: "kilograms",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:kilograms?|kg)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:kilograms?|kg)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 2.20462).toFixed(2)} lb`;
+      return `${match[0]} = ${(num / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lb`;
     },
   },
+  
   {
     name: "ounces",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:ounces?|oz)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:ounces?|oz)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 28.3495).toFixed(2)} g`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} g`;
     },
   },
+  
   {
     name: "grams",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])g\\b|grams?)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:grams?|g)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 0.035274).toFixed(2)} oz`;
+      return `${match[0]} = ${(num / CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} oz`;
     },
   },
+  
   {
     name: "gallons",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:gallons?|gal)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:gallons?|gal)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 3.78541).toFixed(2)} L`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} L`;
     },
   },
+  
   {
     name: "liters",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:(?<![a-zA-Z])l\\b|liters?)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:liters?|l)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 0.264172).toFixed(2)} gal`;
+      return `${match[0]} = ${(num / CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} gal`;
     },
   },
+  
   {
     name: "cups",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:cups?)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:cups?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 237).toFixed(0)} ml`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
     },
   },
+  
   {
     name: "tablespoons",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 14.787).toFixed(1)} ml`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
     },
   },
+  
   {
     name: "teaspoons",
-    pattern: `(?<![\\d\\."'])(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 4.929).toFixed(1)} ml`;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
     },
   },
+  
   // ======= TEMPERATURE CONVERSIONS =======
   {
     name: "fahrenheit",
@@ -312,6 +363,7 @@ const conversions = [
       return `${match[0]} = ${(((num - 32) * 5) / 9).toFixed(1)} °C`;
     },
   },
+  
   {
     name: "celsius",
     pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:°\\s?c|degrees?\\s?c|celsius)\\b`,
@@ -322,6 +374,22 @@ const conversions = [
     },
   },
 ];
+
+// ===== PERFORMANCE OPTIMIZATION: Pre-compile the massive regex =====
+let COMPILED_REGEX = null;
+let COMPILED_PATTERN = null;
+
+function getCompiledRegex() {
+  const currentPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
+  
+  // Only recompile if pattern changed
+  if (COMPILED_PATTERN !== currentPattern) {
+    COMPILED_PATTERN = currentPattern;
+    COMPILED_REGEX = new RegExp(currentPattern, "gi");
+  }
+  
+  return COMPILED_REGEX;
+}
 
 /**
  * Parses a string that may contain numbers, fractions, or spelled-out words.
@@ -480,7 +548,7 @@ function processTextNode(textNode) {
   }
   // --- END OF NEW LOGIC ---
 
-  const regex = new RegExp(combinedPattern, "gi");
+  const regex = getCompiledRegex();
   const matches = [...text.matchAll(regex)];
 
   if (matches.length === 0) return;
