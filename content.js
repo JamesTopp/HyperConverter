@@ -15,26 +15,57 @@ const CONVERSION_FACTORS = {
   TSP_TO_ML: 4.929,
 };
 
-// Word based measurement dictionary
+// Enhanced word-based measurement dictionary
 const measurementWords = {
-  // Numbers 0-20
+  // Numbers 0-100
   'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
   'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
   'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
   'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
-  // Fractions and common words
-  'half': 0.5, 'quarter': 0.25, 'third': 0.333, 'eighth': 0.125,
+  'twenty-one': 21, 'twenty-two': 22, 'twenty-three': 23, 'twenty-four': 24, 'twenty-five': 25,
+  'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
+  'hundred': 100, 'thousand': 1000,
+  
+  // Complete fraction system (eighths and sixteenths)
+  'half': 0.5, 'quarter': 0.25, 'third': 0.333, 
+  'eighth': 0.125, 'three-eighths': 0.375, 'five-eighths': 0.625, 'seven-eighths': 0.875,
+  'sixteenth': 0.0625, 'three-sixteenths': 0.1875, 'five-sixteenths': 0.3125, 
+  'seven-sixteenths': 0.4375, 'nine-sixteenths': 0.5625, 'eleven-sixteenths': 0.6875,
+  'thirteen-sixteenths': 0.8125, 'fifteen-sixteenths': 0.9375,
+  
+  // Articles and common words
   'a': 1, 'an': 1, 'couple': 2, 'few': 3,
-  // "Of" phrases
-  'half of': 0.5, 'quarter of': 0.25, 'third of': 0.333
+  
+  // Phrase variants with "a/an"
+  'half a': 0.5, 'half an': 0.5,
+  'quarter a': 0.25, 'quarter an': 0.25, 
+  'third a': 0.333, 'third an': 0.333,
+  'eighth a': 0.125, 'eighth an': 0.125,
+  
+  // Phrase variants with "of a/an"  
+  'half of a': 0.5, 'half of an': 0.5,
+  'quarter of a': 0.25, 'quarter of an': 0.25,
+  'third of a': 0.333, 'third of an': 0.333,
+  'eighth of a': 0.125, 'eighth of an': 0.125,
+  'couple of': 2, 'few of': 3
 };
 
 const createUniversalPattern = () => {
   const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
   const unicodes = Object.keys(unicodeFractions).join('|');
-  const words = Object.keys(measurementWords).join('|');
   
-  return `(${numbers}|${unicodes}|${words})`;
+  // Create word phrases using the measurementWords keys
+  const baseWords = Object.keys(measurementWords).filter(word => 
+    ['half', 'quarter', 'third', 'eighth', 'couple', 'few'].includes(word)
+  ).join('|');
+  
+  // Word phrases with "a/an" and "of a/an" support  
+  const wordPhrases = `(?:(?:${baseWords})\\s+(?:of\\s+)?(?:a|an)\\s+)`;
+  
+  // Single words from measurementWords
+  const singleWords = `(?:${Object.keys(measurementWords).join('|')})`;
+  
+  return `(${numbers}|${unicodes}|${wordPhrases}|${singleWords})`;
 };
 
 const createEnhancedFractionPattern = () => {
