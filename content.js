@@ -47,7 +47,11 @@ const measurementWords = {
   'quarter of a': 0.25, 'quarter of an': 0.25,
   'third of a': 0.333, 'third of an': 0.333,
   'eighth of a': 0.125, 'eighth of an': 0.125,
-  'couple of': 2, 'few of': 3
+  'couple of': 2, 'few of': 3,
+
+  '¼': 0.25,
+  '⅓': 0.333, 
+  '⅔': 0.667
 };
 
 const createUniversalPattern = () => {
