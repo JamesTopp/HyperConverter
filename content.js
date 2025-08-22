@@ -695,32 +695,19 @@ const MAX_CACHE_SIZE = 1000;
 // UNIFIED PROCESSOR - Processes text nodes, split measurements, AllRecipes ingredients, and table measurements in a single DOM traversal for maximum performance
 function processUnified(container) {
   if (!container) return;
-  // TARGETED DEBUG - Add temporarily
-console.log("🔍 UNICODE DEBUG: Testing specific problem characters");
+ // Add this right after the previous debug code
+console.log("🔍 REGEX DEBUG: Inspecting the actual compiled pattern");
+const compiledRegex = getCompiledRegex();
+console.log("Compiled regex source:", compiledRegex.source);
+console.log("First 300 chars of pattern:", compiledRegex.source.substring(0, 300));
 
-// Test the exact fractions that aren't working
-const problemChars = ['¼', '⅓', '⅔'];
-const workingChar = '¾';
+// Check if Unicode chars are in the pattern at all
+const hasUnicode = compiledRegex.source.includes('⅛') || compiledRegex.source.includes('¼');
+console.log("Pattern contains Unicode fractions:", hasUnicode);
 
-problemChars.forEach(char => {
-  const testString = `${char} cup`;
-  const mainMatch = testString.match(getCompiledRegex());
-  const conversion = findConversion(testString);
-  console.log(`${char} cup - Main regex:`, mainMatch, "Conversion:", conversion);
-});
-
-// Test the working one
-const workingTest = `${workingChar} cup`;
-console.log(`${workingChar} cup (working) - Main regex:`, workingTest.match(getCompiledRegex()), "Conversion:", findConversion(workingTest));
-
-// Test if it's a DOM processing issue
-console.log("🔍 DOM TEST: Looking for Unicode fractions in page");
-const pageText = document.body.textContent;
-problemChars.forEach(char => {
-  if (pageText.includes(char)) {
-    console.log(`Found ${char} in page text - should be processed`);
-  }
-});
+// Test a simple regex that should work
+const simpleTest = /⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞/;
+console.log("Simple Unicode test ¼:", "¼".match(simpleTest));
   processTextNodes(container);
   processSpecialCases(container);
 }
