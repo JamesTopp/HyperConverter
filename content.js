@@ -51,21 +51,13 @@ const measurementWords = {
 };
 
 const createUniversalPattern = () => {
-  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
-  const unicodes = `${Object.keys(unicodeFractions).join('|')}`;
-
-  // Create word phrases using the measurementWords keys
-  const baseWords = Object.keys(measurementWords).filter(word => 
-    ['half', 'quarter', 'third', 'eighth', 'couple', 'few'].includes(word)
-  ).join('|');
+  // Create each part separately and combine properly
+  const numberPart = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
+  const unicodePart = `⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞`;  // No extra parentheses!
+  const wordPart = `(?:half|quarter|third|eighth|couple|few)(?:\\s+(?:of\\s+)?(?:a|an))?`;
+  const singleWordPart = `zero|one|two|three|four|five|six|seven|eight|nine|ten`;
   
-  // Word phrases with "a/an" and "of a/an" support  
-  const wordPhrases = `(?:(?:${baseWords})\\s+(?:of\\s+)?(?:a|an)\\s+)`;
-  
-  // Single words from measurementWords
-  const singleWords = `(?:${Object.keys(measurementWords).join('|')})`;
-  
-  return `(${numbers}|${unicodes}|${wordPhrases}|${singleWords})`;
+  return `(${numberPart}|${unicodePart}|${wordPart}|${singleWordPart})`;
 };
 
 const createEnhancedFractionPattern = () => {
@@ -695,19 +687,6 @@ const MAX_CACHE_SIZE = 1000;
 // UNIFIED PROCESSOR - Processes text nodes, split measurements, AllRecipes ingredients, and table measurements in a single DOM traversal for maximum performance
 function processUnified(container) {
   if (!container) return;
- // Add this right after the previous debug code
-console.log("🔍 REGEX DEBUG: Inspecting the actual compiled pattern");
-const compiledRegex = getCompiledRegex();
-console.log("Compiled regex source:", compiledRegex.source);
-console.log("First 300 chars of pattern:", compiledRegex.source.substring(0, 300));
-
-// Check if Unicode chars are in the pattern at all
-const hasUnicode = compiledRegex.source.includes('⅛') || compiledRegex.source.includes('¼');
-console.log("Pattern contains Unicode fractions:", hasUnicode);
-
-// Test a simple regex that should work
-const simpleTest = /⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞/;
-console.log("Simple Unicode test ¼:", "¼".match(simpleTest));
   processTextNodes(container);
   processSpecialCases(container);
 }
