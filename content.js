@@ -692,23 +692,16 @@ const MUTATION_DEBOUNCE_DELAY = 150; // ms
 const CONVERSION_CACHE = new Map();
 const MAX_CACHE_SIZE = 1000;
 
-/**
- * UNIFIED PROCESSOR - Replaces all 4 separate functions
- * Processes text nodes, split measurements, AllRecipes ingredients, and table measurements
- * in a single DOM traversal for maximum performance
- */
+
+// UNIFIED PROCESSOR - Processes text nodes, split measurements, AllRecipes ingredients, and table measurements in a single DOM traversal for maximum performance
 function processUnified(container) {
   if (!container) return;
-  
-  console.log("🚀 Unified processor starting...");
   
   // Step 1: Process regular text nodes (main conversion logic)
   processTextNodes(container);
   
   // Step 2: Process special cases in single query
   processSpecialCases(container);
-  
-  console.log("✅ Unified processing complete");
 }
 
 /**
@@ -833,8 +826,6 @@ function processIngredientItem(element, text) {
   // Check if this contains cooking measurements
   if (!hasCookingMeasurement(text)) return;
   
-  console.log("Processing ingredient:", text);
-  
   // Try to match cooking patterns
   const match = text.match(
     /(½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\d+(?:\/\d+)?)\s+(teaspoon|teaspoons|cup|cups|tablespoon|tablespoons|tsp|tbsp|ounce|ounces|oz)/i
@@ -853,7 +844,6 @@ function processIngredientItem(element, text) {
         measurementText,
         `<span class="hyper-hover" data-convert="${conversion}">${measurementText}</span>`
       );
-      console.log("Successfully highlighted ingredient:", text);
     }
   }
 }
@@ -867,7 +857,6 @@ function processTableMeasurement(element, text) {
   
   if (numberMatch) {
     const numericValue = parseFloat(text);
-    console.log(`📊 Found potential measurement number: ${text}`);
     
     // Look for unit context in nearby elements
     const unitContext = findUnitContext(element);
@@ -876,7 +865,6 @@ function processTableMeasurement(element, text) {
       const conversionResult = convertTableMeasurement(numericValue, unitContext.unit);
       
       if (conversionResult) {
-        console.log(`✅ Converting: ${text} ${unitContext.unit} = ${conversionResult}`);
         
         // Create tooltip for this measurement
         element.classList.add('hyper-hover');
