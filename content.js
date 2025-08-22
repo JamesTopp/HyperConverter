@@ -606,166 +606,373 @@ function processTextNode(textNode) {
     }
   }
 }
-function processAllRecipesIngredients(container) {
-  console.log("🚀 FUNCTION CALLED!");
-  console.log("🥄 Looking for AllRecipes ingredients");
+// ===== PHASE 2: UNIFIED HIGH-PERFORMANCE PROCESSOR =====
 
-  // Try multiple selectors in order of specificity
-  const selectors = [
-    ".mm-recipes-structured-ingredients__list", // AllRecipes specific
-    'ul[class*="ingredient"]', // General ingredient lists
-    'ul[class*="recipe"]', // Recipe-related lists
-    ".ingredients ul", // Ingredients section
-    ".recipe-ingredients ul", // Recipe ingredients section
-    "ul", // Fallback to any ul
-  ];
+// Debouncing for mutation observer
+let mutationDebounceTimer = null;
+const MUTATION_DEBOUNCE_DELAY = 150; // ms
 
-  let foundIngredients = false;
+// Cache for performance
+const CONVERSION_CACHE = new Map();
+const MAX_CACHE_SIZE = 1000;
 
-  for (const selector of selectors) {
-    const lists = container.querySelectorAll(selector);
+/**
+ * UNIFIED PROCESSOR - Replaces all 4 separate functions
+ * Processes text nodes, split measurements, AllRecipes ingredients, and table measurements
+ * in a single DOM traversal for maximum performance
+ */
+function processUnified(container) {
+  if (!container) return;
+  
+  console.log("🚀 Unified processor starting...");
+  
+  // Step 1: Process regular text nodes (main conversion logic)
+  processTextNodes(container);
+  
+  // Step 2: Process special cases in single query
+  processSpecialCases(container);
+  
+  console.log("✅ Unified processing complete");
+}
 
-    for (const list of lists) {
-      const listItems = list.querySelectorAll("li");
-      let hasIngredients = false;
-
-      // Check if this list actually contains cooking measurements
-      listItems.forEach((item) => {
-        const text = item.textContent.trim();
-        if (
-          text.match(
-            /(\d+|½|¼|¾|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i
-          )
-        ) {
-          hasIngredients = true;
+/**
+ * Process all text nodes efficiently
+ */
+function processTextNodes(container) {
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        if (node.parentNode?.closest(".hyper-hover") ||
+            node.parentNode?.closest("script, style, noscript, input, textarea") ||
+            node.parentNode?.closest("#hyper-converter-tooltip") ||
+            node.parentNode?.closest("[contenteditable='true']")) {
+          return NodeFilter.FILTER_REJECT;
         }
-      });
-
-      if (hasIngredients) {
-        console.log(`Found ingredients using selector: ${selector}`);
-        listItems.forEach((item) => {
-          const text = item.textContent.trim();
-          if (
-            text.match(
-              /(\d+|½|¼|¾|[ⅸ⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i
-            )
-          ) {
-            console.log("Processing ingredient:", text);
-            
-            // AllRecipes splits ingredients into separate spans, so reconstruct the full text
-            const fullText = item.textContent.trim();
-            console.log("Full reconstructed text:", fullText);
-
-            // Check if this matches our patterns when put together
-            if (
-              fullText.match(
-                /(\d+|½|¼|¾|[⅛⅙⅕¼⅓⅜⅖⅔⅗¾⅘⅚⅞])\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs|kilogram|kilograms|kg|kgs|gram|grams|g|liter|liters|litre|litres|l|milliliter|milliliters|millilitre|millilitres|ml|gallon|gallons|gal|pint|pints|pt|quart|quarts|qt|fluid ounce|fluid ounces|fl oz|floz)/i
-              )
-            ) {
-              console.log("Full text matches pattern, processing whole ingredient");
-
-              // Updated regex pattern to include ounces
-              const match = fullText.match(
-                /(½|¼|¾|⅛|⅙⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\d+(?:\/\d+)?)\s+(teaspoon|teaspoons|cup|cups|tablespoon|tablespoons|tsp|tbsp|ounce|ounces|oz)/i
-              );
-              
-              if (match) {
-                const value = match[1];
-                const unit = match[2];
-
-                // Unicode fractions lookup table
-                const unicodeFractions = {
-                  "½": 0.5, "¼": 0.25, "¾": 0.75, "⅛": 0.125, "⅙": 0.167,
-                  "⅕": 0.2, "⅓": 0.333, "⅜": 0.375, "⅖": 0.4, "⅔": 0.667,
-                  "⅗": 0.6, "⅘": 0.8, "⅚": 0.833, "⅞": 0.875,
-                };
-
-                // Find the right conversion
-                let conversion = "";
-                let numericValue = unicodeFractions[value] || parseFloat(value);
-                
-                if (unit.includes("teaspoon") || unit === "tsp") {
-                  conversion = `${value} ${unit} = ${(numericValue * 5).toFixed(1)} ml`;
-                } else if (unit.includes("cup")) {
-                  conversion = `${value} ${unit} = ${(numericValue * 237).toFixed(0)} ml`;
-                } else if (unit.includes("tablespoon") || unit === "tbsp") {
-                  conversion = `${value} ${unit} = ${(numericValue * 15).toFixed(1)} ml`;
-                } else if (unit.includes("ounce") || unit === "oz") {
-                  // FIXED: Added ounces conversion!
-                  conversion = `${value} ${unit} = ${(numericValue / 0.035274).toFixed(1)} g`;
-                }
-
-                if (conversion) {
-                  const measurementText = `${value} ${unit}`;
-                  item.innerHTML = fullText.replace(
-                    measurementText,
-                    `<span class="hyper-hover" data-convert="${conversion}">${measurementText}</span>`
-                  );
-                  console.log("Successfully highlighted ingredient:", fullText);
-                }
-              }
-            }
-          }
-        });
-        foundIngredients = true;
-        break; // Found ingredients, stop looking
+        return NodeFilter.FILTER_ACCEPT;
       }
     }
+  );
 
-    if (foundIngredients) break; // Found ingredients, stop trying selectors
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    textNodes.push(node);
   }
 
-  if (!foundIngredients) {
-    console.log("No ingredient lists found with cooking measurements");
+  // Process all text nodes
+  textNodes.forEach(processTextNode);
+}
+
+/**
+ * Process special cases in a single DOM query
+ * Combines: split measurements, AllRecipes ingredients, table measurements
+ */
+function processSpecialCases(container) {
+  // Single query for all special elements we need to check
+  const specialElements = container.querySelectorAll(`
+    em, strong, b, i,
+    ul li,
+    dl[class*="acl-dl"] dd,
+    .mm-recipes-structured-ingredients__list li,
+    ul[class*="ingredient"] li,
+    ul[class*="recipe"] li,
+    .ingredients ul li,
+    .recipe-ingredients ul li
+  `);
+  
+  const processedElements = new Set(); // Avoid double-processing
+  
+  specialElements.forEach(element => {
+    if (processedElements.has(element)) return;
+    processedElements.add(element);
+    
+    const tagName = element.tagName.toLowerCase();
+    const text = element.textContent.trim();
+    
+    // SPLIT MEASUREMENTS (em, strong, b, i tags)
+    if (['em', 'strong', 'b', 'i'].includes(tagName)) {
+      processSplitMeasurement(element, text);
+    }
+    
+    // ALLRECIPES INGREDIENTS (li tags)
+    else if (tagName === 'li' && text) {
+      processIngredientItem(element, text);
+    }
+    
+    // TABLE MEASUREMENTS (dd tags)
+    else if (tagName === 'dd' && element.closest('dl[class*="acl-dl"]')) {
+      processTableMeasurement(element, text);
+    }
+  });
+}
+
+/**
+ * Process split measurements (like "1/64 <em>inch</em>")
+ */
+function processSplitMeasurement(element, unitText) {
+  // Check if this element contains a unit word
+  if (!isUnitWord(unitText)) return;
+  
+  // Look at the text immediately before this element
+  const prevNode = element.previousSibling;
+  if (prevNode && prevNode.nodeType === 3) { // text node
+    const prevText = prevNode.textContent;
+    
+    // Check if previous text ends with a fraction or number
+    const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)\s*$/);
+    if (match) {
+      const fullMeasurement = match[1] + ' ' + unitText;
+      
+      // Find conversion using cached regex
+      const conversionResult = findConversion(fullMeasurement);
+      
+      if (conversionResult) {
+        // Add highlighting to the unit element
+        if (!element.classList.contains('hyper-hover')) {
+          element.classList.add('hyper-hover');
+          element.dataset.convert = `${fullMeasurement} = ${conversionResult}`;
+        }
+      }
+    }
   }
 }
 
-// Working version for Home Depot table-based measurements
-function processTableMeasurements(container) {
-  console.log("🏠 Looking for table-based measurements (Home Depot style)");
+/**
+ * Process ingredient items (AllRecipes and general cooking sites)
+ */
+function processIngredientItem(element, text) {
+  // Check if this contains cooking measurements
+  if (!hasCookingMeasurement(text)) return;
   
-  // Target DD elements in Home Depot's definition lists
-  const ddElements = container.querySelectorAll('dl[class*="acl-dl"] dd');
-  console.log(`Found ${ddElements.length} DD elements in definition lists`);
+  console.log("Processing ingredient:", text);
   
-  ddElements.forEach(dd => {
-    const text = dd.textContent.trim();
+  // Try to match cooking patterns
+  const match = text.match(
+    /(½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\d+(?:\/\d+)?)\s+(teaspoon|teaspoons|cup|cups|tablespoon|tablespoons|tsp|tbsp|ounce|ounces|oz)/i
+  );
+  
+  if (match) {
+    const value = match[1];
+    const unit = match[2];
     
-    // Check if this DD contains only a number (like "22.24", "47.24", etc.)
-    const numberMatch = text.match(/^\d+(\.\d+)?$/);
+    // Get conversion using centralized factors
+    const conversion = getCookingConversion(value, unit);
     
-    if (numberMatch) {
-      const numericValue = parseFloat(text);
-      console.log(`📊 Found potential measurement number: ${text}`);
+    if (conversion) {
+      const measurementText = `${value} ${unit}`;
+      element.innerHTML = text.replace(
+        measurementText,
+        `<span class="hyper-hover" data-convert="${conversion}">${measurementText}</span>`
+      );
+      console.log("Successfully highlighted ingredient:", text);
+    }
+  }
+}
+
+/**
+ * Process table measurements (Home Depot style)
+ */
+function processTableMeasurement(element, text) {
+  // Check if this DD contains only a number
+  const numberMatch = text.match(/^\d+(\.\d+)?$/);
+  
+  if (numberMatch) {
+    const numericValue = parseFloat(text);
+    console.log(`📊 Found potential measurement number: ${text}`);
+    
+    // Look for unit context in nearby elements
+    const unitContext = findUnitContext(element);
+    
+    if (unitContext) {
+      const conversionResult = convertTableMeasurement(numericValue, unitContext.unit);
       
-      // Look for unit context in nearby elements
-      const unitContext = findUnitContext(dd);
-      
-      if (unitContext) {
-        const conversionResult = convertTableMeasurement(numericValue, unitContext.unit);
+      if (conversionResult) {
+        console.log(`✅ Converting: ${text} ${unitContext.unit} = ${conversionResult}`);
         
-        if (conversionResult) {
-          console.log(`✅ Converting: ${text} ${unitContext.unit} = ${conversionResult}`);
-          
-          // Create tooltip for this measurement
-          dd.classList.add('hyper-hover');
-          dd.dataset.convert = `${text} ${unitContext.unit} = ${conversionResult}`;
-          
-          // Add our CSS styling if not already added
-          if (!document.querySelector('#hyper-converter-table-styles')) {
-            const style = document.createElement('style');
-            style.id = 'hyper-converter-table-styles';
-            style.textContent = `
-            dd.hyper-hover {
-              cursor: help !important;
-            }
-          `;
-            document.head.appendChild(style);
-          }
+        // Create tooltip for this measurement
+        element.classList.add('hyper-hover');
+        element.dataset.convert = `${text} ${unitContext.unit} = ${conversionResult}`;
+        
+        // Add CSS styling if not already added
+        if (!document.querySelector('#hyper-converter-table-styles')) {
+          const style = document.createElement('style');
+          style.id = 'hyper-converter-table-styles';
+          style.textContent = `dd.hyper-hover { cursor: help !important; }`;
+          document.head.appendChild(style);
         }
       }
     }
-  });
+  }
+}
+
+// ===== HELPER FUNCTIONS =====
+
+/**
+ * Check if text is a unit word (cached for performance)
+ */
+let UNIT_PATTERN = null;
+function isUnitWord(text) {
+  if (!UNIT_PATTERN) {
+    const unitWords = [
+      'inch', 'inches', 'ft', 'feet', 'cm', 'centimeters', 'centimetres',
+      'mm', 'millimeters', 'millimetres', 'm', 'meters', 'metres',
+      'kg', 'kilograms', 'kgs', 'g', 'grams', 'l', 'liters', 'litres',
+      'lb', 'lbs', 'pounds', 'oz', 'ounce', 'ounces', 'gal', 'gallons',
+      'cup', 'cups', 'tbsp', 'tablespoons', 'tsp', 'teaspoons', 'teaspoon',
+      'fahrenheit', 'celsius'
+    ];
+    UNIT_PATTERN = new RegExp(`^(${unitWords.join('|')})$`, 'i');
+  }
+  return UNIT_PATTERN.test(text);
+}
+
+/**
+ * Check if text contains cooking measurements
+ */
+function hasCookingMeasurement(text) {
+  return /(\d+|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs)/i.test(text);
+}
+
+/**
+ * Find conversion with caching
+ */
+function findConversion(text) {
+  if (CONVERSION_CACHE.has(text)) {
+    return CONVERSION_CACHE.get(text);
+  }
+  
+  // Try each conversion pattern
+  for (const conversion of conversions) {
+    const testRegex = new RegExp(conversion.pattern, "gi");
+    const testMatch = testRegex.exec(text);
+    if (testMatch) {
+      const result = conversion.convert(testMatch);
+      
+      // Cache the result
+      if (CONVERSION_CACHE.size >= MAX_CACHE_SIZE) {
+        CONVERSION_CACHE.clear(); // Simple cache invalidation
+      }
+      CONVERSION_CACHE.set(text, result);
+      
+      return result;
+    }
+  }
+  return null;
+}
+
+/**
+ * Get cooking conversion using centralized factors
+ */
+function getCookingConversion(value, unit) {
+  const numericValue = parseMeasurementValue(value);
+  if (isNaN(numericValue)) return null;
+  
+  if (unit.includes("teaspoon") || unit === "tsp") {
+    return `${value} ${unit} = ${(numericValue * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
+  } else if (unit.includes("cup")) {
+    return `${value} ${unit} = ${(numericValue * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
+  } else if (unit.includes("tablespoon") || unit === "tbsp") {
+    return `${value} ${unit} = ${(numericValue * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
+  } else if (unit.includes("ounce") || unit === "oz") {
+    return `${value} ${unit} = ${(numericValue * CONVERSION_FACTORS.OZ_TO_G).toFixed(1)} g`;
+  }
+  return null;
+}
+
+// ===== DEBOUNCED MUTATION OBSERVER =====
+
+/**
+ * Debounced processing for mutations
+ */
+function debouncedProcess(container) {
+  if (mutationDebounceTimer) {
+    clearTimeout(mutationDebounceTimer);
+  }
+  
+  mutationDebounceTimer = setTimeout(() => {
+    processUnified(container);
+    mutationDebounceTimer = null;
+  }, MUTATION_DEBOUNCE_DELAY);
+}
+
+// ===== KEEP EXISTING HELPER FUNCTIONS =====
+// (findUnitContext, extractUnit, convertTableMeasurement stay the same)
+
+// Helper function to find unit context near a number element
+function findUnitContext(numberElement) {
+  // Check previous sibling (DT element might contain the label/unit)
+  const prevSibling = numberElement.previousElementSibling;
+  if (prevSibling && prevSibling.tagName === 'DT') {
+    const unit = extractUnit(prevSibling.textContent);
+    if (unit) return { unit, source: 'previous-dt' };
+  }
+  
+  // Check parent DL for headers or patterns
+  const dl = numberElement.closest('dl');
+  if (dl) {
+    const allDTs = dl.querySelectorAll('dt');
+    for (const dt of allDTs) {
+      const unit = extractUnit(dt.textContent);
+      if (unit) return { unit, source: 'dl-header' };
+    }
+  }
+  
+  // Check nearby text for unit indicators
+  const siblings = Array.from(numberElement.parentElement.children);
+  for (const sibling of siblings) {
+    const unit = extractUnit(sibling.textContent);
+    if (unit) return { unit, source: 'sibling' };
+  }
+  
+  return null;
+}
+
+// Helper function to extract unit from text
+function extractUnit(text) {
+  const lowerText = text.toLowerCase();
+  
+  if (lowerText.includes('inch') || lowerText.includes('in.') || lowerText.includes('"')) {
+    return 'inches';
+  }
+  if (lowerText.includes('feet') || lowerText.includes('ft.') || lowerText.includes("'")) {
+    return 'feet';
+  }
+  if (lowerText.includes('cm') || lowerText.includes('centimeter')) {
+    return 'cm';
+  }
+  if (lowerText.includes('meter') || lowerText.includes('metre')) {
+    return 'meters';
+  }
+  if (lowerText.includes('lb') || lowerText.includes('pound')) {
+    return 'pounds';
+  }
+  if (lowerText.includes('kg') || lowerText.includes('kilogram')) {
+    return 'kg';
+  }
+  
+  return null;
+}
+
+// Helper function to convert table measurements
+function convertTableMeasurement(value, unit) {
+  switch (unit) {
+    case 'inches':
+      return `${(value * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
+    case 'feet':
+      return `${(value * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
+    case 'cm':
+      return `${(value / CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} inches`;
+    case 'meters':
+      return `${(value / CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} feet`;
+    case 'pounds':
+      return `${(value * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
+    case 'kg':
+      return `${(value / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
+    default:
+      return null;
+  }
 }
 
 // Helper function to find unit context near a number element
@@ -845,136 +1052,6 @@ function convertTableMeasurement(value, unit) {
   }
 }
 
-// Listen for clicks on accordion/dropdown triggers (add this after the processTableMeasurements function)
-document.addEventListener('click', function(e) {
-  const target = e.target;
-  
-  // Check if clicked element might expand content (Home Depot specific + general)
-  if (target.matches('[class*="accordion"], [class*="dropdown"], [class*="expand"], [class*="toggle"], [class*="acl-accordion"], .acl-accordion-trigger, [aria-expanded]') ||
-      target.closest('[class*="accordion"], [class*="dropdown"], [class*="expand"], [class*="toggle"]')) {
-    
-    console.log("🏠 Accordion/dropdown clicked, will re-scan in 1000ms");
-    
-    // Re-scan after content loads (try multiple delays)
-    setTimeout(() => {
-      console.log("🏠 Re-scanning after accordion click...");
-      processTableMeasurements(document.body);
-    }, 500);
-    
-    setTimeout(() => {
-      console.log("🏠 Second re-scan after accordion click...");
-      processTableMeasurements(document.body);
-    }, 1000);
-    
-    setTimeout(() => {
-      console.log("🏠 Final re-scan after accordion click...");
-      processTableMeasurements(document.body);
-    }, 2000);
-  }
-}, true);
-
-// Simple fix for split measurements (like "1/64 <em>inch</em>")
-function processSplitMeasurements(container) {
-  if (!container) return;
-  
-  // Build unit pattern from existing conversions to cover all units
-  const unitWords = [];
-  conversions.forEach(conv => {
-    const pattern = conv.pattern;
-    // Extract unit words from patterns
-    if (pattern.includes('inch')) unitWords.push('inch', 'inches');
-    if (pattern.includes('feet')) unitWords.push('ft', 'feet');
-    if (pattern.includes('cm')) unitWords.push('cm', 'centimeters', 'centimetres');
-    if (pattern.includes('mm')) unitWords.push('mm', 'millimeters', 'millimetres');
-    if (pattern.includes('meters')) unitWords.push('m', 'meters', 'metres');
-    if (pattern.includes('kg')) unitWords.push('kg', 'kilograms', 'kgs');
-    if (pattern.includes('grams')) unitWords.push('g', 'grams');
-    if (pattern.includes('liters')) unitWords.push('l', 'liters', 'litres');
-    if (pattern.includes('pounds')) unitWords.push('lb', 'lbs', 'pounds');
-    if (pattern.includes('ounce')) unitWords.push('oz', 'ounce', 'ounces');
-    if (pattern.includes('gallons')) unitWords.push('gal', 'gallons');
-    if (pattern.includes('cup')) unitWords.push('cup', 'cups');
-    if (pattern.includes('tbsp')) unitWords.push('tbsp', 'tablespoons');
-    if (pattern.includes('tsp')) unitWords.push('tsp', 'teaspoons', 'teaspoon');
-    if (pattern.includes('fahrenheit')) unitWords.push('fahrenheit');
-    if (pattern.includes('celsius')) unitWords.push('celsius');
-  });
-  
-  const unitPattern = new RegExp(`^(${[...new Set(unitWords)].join('|')})$`, 'i');
-  
-  // Look for fraction patterns followed by formatted units
-  const elements = container.querySelectorAll('em, strong, b, i');
-  
-  elements.forEach(element => {
-    const unitText = element.textContent.trim();
-    
-    // Check if this element contains a unit word
-    if (unitPattern.test(unitText)) {
-      
-      // Look at the text immediately before this element
-      const prevNode = element.previousSibling;
-      if (prevNode && prevNode.nodeType === 3) { // text node
-        const prevText = prevNode.textContent;
-        
-        // Check if previous text ends with a fraction or number
-        const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)\s*$/);
-        if (match) {
-          const fullMeasurement = match[1] + ' ' + unitText;
-          
-          // Find the right conversion first
-          let conversionResult = null;
-          for (const conversion of conversions) {
-            const testRegex = new RegExp(conversion.pattern, "gi");
-            const testMatch = testRegex.exec(fullMeasurement);
-            if (testMatch) {
-              const numericValue = parseFloat(testMatch[1]);
-              if (!isNaN(numericValue)) {
-                conversionResult = conversion.convert(numericValue);
-                break;
-              }
-            }
-          }
-          
-          if (conversionResult) {
-            // Just add highlighting to the unit element (simpler approach)
-            if (!element.classList.contains('hyper-hover')) {
-              element.classList.add('hyper-hover');
-              element.dataset.convert = `${fullMeasurement} = ${conversionResult}`;
-            }
-          }
-        }
-      }
-    }
-  });
-}
-
-function processContainer(container) {
-  if (!container) return;
-  
-  const walker = document.createTreeWalker(
-    container,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode: function(node) {
-        if (node.parentNode?.closest(".hyper-hover") ||
-            node.parentNode?.closest("script, style, noscript") ||
-            node.parentNode?.closest("#hyper-converter-tooltip")) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    }
-  );
-
-  const textNodes = [];
-  let node;
-  while (node = walker.nextNode()) {
-    textNodes.push(node);
-  }
-
-  textNodes.forEach(processTextNode);
-}
-
 document.addEventListener("mouseover", function(e) {
   let target = e.target;
   
@@ -1020,22 +1097,18 @@ document.addEventListener("mouseout", function(e) {
 chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
   const isEnabled = result.enabled !== false && !result.globallyDisabled;
   
-  if (isEnabled) {
-    processContainer(document.body);
-    processSplitMeasurements(document.body);
-    processAllRecipesIngredients(document.body);
-    processTableMeasurements(document.body);
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) {
-            processContainer(node);
-            processSplitMeasurements(node);
-            processTableMeasurements(node);
-          }
-        });
+ if (isEnabled) {
+  processUnified(document.body);
+  
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === 1) {
+          debouncedProcess(node);
+        }
       });
     });
+  });
 
     observer.observe(document.body, {
       childList: true,
