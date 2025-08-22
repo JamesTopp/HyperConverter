@@ -591,10 +591,66 @@ if (previousTextNode) {
   }
 }
 
-  const regex = getCompiledRegex();
-  const matches = [...text.matchAll(regex)];
+  // UNICODE FRACTION BYPASS - Handle Unicode fractions separately
+function handleUnicodeFractions(text) {
+  const unicodePattern = /(⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞)\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tsp|tbsp)/gi;
+  const matches = [...text.matchAll(unicodePattern)];
+  
+  return matches.map(match => ({
+    fullMatch: match[0],
+    value: match[1],
+    unit: match[2],
+    index: match.index
+  }));
+}
 
-  if (matches.length === 0) return;
+// Try Unicode fractions first
+const unicodeMatches = handleUnicodeFractions(text);
+if (unicodeMatches.length > 0) {
+  console.log("🎯 Unicode matches found:", unicodeMatches);
+  
+  // Process the first Unicode match
+  const match = unicodeMatches[0];
+  const conversion = getCookingConversion(match.value, match.unit);
+  
+  if (conversion) {
+    const span = document.createElement("span");
+    span.className = "hyper-hover";
+    span.textContent = stitched ? textNode.textContent : match.fullMatch;
+    span.dataset.convert = conversion;
+    
+    const fragment = document.createDocumentFragment();
+    
+    // Add text before match
+    if (match.index > 0) {
+      fragment.appendChild(document.createTextNode(text.slice(0, match.index)));
+    }
+    
+    // Add the conversion span
+    fragment.appendChild(span);
+    
+    // Add text after match
+    const afterIndex = match.index + match.fullMatch.length;
+    if (afterIndex < text.length) {
+      fragment.appendChild(document.createTextNode(text.slice(afterIndex)));
+    }
+    
+    // Replace the text node
+    if (stitched && previousTextNode) {
+      previousTextNode.parentNode.removeChild(previousTextNode);
+      parent.replaceChild(fragment, textNode);
+    } else {
+      parent.replaceChild(fragment, textNode);
+    }
+    return; // Exit early - we handled it
+  }
+}
+
+// Fall back to normal regex processing
+const regex = getCompiledRegex();
+const matches = [...text.matchAll(regex)];
+
+if (matches.length === 0) return;
 
   const fragment = document.createDocumentFragment();
   let lastIndex = 0;
