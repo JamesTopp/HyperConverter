@@ -4,7 +4,6 @@ const unicodeFractions = {
   "⅚": 0.833, "⅞": 0.875,
 };
 
-// ===== CONSTANTS - Centralized conversion factors =====
 const CONVERSION_FACTORS = {
   INCH_TO_CM: 2.54,
   FOOT_TO_M: 0.3048,
@@ -16,11 +15,41 @@ const CONVERSION_FACTORS = {
   TSP_TO_ML: 4.929,
 };
 
-// Helper function for creating fraction patterns  
-const createFractionPattern = () => `(\\d+\\/\\d+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third))`;
-const createNumberPattern = () => `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})`;
+// Word based measurement dictionary
+const measurementWords = {
+  // Numbers 0-20
+  'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+  'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+  'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+  'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+  // Fractions and common words
+  'half': 0.5, 'quarter': 0.25, 'third': 0.333, 'eighth': 0.125,
+  'a': 1, 'an': 1, 'couple': 2, 'few': 3,
+  // "Of" phrases
+  'half of': 0.5, 'quarter of': 0.25, 'third of': 0.333
+};
 
-// ===== OPTIMIZED CONVERSIONS ARRAY =====
+const createUniversalPattern = () => {
+  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
+  const unicodes = Object.keys(unicodeFractions).join('|');
+  const words = Object.keys(measurementWords).join('|');
+  
+  return `(${numbers}|${unicodes}|${words})`;
+};
+
+const createEnhancedFractionPattern = () => {
+  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
+  const unicodes = Object.keys(unicodeFractions).join('|');
+  const words = `(?:${Object.keys(measurementWords).join('|')})`;
+  const wordPhrases = `(?:${words}(?:\\s+of)?)`;
+  
+  return `(${numbers}|${unicodes}|${wordPhrases})`;
+};
+
+// Helper function for creating fraction patterns  
+const createFractionPattern = () => createEnhancedFractionPattern();
+const createNumberPattern = () => createUniversalPattern();
+
 const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
   {
@@ -380,10 +409,19 @@ function getCompiledRegex() {
 function parseMeasurementValue(valueString) {
   const valStr = String(valueString).toLowerCase().trim();
 
-  // The unicodeFractions object is global, so we can directly use it here.
+  // Check measurement words first (including "of" phrases)
+  if (measurementWords[valStr]) return measurementWords[valStr];
+  
+  // Handle "of" phrases like "half of a", "quarter of an"
+  if (valStr.includes(' of ')) {
+    const cleanStr = valStr.replace(/ of (?:a|an)\s*$/, '').replace(/ of$/, '');
+    if (measurementWords[cleanStr]) return measurementWords[cleanStr];
+  }
+
+  // Unicode fractions
   if (unicodeFractions[valStr]) return unicodeFractions[valStr];
 
-  // Spelled-Out Dictionary
+  // Legacy word-to-number dictionary (keeping for backwards compatibility)
   const wordToNumber = {
     // Numbers 0-19
     'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
@@ -395,13 +433,20 @@ function parseMeasurementValue(valueString) {
     'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
     // Large scale numbers
     'hundred': 100, 'thousand': 1000, 'million': 1000000, 'billion': 1000000000,
-    // Articles and fractions
+    // Articles and fractions (now handled by measurementWords, but kept for safety)
     'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
   };
   if (wordToNumber[valStr]) return wordToNumber[valStr];
   
-  // Handle "one and a half" patterns
-  if (valStr.match(/one and a half/)) return 1.5;
+  // Handle complex phrases like "one and a half", "two and a quarter"
+  const complexMatch = valStr.match(/^(\w+)\s+and\s+(?:a\s+)?(\w+)$/);
+  if (complexMatch) {
+    const first = measurementWords[complexMatch[1]] || wordToNumber[complexMatch[1]];
+    const second = measurementWords[complexMatch[2]] || wordToNumber[complexMatch[2]];
+    if (!isNaN(first) && !isNaN(second)) {
+      return first + second;
+    }
+  }
   
   // Handle text fractions like "1/3"
   if (valStr.includes("/")) {
