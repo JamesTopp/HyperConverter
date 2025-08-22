@@ -467,25 +467,21 @@ function parseMeasurementValue(valueString) {
     // Articles and fractions (now handled by measurementWords, but kept for safety)
     'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
   };
-  // TEMPORARY DEBUG - Testing main compiled regex
-console.log("🔍 MAIN REGEX DEBUG: Testing main compiled regex:");
-const mainRegex = getCompiledRegex();
-console.log("🔍 MAIN REGEX DEBUG: Main regex exists:", !!mainRegex);
+  // TEMPORARY DEBUG - Inspect the compiled pattern
+console.log("🔍 PATTERN DEBUG: Inspecting compilation:");
+const rawPatterns = conversions.map(c => c.pattern);
+console.log("🔍 First few raw patterns:", rawPatterns.slice(0, 3));
 
-// Test if main regex catches our problem fractions
-const testText1 = "¼ cup";
-const testText2 = "⅓ cup"; 
-const testText3 = "½ cup"; // This one works
+const namedPatterns = conversions.map(c => `(?<${c.name}>${c.pattern})`);
+console.log("🔍 First few named patterns:", namedPatterns.slice(0, 3));
 
-console.log("🔍 MAIN REGEX DEBUG: ¼ cup:", testText1.match(mainRegex));
-console.log("🔍 MAIN REGEX DEBUG: ⅓ cup:", testText2.match(mainRegex));
-console.log("🔍 MAIN REGEX DEBUG: ½ cup:", testText3.match(mainRegex));
+const fullPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
+console.log("🔍 Full compiled pattern (first 200 chars):", fullPattern.substring(0, 200));
 
-// temp debug end heck if specific conversions work
-console.log("🔍 CONVERSION DEBUG: Testing specific conversions:");
-console.log("¼ cup conversion:", findConversion("¼ cup"));
-console.log("⅓ cup conversion:", findConversion("⅓ cup"));
-console.log("½ cup conversion:", findConversion("½ cup"));
+// Test the pattern string directly
+console.log("🔍 Testing pattern string directly:");
+const testRegex2 = new RegExp(fullPattern, "gi");
+console.log("🔍 Direct pattern test ¼ cup:", "¼ cup".match(testRegex2));
   
   // Handle complex phrases like "one and a half", "two and a quarter"
   const complexMatch = valStr.match(/^(\w+)\s+and\s+(?:a\s+)?(\w+)$/);
