@@ -322,7 +322,15 @@ const conversions = [
       return `${match[0]} = ${(num / CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} gal`;
     },
   },
-  
+  {
+  name: "milliliters",
+  pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:milliliters?|ml)\\b(?![a-zA-Z])`,
+  convert: (match) => {
+    const num = parseMeasurementValue(match[1]);
+    if (isNaN(num)) return null;
+    return `${match[0]} = ${(num * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} tsp`;
+  },
+  },
   {
     name: "cups",
     pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:cups?)\\b`,
