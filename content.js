@@ -467,23 +467,25 @@ function parseMeasurementValue(valueString) {
     // Articles and fractions (now handled by measurementWords, but kept for safety)
     'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
   };
-  // TEMPORARY DEBUG - Add after unicodeFractions definition
-console.log("🔍 DEBUG: Unicode fractions defined:", !!unicodeFractions);
-console.log("🔍 DEBUG: Keys count:", Object.keys(unicodeFractions).length);
-console.log("🔍 DEBUG: Testing problematic chars:");
-console.log("¼ exists:", unicodeFractions.hasOwnProperty('¼'));
-console.log("⅓ exists:", unicodeFractions.hasOwnProperty('⅓')); 
-console.log("⅔ exists:", unicodeFractions.hasOwnProperty('⅔'));
+  // TEMPORARY DEBUG - Testing main compiled regex
+console.log("🔍 MAIN REGEX DEBUG: Testing main compiled regex:");
+const mainRegex = getCompiledRegex();
+console.log("🔍 MAIN REGEX DEBUG: Main regex exists:", !!mainRegex);
 
-// temp debug Test the pattern compilation
-const testPattern = Object.keys(unicodeFractions).join('|');
-console.log("🔍 DEBUG: Joined pattern:", testPattern);
+// Test if main regex catches our problem fractions
+const testText1 = "¼ cup";
+const testText2 = "⅓ cup"; 
+const testText3 = "½ cup"; // This one works
 
-// temp debug Test direct regex matching
-const directTest = new RegExp(`(${testPattern})\\s+(cup|cups)`, 'gi');
-console.log("🔍 DEBUG: Direct ¼ test:", "¼ cup".match(directTest));
-console.log("🔍 DEBUG: Direct ⅓ test:", "⅓ cup".match(directTest));
-  if (wordToNumber[valStr]) return wordToNumber[valStr];
+console.log("🔍 MAIN REGEX DEBUG: ¼ cup:", testText1.match(mainRegex));
+console.log("🔍 MAIN REGEX DEBUG: ⅓ cup:", testText2.match(mainRegex));
+console.log("🔍 MAIN REGEX DEBUG: ½ cup:", testText3.match(mainRegex));
+
+// temp debug end heck if specific conversions work
+console.log("🔍 CONVERSION DEBUG: Testing specific conversions:");
+console.log("¼ cup conversion:", findConversion("¼ cup"));
+console.log("⅓ cup conversion:", findConversion("⅓ cup"));
+console.log("½ cup conversion:", findConversion("½ cup"));
   
   // Handle complex phrases like "one and a half", "two and a quarter"
   const complexMatch = valStr.match(/^(\w+)\s+and\s+(?:a\s+)?(\w+)$/);
