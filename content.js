@@ -52,8 +52,8 @@ const measurementWords = {
 
 const createUniversalPattern = () => {
   const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
-  const unicodes = Object.keys(unicodeFractions).join('|');
-  
+  const unicodes = `(${Object.keys(unicodeFractions).join('|')})`;
+
   // Create word phrases using the measurementWords keys
   const baseWords = Object.keys(measurementWords).filter(word => 
     ['half', 'quarter', 'third', 'eighth', 'couple', 'few'].includes(word)
@@ -70,7 +70,7 @@ const createUniversalPattern = () => {
 
 const createEnhancedFractionPattern = () => {
   const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
-  const unicodes = Object.keys(unicodeFractions).join('|');
+  const unicodes = `(${Object.keys(unicodeFractions).join('|')})`;
   const words = `(?:${Object.keys(measurementWords).join('|')})`;
   const wordPhrases = `(?:${words}(?:\\s+of)?)`;
   
@@ -388,7 +388,7 @@ const conversions = [
   },
   {
     name: "teaspoons",
-    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|(${Object.keys(unicodeFractions).join('|')})|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
