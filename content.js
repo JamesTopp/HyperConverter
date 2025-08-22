@@ -50,23 +50,16 @@ const measurementWords = {
   'couple of': 2, 'few of': 3
 };
 
-const createUniversalPattern = () => {
-  // Create each part separately and combine properly
-  const numberPart = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
-  const unicodePart = `⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞`;  // No extra parentheses!
-  const wordPart = `(?:half|quarter|third|eighth|couple|few)(?:\\s+(?:of\\s+)?(?:a|an))?`;
-  const singleWordPart = `zero|one|two|three|four|five|six|seven|eight|nine|ten`;
-  
-  return `(${numberPart}|${unicodePart}|${wordPart}|${singleWordPart})`;
-};
-
-const createEnhancedFractionPattern = () => {
+const createMeasurementPattern = () => {
   const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
-  const unicodes = `${Object.keys(unicodeFractions).join('|')}`;
-  const words = `(?:${Object.keys(measurementWords).join('|')})`;
-  const wordPhrases = `(?:${words}(?:\\s+of)?)`;
-  
-  return `(${numbers}|${unicodes}|${wordPhrases})`;
+  const unicodes = `⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞`;
+  const basicNumbers = `zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand`;
+  const simpleFractions = `half|quarter|third|eighth|three-eighths|five-eighths|seven-eighths|sixteenth|three-sixteenths|five-sixteenths|seven-sixteenths|nine-sixteenths|eleven-sixteenths|thirteen-sixteenths|fifteen-sixteenths`;
+  const articles = `a|an|couple|few`;
+  const phrasesWithArticles = `(?:half|quarter|third|eighth)\\s+(?:a|an)`;
+  const phrasesWithOf = `(?:half|quarter|third|eighth|couple|few)\\s+of\\s+(?:a|an)?`;
+  const compoundPatterns = `(?:${basicNumbers})\\s+and\\s+(?:a\\s+)?(?:${simpleFractions})`;
+  return `(-?[\\d\\w\\.\\/]+|${unicodes}|${basicNumbers}|${simpleFractions}|${articles}|${phrasesWithArticles}|${phrasesWithOf}|${compoundPatterns})`;
 };
 
 // Helper function for creating fraction patterns  
