@@ -519,15 +519,16 @@ function processTextNode(textNode) {
       previousTextNode = p.lastChild;
   }
 
-  // If we found a valid previous text node, check if it looks like the start of a dimension.
-  if (previousTextNode) {
-    const prevText = previousTextNode.textContent;
-    if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/)) {
-      text = prevText + text; // Stitch the text together
-      stitched = true;
-    }
+ // If we found a valid previous text node, check if it looks like the start of a measurement.
+if (previousTextNode) {
+  const prevText = previousTextNode.textContent;
+  // Enhanced stitching: dimensions OR word fractions/numbers
+  if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) || 
+      prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
+    text = prevText + text; // Stitch the text together
+    stitched = true;
   }
-  // --- END OF NEW LOGIC ---
+}
 
   const regex = getCompiledRegex();
   const matches = [...text.matchAll(regex)];
@@ -708,9 +709,8 @@ function processSpecialCases(container) {
   });
 }
 
-/**
- * Process split measurements (like "1/64 <em>inch</em>")
- */
+
+ // Process split measurements (like "1/64 <em>inch</em>" or "3/4 <strong>teaspoon</strong>")
 function processSplitMeasurement(element, unitText) {
   // Check if this element contains a unit word
   if (!isUnitWord(unitText)) return;
@@ -720,20 +720,32 @@ function processSplitMeasurement(element, unitText) {
   if (prevNode && prevNode.nodeType === 3) { // text node
     const prevText = prevNode.textContent;
     
-    // Check if previous text ends with a fraction or number
-    const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)\s*$/);
+    // Enhanced pattern that includes Unicode fractions AND regular fractions
+    const fractionPattern = `([\\d\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*$`;
+    const match = prevText.match(new RegExp(fractionPattern));
+    
     if (match) {
-      const fullMeasurement = match[1] + ' ' + unitText;
+      const numberPart = match[1];
+      const fullMeasurement = numberPart + ' ' + unitText;
       
-      // Find conversion using cached regex
+      // Find conversion
       const conversionResult = findConversion(fullMeasurement);
       
       if (conversionResult) {
-        // Add highlighting to the unit element
-        if (!element.classList.contains('hyper-hover')) {
-          element.classList.add('hyper-hover');
-          element.dataset.convert = `${fullMeasurement} = ${conversionResult}`;
-        }
+        // Create a wrapper span around BOTH the number and unit
+        const wrapper = document.createElement('span');
+        wrapper.className = 'hyper-hover';
+        wrapper.dataset.convert = conversionResult;
+        
+        // Update the previous text node to remove the number part
+        const newPrevText = prevText.replace(new RegExp(fractionPattern), '');
+        prevNode.textContent = newPrevText;
+        
+        // Add number + unit to wrapper
+        wrapper.textContent = numberPart + ' ' + unitText;
+        
+        // Replace the unit element with our wrapper
+        element.parentNode.replaceChild(wrapper, element);
       }
     }
   }
