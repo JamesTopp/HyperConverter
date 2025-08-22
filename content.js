@@ -379,7 +379,7 @@ const conversions = [
   },
   {
     name: "tablespoons",
-    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|(${Object.keys(unicodeFractions).join('|')})|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -467,21 +467,6 @@ function parseMeasurementValue(valueString) {
     // Articles and fractions (now handled by measurementWords, but kept for safety)
     'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
   };
-  // TEMPORARY DEBUG - Inspect the compiled pattern
-console.log("🔍 PATTERN DEBUG: Inspecting compilation:");
-const rawPatterns = conversions.map(c => c.pattern);
-console.log("🔍 First few raw patterns:", rawPatterns.slice(0, 3));
-
-const namedPatterns = conversions.map(c => `(?<${c.name}>${c.pattern})`);
-console.log("🔍 First few named patterns:", namedPatterns.slice(0, 3));
-
-const fullPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
-console.log("🔍 Full compiled pattern (first 200 chars):", fullPattern.substring(0, 200));
-
-// Test the pattern string directly
-console.log("🔍 Testing pattern string directly:");
-const testRegex2 = new RegExp(fullPattern, "gi");
-console.log("🔍 Direct pattern test ¼ cup:", "¼ cup".match(testRegex2));
   
   // Handle complex phrases like "one and a half", "two and a quarter"
   const complexMatch = valStr.match(/^(\w+)\s+and\s+(?:a\s+)?(\w+)$/);
