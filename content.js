@@ -63,8 +63,8 @@ const createMeasurementPattern = () => {
 };
 
 // Helper function for creating fraction patterns  
-const createFractionPattern = () => createEnhancedFractionPattern();
-const createNumberPattern = () => createUniversalPattern();
+const createFractionPattern = () => createMeasurementPattern();
+const createNumberPattern = () => createMeasurementPattern();
 
 const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
