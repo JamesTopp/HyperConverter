@@ -47,11 +47,7 @@ const measurementWords = {
   'quarter of a': 0.25, 'quarter of an': 0.25,
   'third of a': 0.333, 'third of an': 0.333,
   'eighth of a': 0.125, 'eighth of an': 0.125,
-  'couple of': 2, 'few of': 3,
-
-  '¼': 0.25,
-  '⅓': 0.333, 
-  '⅔': 0.667
+  'couple of': 2, 'few of': 3
 };
 
 const createUniversalPattern = () => {
@@ -435,6 +431,9 @@ function getCompiledRegex() {
   
   return COMPILED_REGEX;
 }
+// TEMPORARY DEBUG - Remove after testing
+console.log("Unicode fractions in patterns:", Object.keys(unicodeFractions));
+console.log("Sample pattern test:", Object.keys(unicodeFractions).join('|'));
 
 /**
  * Parses a string that may contain numbers, fractions, or spelled-out words.
