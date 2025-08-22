@@ -585,6 +585,7 @@ if (previousTextNode) {
   // Enhanced stitching: dimensions OR word fractions/numbers
   if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) || 
       prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
+      prevText.match(/(⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞|\d+\/\d+)\s*$/)
     text = prevText + text; // Stitch the text together
     stitched = true;
   }
