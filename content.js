@@ -1206,9 +1206,31 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
   });
 });
 
+// Scroll-based trigger for added robustness =====
+let scrollDebounceTimer = null;
+const SCROLL_DEBOUNCE_DELAY = 250; // ms
+
+window.addEventListener('scroll', () => {
+  if (scrollDebounceTimer) {
+    clearTimeout(scrollDebounceTimer);
+  }
+  
+  scrollDebounceTimer = setTimeout(() => {
+    console.log("📜 Scroll event triggered processing...");
+    processUnified(document.body); // Re-process the body
+  }, SCROLL_DEBOUNCE_DELAY);
+});
+
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
+      characterData: true // Make sure you've made this change too
+    });
+
+        observer.observe(document.body, {
+      childList: true,      // Watches for nodes being added/removed
+      subtree: true,        // Watches descendants of the target
+      characterData: true   // Watches for changes to text content
     });
 
     console.log("🚀 HyperConverter initialized");
