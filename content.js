@@ -1187,6 +1187,26 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
   
  if (isEnabled) {
   processUnified(document.body);
+
+    // TEMPORARY DEBUG: Check what Amazon elements exist on page load
+  setTimeout(() => {
+    console.log("🔍 DEBUG: Checking Amazon elements after page load...");
+    
+    const allProducts = document.querySelectorAll('[data-asin]');
+    console.log("🛒 Found", allProducts.length, "total Amazon products");
+    
+    allProducts.forEach((product, index) => {
+      const measurements = product.textContent.match(/\d+\s*[x×]\s*\d+\s*inch/gi);
+      const hasTriangle = product.querySelector('.hyper-hover');
+      
+      console.log(`Product ${index + 1}:`, {
+        hasMeasurements: !!measurements,
+        measurements: measurements,
+        hasTriangle: !!hasTriangle,
+        element: product
+      });
+    });
+  }, 3000); // Wait 3 seconds for dynamic content
   
   const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
