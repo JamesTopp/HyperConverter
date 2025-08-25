@@ -1219,7 +1219,7 @@ window.addEventListener('scroll', () => {
     console.log("📜 Scroll event triggered processing...");
     processUnified(document.body); // Re-process the body
   }, SCROLL_DEBOUNCE_DELAY);
-});
+}); 
 
     observer.observe(document.body, {
       childList: true,
