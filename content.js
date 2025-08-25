@@ -678,7 +678,6 @@ if (previousTextNode) {
       } else {
         parent.replaceChild(fragment, textNode);
       }
-      processTextNodes(parent); // Re-process the parent to catch any new patterns
     } catch (e) {
       console.warn("Could not replace text node:", e);
     }
