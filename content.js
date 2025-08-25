@@ -700,16 +700,13 @@ const MAX_CACHE_SIZE = 1000;
  */
 function processUnified(container) {
   if (!container) return;
-  
-  console.log("🚀 Unified processor starting...");
-  
+    
   // Step 1: Process regular text nodes (main conversion logic)
   processTextNodes(container);
   
   // Step 2: Process special cases in single query
   processSpecialCases(container);
   
-  console.log("✅ Unified processing complete");
 }
 
 /**
@@ -827,15 +824,10 @@ function processSplitMeasurement(element, unitText) {
   }
 }
 
-/**
- * Process ingredient items (AllRecipes and general cooking sites)
- */
 function processIngredientItem(element, text) {
   // Check if this contains cooking measurements
   if (!hasCookingMeasurement(text)) return;
-  
-  console.log("Processing ingredient:", text);
-  
+    
   // Try to match cooking patterns
   const match = text.match(
     /(½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\d+(?:\/\d+)?)\s+(teaspoon|teaspoons|cup|cups|tablespoon|tablespoons|tsp|tbsp|ounce|ounces|oz)/i
@@ -854,31 +846,23 @@ function processIngredientItem(element, text) {
         measurementText,
         `<span class="hyper-hover" data-convert="${conversion}">${measurementText}</span>`
       );
-      console.log("Successfully highlighted ingredient:", text);
     }
   }
 }
 
-/**
- * Process table measurements (Home Depot style)
- */
 function processTableMeasurement(element, text) {
   // Check if this DD contains only a number
   const numberMatch = text.match(/^\d+(\.\d+)?$/);
   
   if (numberMatch) {
-    const numericValue = parseFloat(text);
-    console.log(`📊 Found potential measurement number: ${text}`);
-    
+    const numericValue = parseFloat(text);    
     // Look for unit context in nearby elements
     const unitContext = findUnitContext(element);
     
     if (unitContext) {
       const conversionResult = convertTableMeasurement(numericValue, unitContext.unit);
       
-      if (conversionResult) {
-        console.log(`✅ Converting: ${text} ${unitContext.unit} = ${conversionResult}`);
-        
+      if (conversionResult) {        
         // Create tooltip for this measurement
         element.classList.add('hyper-hover');
         element.dataset.convert = `${text} ${unitContext.unit} = ${conversionResult}`;
@@ -1198,7 +1182,6 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
         // AMAZON FIX: Also check for nested content that might contain measurements
         const measurementElements = node.querySelectorAll && node.querySelectorAll('[data-asin], .s-result-item, .a-section, .a-row');
         if (measurementElements && measurementElements.length > 0) {
-          console.log("🛒 Amazon: Processing", measurementElements.length, "newly loaded elements");
           measurementElements.forEach(el => debouncedProcess(el));
         }
       }
@@ -1216,7 +1199,6 @@ window.addEventListener('scroll', () => {
   }
   
   scrollDebounceTimer = setTimeout(() => {
-    console.log("📜 Scroll event triggered processing...");
     processUnified(document.body); // Re-process the body
   }, SCROLL_DEBOUNCE_DELAY);
 }); 
