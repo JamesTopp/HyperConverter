@@ -1188,60 +1188,32 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
  if (isEnabled) {
   processUnified(document.body);
 
-// TARGETED DEBUG: Focus on specific working vs non-working products
-setTimeout(() => {
-  console.log("🔍 TARGETED DEBUG: Checking specific Amazon products...");
+  setTimeout(() => {
+  console.log("🔍 SIMPLE TEST: What elements are we finding?");
   
-  const allProducts = document.querySelectorAll('[data-asin]');
-  console.log("🛒 Found", allProducts.length, "total Amazon products");
-  
-  // Let's check specific products by their position
-  const targetsToCheck = [
-    { index: 0, label: "First bottom row" },
-    { index: 1, label: "Second bottom row" },
-    { index: 7, label: "Last bottom row" },
-    { index: 8, label: "First top row (should work)" },
-    { index: 9, label: "Second top row (should work)" }
+  // Try different selectors to find bottom row
+  const selectors = [
+    '[data-asin]',
+    '.s-result-item', 
+    '.AdHolder',
+    '.s-widget-container',
+    '[data-component-type="s-search-result"]'
   ];
   
-  targetsToCheck.forEach(target => {
-    if (allProducts[target.index]) {
-      const product = allProducts[target.index];
-      const hasTriangle = product.querySelector('.hyper-hover');
-      const asin = product.getAttribute('data-asin');
-      
-      console.log(`\n🎯 ${target.label} (Index ${target.index}):`);
-      console.log("ASIN:", asin);
-      console.log("Has triangle:", !!hasTriangle);
-      
-      if (hasTriangle) {
-        console.log("Triangle text:", hasTriangle.textContent);
-        console.log("Triangle tooltip:", hasTriangle.dataset.convert);
-      }
-      
-      // Check for dimension text in different ways
-      console.log("Product title element:", product.querySelector('h2, .s-title, [data-cy="title-recipe-link"]')?.textContent);
-      console.log("All text (first 150 chars):", product.textContent.substring(0, 150));
-      
-      // Look for measurement patterns more broadly
-      const allText = product.textContent;
-      const patterns = [
-        { name: "X dimensions", regex: /\d+\s*[x×]\s*\d+/gi },
-        { name: "Quote dimensions", regex: /\d+\s*[""″]\s*[x×]\s*\d+\s*[""″]/gi },
-        { name: "Inches", regex: /\d+\s*inch/gi },
-        { name: "Quote marks", regex: /\d+\s*[""″]/gi }
-      ];
-      
-      patterns.forEach(pattern => {
-        const matches = allText.match(pattern.regex);
-        if (matches) {
-          console.log(`  ✅ ${pattern.name}:`, matches);
-        }
-      });
-      
-      console.log("Element:", product);
+  selectors.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    console.log(`Selector "${selector}": ${elements.length} elements found`);
+    
+    if (elements.length > 0) {
+      console.log("First element:", elements[0]);
+      console.log("Last element:", elements[elements.length - 1]);
     }
   });
+  
+  // Also check: are there any .hyper-hover elements at all?
+  const allTriangles = document.querySelectorAll('.hyper-hover');
+  console.log(`\n🔺 Total triangles found: ${allTriangles.length}`);
+  
 }, 3000);
   
   const observer = new MutationObserver((mutations) => {
