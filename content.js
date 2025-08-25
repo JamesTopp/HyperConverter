@@ -1189,14 +1189,22 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
   processUnified(document.body);
   
   const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === 1) {
-          debouncedProcess(node);
+  mutations.forEach((mutation) => {
+    mutation.addedNodes.forEach((node) => {
+      if (node.nodeType === 1) {
+        // Process the new node
+        debouncedProcess(node);
+        
+        // AMAZON FIX: Also check for nested content that might contain measurements
+        const measurementElements = node.querySelectorAll && node.querySelectorAll('[data-asin], .s-result-item, .a-section, .a-row');
+        if (measurementElements && measurementElements.length > 0) {
+          console.log("🛒 Amazon: Processing", measurementElements.length, "newly loaded elements");
+          measurementElements.forEach(el => debouncedProcess(el));
         }
-      });
+      }
     });
   });
+});
 
     observer.observe(document.body, {
       childList: true,
