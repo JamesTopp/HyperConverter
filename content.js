@@ -1188,25 +1188,61 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
  if (isEnabled) {
   processUnified(document.body);
 
-    // TEMPORARY DEBUG: Check what Amazon elements exist on page load
-  setTimeout(() => {
-    console.log("🔍 DEBUG: Checking Amazon elements after page load...");
-    
-    const allProducts = document.querySelectorAll('[data-asin]');
-    console.log("🛒 Found", allProducts.length, "total Amazon products");
-    
-    allProducts.forEach((product, index) => {
-      const measurements = product.textContent.match(/\d+\s*[x×]\s*\d+\s*inch/gi);
+// TARGETED DEBUG: Focus on specific working vs non-working products
+setTimeout(() => {
+  console.log("🔍 TARGETED DEBUG: Checking specific Amazon products...");
+  
+  const allProducts = document.querySelectorAll('[data-asin]');
+  console.log("🛒 Found", allProducts.length, "total Amazon products");
+  
+  // Let's check specific products by their position
+  const targetsToCheck = [
+    { index: 0, label: "First bottom row" },
+    { index: 1, label: "Second bottom row" },
+    { index: 7, label: "Last bottom row" },
+    { index: 8, label: "First top row (should work)" },
+    { index: 9, label: "Second top row (should work)" }
+  ];
+  
+  targetsToCheck.forEach(target => {
+    if (allProducts[target.index]) {
+      const product = allProducts[target.index];
       const hasTriangle = product.querySelector('.hyper-hover');
+      const asin = product.getAttribute('data-asin');
       
-      console.log(`Product ${index + 1}:`, {
-        hasMeasurements: !!measurements,
-        measurements: measurements,
-        hasTriangle: !!hasTriangle,
-        element: product
+      console.log(`\n🎯 ${target.label} (Index ${target.index}):`);
+      console.log("ASIN:", asin);
+      console.log("Has triangle:", !!hasTriangle);
+      
+      if (hasTriangle) {
+        console.log("Triangle text:", hasTriangle.textContent);
+        console.log("Triangle tooltip:", hasTriangle.dataset.convert);
+      }
+      
+      // Check for dimension text in different ways
+      console.log("Product title element:", product.querySelector('h2, .s-title, [data-cy="title-recipe-link"]')?.textContent);
+      console.log("All text (first 150 chars):", product.textContent.substring(0, 150));
+      
+      // Look for measurement patterns more broadly
+      const allText = product.textContent;
+      const patterns = [
+        { name: "X dimensions", regex: /\d+\s*[x×]\s*\d+/gi },
+        { name: "Quote dimensions", regex: /\d+\s*[""″]\s*[x×]\s*\d+\s*[""″]/gi },
+        { name: "Inches", regex: /\d+\s*inch/gi },
+        { name: "Quote marks", regex: /\d+\s*[""″]/gi }
+      ];
+      
+      patterns.forEach(pattern => {
+        const matches = allText.match(pattern.regex);
+        if (matches) {
+          console.log(`  ✅ ${pattern.name}:`, matches);
+        }
       });
-    });
-  }, 3000); // Wait 3 seconds for dynamic content
+      
+      console.log("Element:", product);
+    }
+  });
+}, 3000);
   
   const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
