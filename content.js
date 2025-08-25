@@ -615,53 +615,60 @@ if (previousTextNode) {
   let lastIndex = 0;
 
   matches.forEach(match => {
-    if (stitched && match.index !== 0) return;
+    try {
+      if (stitched && match.index !== 0) return;
 
-    const fullMatch = match[0];
-    const matchStart = match.index;
-    const groups = match.groups;
+      const fullMatch = match[0];
+      const matchStart = match.index;
+      const groups = match.groups;
 
-    if (matchStart > lastIndex) {
-      const beforeText = text.slice(lastIndex, matchStart);
-      fragment.appendChild(document.createTextNode(beforeText));
-    }
-
-    let conversionName = null;
-    for (const key in groups) {
-      if (groups[key] !== undefined) {
-        conversionName = key;
-        break;
+      if (matchStart > lastIndex) {
+        const beforeText = text.slice(lastIndex, matchStart);
+        fragment.appendChild(document.createTextNode(beforeText));
       }
-    }
 
-    if (conversionName) {
-      const conversion = conversions.find(c => c.name === conversionName);
-      if (conversion) {
-        const valueRegex = new RegExp(conversion.pattern, "i");
-        const valueMatch = fullMatch.match(valueRegex);
+      let conversionName = null;
+      for (const key in groups) {
+        if (groups[key] !== undefined) {
+          conversionName = key;
+          break;
+        }
+      }
 
-        if (valueMatch) {
-          const conversionResult = conversion.convert(valueMatch);
+      if (conversionName) {
+        const conversion = conversions.find(c => c.name === conversionName);
+        if (conversion) {
+          const valueRegex = new RegExp(conversion.pattern, "i");
+          const valueMatch = fullMatch.match(valueRegex);
 
-          if (conversionResult) {
-            const span = document.createElement("span");
-            span.className = "hyper-hover";
-            // If we stitched, the span should contain the original, unstitched text
-            span.textContent = stitched ? textNode.textContent : fullMatch;
-            span.dataset.convert = conversionResult;
-            fragment.appendChild(span);
+          if (valueMatch) {
+            const conversionResult = conversion.convert(valueMatch);
+
+            if (conversionResult) {
+              const span = document.createElement("span");
+              span.className = "hyper-hover";
+              span.textContent = stitched ? textNode.textContent : fullMatch;
+              span.dataset.convert = conversionResult;
+              fragment.appendChild(span);
+            } else {
+              fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
+            }
           } else {
             fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
           }
-        } else {
-          fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
         }
+      } else {
+        fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
       }
-    } else {
-      fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
+      
+      lastIndex = matchStart + fullMatch.length;
+
+    } catch (e) { // <-- START OF THE NEW CATCH BLOCK
+      console.warn("HyperConverter: Error processing a match, skipping. Details:", e);
+      // To ensure the loop continues correctly, append the raw text for the failed match
+      fragment.appendChild(document.createTextNode(match[0]));
+      lastIndex = match.index + match[0].length;
     }
-    
-    lastIndex = matchStart + fullMatch.length;
   });
 
   // Only append trailing text if we didn't stitch
