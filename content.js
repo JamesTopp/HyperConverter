@@ -1,10 +1,10 @@
-// this is the current version
 const unicodeFractions = {
   "⅛": 0.125, "⅙": 0.167, "⅕": 0.2, "¼": 0.25, "⅓": 0.333, "⅜": 0.375,
   "⅖": 0.4, "½": 0.5, "⅔": 0.667, "⅗": 0.6, "¾": 0.75, "⅘": 0.8,
   "⅚": 0.833, "⅞": 0.875,
 };
 
+// ===== CONSTANTS - Centralized conversion factors =====
 const CONVERSION_FACTORS = {
   INCH_TO_CM: 2.54,
   FOOT_TO_M: 0.3048,
@@ -16,57 +16,11 @@ const CONVERSION_FACTORS = {
   TSP_TO_ML: 4.929,
 };
 
-// Enhanced word-based measurement dictionary
-const measurementWords = {
-  // Numbers 0-100
-  'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-  'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-  'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
-  'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
-  'twenty-one': 21, 'twenty-two': 22, 'twenty-three': 23, 'twenty-four': 24, 'twenty-five': 25,
-  'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
-  'hundred': 100, 'thousand': 1000,
-  
-  // Complete fraction system (eighths and sixteenths)
-  'half': 0.5, 'quarter': 0.25, 'third': 0.333, 
-  'eighth': 0.125, 'three-eighths': 0.375, 'five-eighths': 0.625, 'seven-eighths': 0.875,
-  'sixteenth': 0.0625, 'three-sixteenths': 0.1875, 'five-sixteenths': 0.3125, 
-  'seven-sixteenths': 0.4375, 'nine-sixteenths': 0.5625, 'eleven-sixteenths': 0.6875,
-  'thirteen-sixteenths': 0.8125, 'fifteen-sixteenths': 0.9375,
-  
-  // Articles and common words
-  'a': 1, 'an': 1, 'couple': 2, 'few': 3,
-  
-  // Phrase variants with "a/an"
-  'half a': 0.5, 'half an': 0.5,
-  'quarter a': 0.25, 'quarter an': 0.25, 
-  'third a': 0.333, 'third an': 0.333,
-  'eighth a': 0.125, 'eighth an': 0.125,
-  
-  // Phrase variants with "of a/an"  
-  'half of a': 0.5, 'half of an': 0.5,
-  'quarter of a': 0.25, 'quarter of an': 0.25,
-  'third of a': 0.333, 'third of an': 0.333,
-  'eighth of a': 0.125, 'eighth of an': 0.125,
-  'couple of': 2, 'few of': 3
-};
-
-const createMeasurementPattern = () => {
-  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
-  const unicodes = `⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞`;
-  const basicNumbers = `zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty-one|twenty-two|twenty-three|twenty-four|twenty-five|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand`;
-  const simpleFractions = `half|quarter|third|eighth|three-eighths|five-eighths|seven-eighths|sixteenth|three-sixteenths|five-sixteenths|seven-sixteenths|nine-sixteenths|eleven-sixteenths|thirteen-sixteenths|fifteen-sixteenths`;
-  const articles = `a|an|couple|few`;
-  const phrasesWithArticles = `(?:half|quarter|third|eighth)\\s+(?:a|an)`;
-  const phrasesWithOf = `(?:half|quarter|third|eighth|couple|few)\\s+of\\s+(?:a|an)?`;
-  const compoundPatterns = `(?:${basicNumbers})\\s+and\\s+(?:a\\s+)?(?:${simpleFractions})`;
-  return `(-?[\\d\\w\\.\\/]+|${unicodes}|${basicNumbers}|${simpleFractions}|${articles}|${phrasesWithArticles}|${phrasesWithOf}|${compoundPatterns})`;
-};
-
 // Helper function for creating fraction patterns  
-const createFractionPattern = () => createMeasurementPattern();
-const createNumberPattern = () => createMeasurementPattern();
+const createFractionPattern = () => `(\\d+\\/\\d+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third))`;
+const createNumberPattern = () => `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})`;
 
+// ===== OPTIMIZED CONVERSIONS ARRAY =====
 const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
   {
@@ -248,7 +202,7 @@ const conversions = [
   // ======= STANDARD PRIORITY: Regular units (FIXED - No lookbehinds) =======
   {
     name: "inches",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:inches?|inch|in)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:inches?|inch|in)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -257,7 +211,7 @@ const conversions = [
   },
   {
     name: "feet",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:feet|foot|ft)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:feet|foot|ft)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -266,7 +220,7 @@ const conversions = [
   },
   {
     name: "centimeters",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:centimetres?|centimeters?|cm|CM)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:centimetres?|centimeters?|cm|CM)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -275,7 +229,7 @@ const conversions = [
   },
   {
     name: "millimeters",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:millimeters?|mm)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:millimeters?|mm)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -284,7 +238,7 @@ const conversions = [
   },
   {
     name: "meters",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:metres?|meters?|m|M)\\b(?![a-zA-Z])`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:metres?|meters?|m|M)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -293,7 +247,7 @@ const conversions = [
   },
   {
     name: "pounds",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -301,17 +255,17 @@ const conversions = [
     },
   },
   {
-    name: "kilometers",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:kilometres?|kilometers?|km|KM)\\b`,
-    convert: (match) => {
-      const num = parseMeasurementValue(match[1]);
-      if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * 0.621371).toFixed(2)} miles`;
+  name: "kilometers",
+  pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:kilometres?|kilometers?|km|KM)\\b`,
+  convert: (match) => {
+    const num = parseMeasurementValue(match[1]);
+    if (isNaN(num)) return null;
+    return `${match[0]} = ${(num * 0.621371).toFixed(2)} miles`;
     },
   },
   {
     name: "ounces",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:ounces?|oz)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:ounces?|oz)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -320,7 +274,7 @@ const conversions = [
   },
   {
     name: "grams",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:grams?|g)\\b(?![a-zA-Z])`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:grams?|g)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -329,7 +283,7 @@ const conversions = [
   },
   {
     name: "gallons",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:gallons?|gal)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:gallons?|gal)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -338,7 +292,7 @@ const conversions = [
   },
   {
     name: "liters",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:litres?|liters?|l|L)\\b(?![a-zA-Z])`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:litres?|liters?|l|L)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -346,17 +300,17 @@ const conversions = [
     },
   },
   {
-    name: "milliliters",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:millilitres?|milliliters?|ml|mL)\\b(?![a-zA-Z])`,
-    convert: (match) => {
-      const num = parseMeasurementValue(match[1]);
-      if (isNaN(num)) return null;
-      return `${match[0]} = ${(num / CONVERSION_FACTORS.TSP_TO_ML).toFixed(2)} tsp`;
+  name: "milliliters",
+  pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:millilitres?|milliliters?|ml|mL)\\b(?![a-zA-Z])`,
+  convert: (match) => {
+    const num = parseMeasurementValue(match[1]);
+    if (isNaN(num)) return null;
+    return `${match[0]} = ${(num / CONVERSION_FACTORS.TSP_TO_ML).toFixed(2)} tsp`;
     },
   },
   {
     name: "cups",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:cups?)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:cups?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -365,7 +319,7 @@ const conversions = [
   },
   {
     name: "tablespoons",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -374,7 +328,7 @@ const conversions = [
   },
   {
     name: "teaspoons",
-    pattern: `\\b${createMeasurementPattern()}\\s*-?\\s*(?:teaspoons?|tsp)\\b`,    
+    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -426,19 +380,10 @@ function getCompiledRegex() {
 function parseMeasurementValue(valueString) {
   const valStr = String(valueString).toLowerCase().trim();
 
-  // Check measurement words first (including "of" phrases)
-  if (measurementWords[valStr]) return measurementWords[valStr];
-  
-  // Handle "of" phrases like "half of a", "quarter of an"
-  if (valStr.includes(' of ')) {
-    const cleanStr = valStr.replace(/ of (?:a|an)\s*$/, '').replace(/ of$/, '');
-    if (measurementWords[cleanStr]) return measurementWords[cleanStr];
-  }
-
-  // Unicode fractions
+  // The unicodeFractions object is global, so we can directly use it here.
   if (unicodeFractions[valStr]) return unicodeFractions[valStr];
 
-  // Legacy word-to-number dictionary (keeping for backwards compatibility)
+  // Spelled-Out Dictionary
   const wordToNumber = {
     // Numbers 0-19
     'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
@@ -450,19 +395,13 @@ function parseMeasurementValue(valueString) {
     'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
     // Large scale numbers
     'hundred': 100, 'thousand': 1000, 'million': 1000000, 'billion': 1000000000,
-    // Articles and fractions (now handled by measurementWords, but kept for safety)
+    // Articles and fractions
     'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
   };
+  if (wordToNumber[valStr]) return wordToNumber[valStr];
   
-  // Handle complex phrases like "one and a half", "two and a quarter"
-  const complexMatch = valStr.match(/^(\w+)\s+and\s+(?:a\s+)?(\w+)$/);
-  if (complexMatch) {
-    const first = measurementWords[complexMatch[1]] || wordToNumber[complexMatch[1]];
-    const second = measurementWords[complexMatch[2]] || wordToNumber[complexMatch[2]];
-    if (!isNaN(first) && !isNaN(second)) {
-      return first + second;
-    }
-  }
+  // Handle "one and a half" patterns
+  if (valStr.match(/one and a half/)) return 1.5;
   
   // Handle text fractions like "1/3"
   if (valStr.includes("/")) {
@@ -580,78 +519,20 @@ function processTextNode(textNode) {
       previousTextNode = p.lastChild;
   }
 
- // If we found a valid previous text node, check if it looks like the start of a measurement.
-if (previousTextNode) {
-  const prevText = previousTextNode.textContent;
-  // Enhanced stitching: dimensions OR word fractions/numbers
-  if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) || 
-      prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
-      prevText.match(/(⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞|\d+\/\d+)\s*$/)
-    text = prevText + text; // Stitch the text together
-    stitched = true;
+  // If we found a valid previous text node, check if it looks like the start of a dimension.
+  if (previousTextNode) {
+    const prevText = previousTextNode.textContent;
+    if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/)) {
+      text = prevText + text; // Stitch the text together
+      stitched = true;
+    }
   }
-}
+  // --- END OF NEW LOGIC ---
 
-  // UNICODE FRACTION BYPASS - Handle Unicode fractions separately
-function handleUnicodeFractions(text) {
-  const unicodePattern = /(⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞)\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tsp|tbsp)/gi;
-  const matches = [...text.matchAll(unicodePattern)];
-  
-  return matches.map(match => ({
-    fullMatch: match[0],
-    value: match[1],
-    unit: match[2],
-    index: match.index
-  }));
-}
+  const regex = getCompiledRegex();
+  const matches = [...text.matchAll(regex)];
 
-// Try Unicode fractions first
-const unicodeMatches = handleUnicodeFractions(text);
-if (unicodeMatches.length > 0) {
-  console.log("🎯 Unicode matches found:", unicodeMatches);
-  
-  // Process the first Unicode match
-  const match = unicodeMatches[0];
-  const conversion = getCookingConversion(match.value, match.unit);
-  
-  if (conversion) {
-    const span = document.createElement("span");
-    span.className = "hyper-hover";
-    span.textContent = stitched ? textNode.textContent : match.fullMatch;
-    span.dataset.convert = conversion;
-    
-    const fragment = document.createDocumentFragment();
-    
-    // Add text before match
-    if (match.index > 0) {
-      fragment.appendChild(document.createTextNode(text.slice(0, match.index)));
-    }
-    
-    // Add the conversion span
-    fragment.appendChild(span);
-    
-    // Add text after match
-    const afterIndex = match.index + match.fullMatch.length;
-    if (afterIndex < text.length) {
-      fragment.appendChild(document.createTextNode(text.slice(afterIndex)));
-    }
-    
-    // Replace the text node
-    if (stitched && previousTextNode) {
-      previousTextNode.parentNode.removeChild(previousTextNode);
-      parent.replaceChild(fragment, textNode);
-    } else {
-      parent.replaceChild(fragment, textNode);
-    }
-    return; // Exit early - we handled it
-  }
-}
-
-// Fall back to normal regex processing
-const regex = getCompiledRegex();
-const matches = [...text.matchAll(regex)];
-
-if (matches.length === 0) return;
+  if (matches.length === 0) return;
 
   const fragment = document.createDocumentFragment();
   let lastIndex = 0;
@@ -735,14 +616,28 @@ const MUTATION_DEBOUNCE_DELAY = 150; // ms
 const CONVERSION_CACHE = new Map();
 const MAX_CACHE_SIZE = 1000;
 
-
-// UNIFIED PROCESSOR - Processes text nodes, split measurements, AllRecipes ingredients, and table measurements in a single DOM traversal for maximum performance
+/**
+ * UNIFIED PROCESSOR - Replaces all 4 separate functions
+ * Processes text nodes, split measurements, AllRecipes ingredients, and table measurements
+ * in a single DOM traversal for maximum performance
+ */
 function processUnified(container) {
   if (!container) return;
+  
+  console.log("🚀 Unified processor starting...");
+  
+  // Step 1: Process regular text nodes (main conversion logic)
   processTextNodes(container);
+  
+  // Step 2: Process special cases in single query
   processSpecialCases(container);
+  
+  console.log("✅ Unified processing complete");
 }
 
+/**
+ * Process all text nodes efficiently
+ */
 function processTextNodes(container) {
   const walker = document.createTreeWalker(
     container,
@@ -813,8 +708,9 @@ function processSpecialCases(container) {
   });
 }
 
-
- // Process split measurements (like "1/64 <em>inch</em>" or "3/4 <strong>teaspoon</strong>")
+/**
+ * Process split measurements (like "1/64 <em>inch</em>")
+ */
 function processSplitMeasurement(element, unitText) {
   // Check if this element contains a unit word
   if (!isUnitWord(unitText)) return;
@@ -824,32 +720,20 @@ function processSplitMeasurement(element, unitText) {
   if (prevNode && prevNode.nodeType === 3) { // text node
     const prevText = prevNode.textContent;
     
-    // Enhanced pattern that includes Unicode fractions AND regular fractions
-    const fractionPattern = `([\\d\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*$`;
-    const match = prevText.match(new RegExp(fractionPattern));
-    
+    // Check if previous text ends with a fraction or number
+    const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)\s*$/);
     if (match) {
-      const numberPart = match[1];
-      const fullMeasurement = numberPart + ' ' + unitText;
+      const fullMeasurement = match[1] + ' ' + unitText;
       
-      // Find conversion
+      // Find conversion using cached regex
       const conversionResult = findConversion(fullMeasurement);
       
       if (conversionResult) {
-        // Create a wrapper span around BOTH the number and unit
-        const wrapper = document.createElement('span');
-        wrapper.className = 'hyper-hover';
-        wrapper.dataset.convert = conversionResult;
-        
-        // Update the previous text node to remove the number part
-        const newPrevText = prevText.replace(new RegExp(fractionPattern), '');
-        prevNode.textContent = newPrevText;
-        
-        // Add number + unit to wrapper
-        wrapper.textContent = numberPart + ' ' + unitText;
-        
-        // Replace the unit element with our wrapper
-        element.parentNode.replaceChild(wrapper, element);
+        // Add highlighting to the unit element
+        if (!element.classList.contains('hyper-hover')) {
+          element.classList.add('hyper-hover');
+          element.dataset.convert = `${fullMeasurement} = ${conversionResult}`;
+        }
       }
     }
   }
@@ -861,6 +745,8 @@ function processSplitMeasurement(element, unitText) {
 function processIngredientItem(element, text) {
   // Check if this contains cooking measurements
   if (!hasCookingMeasurement(text)) return;
+  
+  console.log("Processing ingredient:", text);
   
   // Try to match cooking patterns
   const match = text.match(
@@ -880,6 +766,7 @@ function processIngredientItem(element, text) {
         measurementText,
         `<span class="hyper-hover" data-convert="${conversion}">${measurementText}</span>`
       );
+      console.log("Successfully highlighted ingredient:", text);
     }
   }
 }
@@ -893,6 +780,7 @@ function processTableMeasurement(element, text) {
   
   if (numberMatch) {
     const numericValue = parseFloat(text);
+    console.log(`📊 Found potential measurement number: ${text}`);
     
     // Look for unit context in nearby elements
     const unitContext = findUnitContext(element);
@@ -901,6 +789,7 @@ function processTableMeasurement(element, text) {
       const conversionResult = convertTableMeasurement(numericValue, unitContext.unit);
       
       if (conversionResult) {
+        console.log(`✅ Converting: ${text} ${unitContext.unit} = ${conversionResult}`);
         
         // Create tooltip for this measurement
         element.classList.add('hyper-hover');
