@@ -1187,34 +1187,6 @@ chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
   
  if (isEnabled) {
   processUnified(document.body);
-
-  setTimeout(() => {
-  console.log("🔍 SIMPLE TEST: What elements are we finding?");
-  
-  // Try different selectors to find bottom row
-  const selectors = [
-    '[data-asin]',
-    '.s-result-item', 
-    '.AdHolder',
-    '.s-widget-container',
-    '[data-component-type="s-search-result"]'
-  ];
-  
-  selectors.forEach(selector => {
-    const elements = document.querySelectorAll(selector);
-    console.log(`Selector "${selector}": ${elements.length} elements found`);
-    
-    if (elements.length > 0) {
-      console.log("First element:", elements[0]);
-      console.log("Last element:", elements[elements.length - 1]);
-    }
-  });
-  
-  // Also check: are there any .hyper-hover elements at all?
-  const allTriangles = document.querySelectorAll('.hyper-hover');
-  console.log(`\n🔺 Total triangles found: ${allTriangles.length}`);
-  
-}, 3000);
   
   const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
