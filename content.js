@@ -4,7 +4,6 @@ const unicodeFractions = {
   "⅚": 0.833, "⅞": 0.875,
 };
 
-// ===== CONSTANTS - Centralized conversion factors =====
 const CONVERSION_FACTORS = {
   INCH_TO_CM: 2.54,
   FOOT_TO_M: 0.3048,
@@ -16,11 +15,72 @@ const CONVERSION_FACTORS = {
   TSP_TO_ML: 4.929,
 };
 
-// Helper function for creating fraction patterns  
-const createFractionPattern = () => `(\\d+\\/\\d+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third))`;
-const createNumberPattern = () => `(-?[\\d\\.\\/]+|${Object.keys(unicodeFractions).join('|')})`;
+// Enhanced word-based measurement dictionary
+const measurementWords = {
+  // Numbers 0-100
+  'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+  'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+  'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+  'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+  'twenty-one': 21, 'twenty-two': 22, 'twenty-three': 23, 'twenty-four': 24, 'twenty-five': 25,
+  'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
+  'hundred': 100, 'thousand': 1000,
+  
+  // Complete fraction system (eighths and sixteenths)
+  'half': 0.5, 'quarter': 0.25, 'third': 0.333, 
+  'eighth': 0.125, 'three-eighths': 0.375, 'five-eighths': 0.625, 'seven-eighths': 0.875,
+  'sixteenth': 0.0625, 'three-sixteenths': 0.1875, 'five-sixteenths': 0.3125, 
+  'seven-sixteenths': 0.4375, 'nine-sixteenths': 0.5625, 'eleven-sixteenths': 0.6875,
+  'thirteen-sixteenths': 0.8125, 'fifteen-sixteenths': 0.9375,
+  
+  // Articles and common words
+  'a': 1, 'an': 1, 'couple': 2, 'few': 3,
+  
+  // Phrase variants with "a/an"
+  'half a': 0.5, 'half an': 0.5,
+  'quarter a': 0.25, 'quarter an': 0.25, 
+  'third a': 0.333, 'third an': 0.333,
+  'eighth a': 0.125, 'eighth an': 0.125,
+  
+  // Phrase variants with "of a/an"  
+  'half of a': 0.5, 'half of an': 0.5,
+  'quarter of a': 0.25, 'quarter of an': 0.25,
+  'third of a': 0.333, 'third of an': 0.333,
+  'eighth of a': 0.125, 'eighth of an': 0.125,
+  'couple of': 2, 'few of': 3
+};
 
-// ===== OPTIMIZED CONVERSIONS ARRAY =====
+const createUniversalPattern = () => {
+  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
+  const unicodes = Object.keys(unicodeFractions).join('|');
+  
+  // Create word phrases using the measurementWords keys
+  const baseWords = Object.keys(measurementWords).filter(word => 
+    ['half', 'quarter', 'third', 'eighth', 'couple', 'few'].includes(word)
+  ).join('|');
+  
+  // Word phrases with "a/an" and "of a/an" support  
+  const wordPhrases = `(?:(?:${baseWords})\\s+(?:of\\s+)?(?:a|an)\\s+)`;
+  
+  // Single words from measurementWords
+  const singleWords = `(?:${Object.keys(measurementWords).join('|')})`;
+  
+  return `(${numbers}|${unicodes}|${wordPhrases}|${singleWords})`;
+};
+
+const createEnhancedFractionPattern = () => {
+  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
+  const unicodes = Object.keys(unicodeFractions).join('|');
+  const words = `(?:${Object.keys(measurementWords).join('|')})`;
+  const wordPhrases = `(?:${words}(?:\\s+of)?)`;
+  
+  return `(${numbers}|${unicodes}|${wordPhrases})`;
+};
+
+// Helper function for creating fraction patterns  
+const createFractionPattern = () => createEnhancedFractionPattern();
+const createNumberPattern = () => createUniversalPattern();
+
 const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
   {
@@ -309,12 +369,12 @@ const conversions = [
     },
   },
   {
-    name: "cups",
-    pattern: `\\b(-?[\\d\\w\\.\\/]+|${Object.keys(unicodeFractions).join('|')}|(?:\\d+\\s+)?(?:quarters?|halves?|thirds?|half|quarter|third)|(?: and a half)?)\\s*-?\\s*(?:cups?)\\b`,
-    convert: (match) => {
-      const num = parseMeasurementValue(match[1]);
-      if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
+  name: "cups",
+  pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:cups?)\\b`,
+  convert: (match) => {
+    const num = parseMeasurementValue(match[1]);
+    if (isNaN(num)) return null;
+    return `${match[0]} = ${(num * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
     },
   },
   {
@@ -380,10 +440,19 @@ function getCompiledRegex() {
 function parseMeasurementValue(valueString) {
   const valStr = String(valueString).toLowerCase().trim();
 
-  // The unicodeFractions object is global, so we can directly use it here.
+  // Check measurement words first (including "of" phrases)
+  if (measurementWords[valStr]) return measurementWords[valStr];
+  
+  // Handle "of" phrases like "half of a", "quarter of an"
+  if (valStr.includes(' of ')) {
+    const cleanStr = valStr.replace(/ of (?:a|an)\s*$/, '').replace(/ of$/, '');
+    if (measurementWords[cleanStr]) return measurementWords[cleanStr];
+  }
+
+  // Unicode fractions
   if (unicodeFractions[valStr]) return unicodeFractions[valStr];
 
-  // Spelled-Out Dictionary
+  // Legacy word-to-number dictionary (keeping for backwards compatibility)
   const wordToNumber = {
     // Numbers 0-19
     'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
@@ -395,13 +464,20 @@ function parseMeasurementValue(valueString) {
     'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
     // Large scale numbers
     'hundred': 100, 'thousand': 1000, 'million': 1000000, 'billion': 1000000000,
-    // Articles and fractions
+    // Articles and fractions (now handled by measurementWords, but kept for safety)
     'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
   };
   if (wordToNumber[valStr]) return wordToNumber[valStr];
   
-  // Handle "one and a half" patterns
-  if (valStr.match(/one and a half/)) return 1.5;
+  // Handle complex phrases like "one and a half", "two and a quarter"
+  const complexMatch = valStr.match(/^(\w+)\s+and\s+(?:a\s+)?(\w+)$/);
+  if (complexMatch) {
+    const first = measurementWords[complexMatch[1]] || wordToNumber[complexMatch[1]];
+    const second = measurementWords[complexMatch[2]] || wordToNumber[complexMatch[2]];
+    if (!isNaN(first) && !isNaN(second)) {
+      return first + second;
+    }
+  }
   
   // Handle text fractions like "1/3"
   if (valStr.includes("/")) {
@@ -519,15 +595,16 @@ function processTextNode(textNode) {
       previousTextNode = p.lastChild;
   }
 
-  // If we found a valid previous text node, check if it looks like the start of a dimension.
-  if (previousTextNode) {
-    const prevText = previousTextNode.textContent;
-    if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/)) {
-      text = prevText + text; // Stitch the text together
-      stitched = true;
-    }
+ // If we found a valid previous text node, check if it looks like the start of a measurement.
+if (previousTextNode) {
+  const prevText = previousTextNode.textContent;
+  // Enhanced stitching: dimensions OR word fractions/numbers
+  if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) || 
+      prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
+    text = prevText + text; // Stitch the text together
+    stitched = true;
   }
-  // --- END OF NEW LOGIC ---
+}
 
   const regex = getCompiledRegex();
   const matches = [...text.matchAll(regex)];
@@ -708,9 +785,8 @@ function processSpecialCases(container) {
   });
 }
 
-/**
- * Process split measurements (like "1/64 <em>inch</em>")
- */
+
+ // Process split measurements (like "1/64 <em>inch</em>" or "3/4 <strong>teaspoon</strong>")
 function processSplitMeasurement(element, unitText) {
   // Check if this element contains a unit word
   if (!isUnitWord(unitText)) return;
@@ -720,20 +796,32 @@ function processSplitMeasurement(element, unitText) {
   if (prevNode && prevNode.nodeType === 3) { // text node
     const prevText = prevNode.textContent;
     
-    // Check if previous text ends with a fraction or number
-    const match = prevText.match(/([\d\/⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]+)\s*$/);
+    // Enhanced pattern that includes Unicode fractions AND regular fractions
+    const fractionPattern = `([\\d\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*$`;
+    const match = prevText.match(new RegExp(fractionPattern));
+    
     if (match) {
-      const fullMeasurement = match[1] + ' ' + unitText;
+      const numberPart = match[1];
+      const fullMeasurement = numberPart + ' ' + unitText;
       
-      // Find conversion using cached regex
+      // Find conversion
       const conversionResult = findConversion(fullMeasurement);
       
       if (conversionResult) {
-        // Add highlighting to the unit element
-        if (!element.classList.contains('hyper-hover')) {
-          element.classList.add('hyper-hover');
-          element.dataset.convert = `${fullMeasurement} = ${conversionResult}`;
-        }
+        // Create a wrapper span around BOTH the number and unit
+        const wrapper = document.createElement('span');
+        wrapper.className = 'hyper-hover';
+        wrapper.dataset.convert = conversionResult;
+        
+        // Update the previous text node to remove the number part
+        const newPrevText = prevText.replace(new RegExp(fractionPattern), '');
+        prevNode.textContent = newPrevText;
+        
+        // Add number + unit to wrapper
+        wrapper.textContent = numberPart + ' ' + unitText;
+        
+        // Replace the unit element with our wrapper
+        element.parentNode.replaceChild(wrapper, element);
       }
     }
   }
