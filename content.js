@@ -568,127 +568,118 @@ function hideTooltip() {
 // This uses named capture groups based on the 'name' property in objects.
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
-// Gemini text node processor
 function processTextNode(textNode) {
-  if (!textNode || textNode.nodeType !== 3) return;
+    if (!textNode || textNode.nodeType !== 3) return;
 
-  const parent = textNode.parentNode;
-  if (!parent ||
-      parent.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
-      parent.closest("#hyper-converter-tooltip")) return;
+    const parent = textNode.parentNode;
+    if (!parent ||
+        parent.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
+        parent.closest("#hyper-converter-tooltip")) return;
 
-  let text = textNode.textContent;
-  if (!text.trim()) return;
+    let text = textNode.textContent;
+    if (!text.trim()) return;
 
-  // --- NEW, SMARTER "TEXT STITCHING" LOGIC (Handles Sibling and Cousin nodes) ---
-  let stitched = false;
-  let previousTextNode = null;
-  
-  // Start by looking for an immediate previous sibling that is a text node
-  let p = textNode.previousSibling;
-  if (p && p.nodeType === 3) {
-      previousTextNode = p;
-  } 
-  // If not found, check if the previous sibling is an element (like <span>)
-  // and look for a text node as its last child. This finds the "cousin".
-  else if (p && p.nodeType === 1 && p.lastChild && p.lastChild.nodeType === 3) {
-      previousTextNode = p.lastChild;
-  }
+    // --- The "TEXT STITCHING" LOGIC REMAINS THE SAME ---
+    let stitched = false;
+    let previousTextNode = null;
+    let p = textNode.previousSibling;
+    if (p && p.nodeType === 3) {
+        previousTextNode = p;
+    } else if (p && p.nodeType === 1 && p.lastChild && p.lastChild.nodeType === 3) {
+        previousTextNode = p.lastChild;
+    }
 
- // If we found a valid previous text node, check if it looks like the start of a measurement.
-if (previousTextNode) {
-  const prevText = previousTextNode.textContent;
-  // Enhanced stitching: dimensions OR word fractions/numbers
-  if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) || 
-      prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
-    text = prevText + text; // Stitch the text together
-    stitched = true;
-  }
-}
-
-  const regex = getCompiledRegex();
-  const matches = [...text.matchAll(regex)];
-
-  if (matches.length === 0) return;
-
-  const fragment = document.createDocumentFragment();
-  let lastIndex = 0;
-
-  matches.forEach(match => {
-    try {
-      if (stitched && match.index !== 0) return;
-
-      const fullMatch = match[0];
-      const matchStart = match.index;
-      const groups = match.groups;
-
-      if (matchStart > lastIndex) {
-        const beforeText = text.slice(lastIndex, matchStart);
-        fragment.appendChild(document.createTextNode(beforeText));
-      }
-
-      let conversionName = null;
-      for (const key in groups) {
-        if (groups[key] !== undefined) {
-          conversionName = key;
-          break;
+    if (previousTextNode) {
+        const prevText = previousTextNode.textContent;
+        if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
+            prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
+            text = prevText + text;
+            stitched = true;
         }
-      }
+    }
 
-      if (conversionName) {
-        const conversion = conversions.find(c => c.name === conversionName);
-        if (conversion) {
-          const valueRegex = new RegExp(conversion.pattern, "i");
-          const valueMatch = fullMatch.match(valueRegex);
+    const regex = getCompiledRegex(); // This gets your global regex
+    // We MUST reset lastIndex before using exec in a loop
+    regex.lastIndex = 0; 
+    
+    // Only proceed if there's at least one match
+    if (!regex.test(text)) {
+        return;
+    }
+    // Reset again after testing
+    regex.lastIndex = 0;
 
-          if (valueMatch) {
-            const conversionResult = conversion.convert(valueMatch);
+    const fragment = document.createDocumentFragment();
+    let lastIndex = 0;
+    let match;
 
-            if (conversionResult) {
-              const span = document.createElement("span");
-              span.className = "hyper-hover";
-              span.textContent = stitched ? textNode.textContent : fullMatch;
-              span.dataset.convert = conversionResult;
-              fragment.appendChild(span);
-            } else {
-              fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
+    // --- NEW, MORE ROBUST LOOP ---
+    while ((match = regex.exec(text)) !== null) {
+        const fullMatch = match[0];
+        const matchStart = match.index;
+
+        // 1. Append the text before this match
+        if (matchStart > lastIndex) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex, matchStart)));
+        }
+
+        // 2. Find the conversion and create the span
+        let conversionName = null;
+        for (const key in match.groups) {
+            if (match.groups[key] !== undefined) {
+                conversionName = key;
+                break;
             }
-          } else {
-            fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
-          }
         }
-      } else {
-        fragment.appendChild(document.createTextNode(stitched ? textNode.textContent : fullMatch));
-      }
-      
-      lastIndex = matchStart + fullMatch.length;
 
-    } catch (e) { // <-- START OF THE NEW CATCH BLOCK
-      console.warn("HyperConverter: Error processing a match, skipping. Details:", e);
-      // To ensure the loop continues correctly, append the raw text for the failed match
-      fragment.appendChild(document.createTextNode(match[0]));
-      lastIndex = match.index + match[0].length;
+        if (conversionName) {
+            const conversion = conversions.find(c => c.name === conversionName);
+            if (conversion) {
+                // We need to run the specific pattern again on the fullMatch to get capture groups for the convert function
+                const valueRegex = new RegExp(conversion.pattern, "i");
+                const valueMatch = fullMatch.match(valueRegex);
+                const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
+
+                if (conversionResult) {
+                    const span = document.createElement("span");
+                    span.className = "hyper-hover";
+                    // This simplifies the stitched logic immensely. The span always contains what was matched.
+                    span.textContent = fullMatch; 
+                    span.dataset.convert = conversionResult;
+                    fragment.appendChild(span);
+                } else {
+                    // If conversion fails for some reason, append the original text
+                    fragment.appendChild(document.createTextNode(fullMatch));
+                }
+            }
+        } else {
+            // If no conversion was found (should be rare), append original text
+            fragment.appendChild(document.createTextNode(fullMatch));
+        }
+
+        // 3. Update our position in the string
+        lastIndex = regex.lastIndex;
     }
-  });
 
-  // Only append trailing text if we didn't stitch
-  if (!stitched && lastIndex < text.length) {
-    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-  }
-
-  if (fragment.hasChildNodes()) {
-    try {
-      if (stitched && previousTextNode) {
-        // If we stitched, we need to replace BOTH the previous and current text nodes.
-        previousTextNode.parentNode.removeChild(previousTextNode);
-        parent.replaceChild(fragment, textNode);
-      } else {
-        parent.replaceChild(fragment, textNode);
-      }
-    } catch (e) {
-      console.warn("Could not replace text node:", e);
+    // 4. Append any remaining text after the last match
+    if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
     }
-  }
+
+    // 5. Replace the original node(s) with our new fragment
+    if (fragment.hasChildNodes()) {
+        try {
+            if (stitched && previousTextNode) {
+                // If we stitched, we replace BOTH nodes
+                previousTextNode.parentNode.removeChild(previousTextNode);
+                parent.replaceChild(fragment, textNode);
+            } else {
+                parent.replaceChild(fragment, textNode);
+            }
+        } catch (e) {
+            console.warn("Could not replace text node:", e);
+        }
+    }
 }
 // ===== PHASE 2: UNIFIED HIGH-PERFORMANCE PROCESSOR =====
 
