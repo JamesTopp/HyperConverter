@@ -683,64 +683,39 @@ function processTextNode(textNode) {
 }
 // ===== PHASE 2: UNIFIED HIGH-PERFORMANCE PROCESSOR =====
 
-// Debouncing for mutation observer
-let mutationDebounceTimer = null;
-const MUTATION_DEBOUNCE_DELAY = 150; // ms
-
-// Cache for performance
-const CONVERSION_CACHE = new Map();
-const MAX_CACHE_SIZE = 1000;
-
-/**
- * UNIFIED PROCESSOR - Replaces all 4 separate functions
- * Processes text nodes, split measurements, AllRecipes ingredients, and table measurements
- * in a single DOM traversal for maximum performance
- */
 function processUnified(container) {
   if (!container) return;
-    
-  // Step 1: Process regular text nodes (main conversion logic)
-  processTextNodes(container);
-  
-  // Step 2: Process special cases in single query
+  const textNodes = collectTextNodes(container);
+  textNodes.forEach(processTextNode);
   processSpecialCases(container);
-  
 }
 
-/**
- * Process all text nodes efficiently
- */
-function processTextNodes(container) {
+function collectTextNodes(container) {
   const walker = document.createTreeWalker(
     container,
     NodeFilter.SHOW_TEXT,
     {
       acceptNode: function(node) {
-        if (node.parentNode?.closest(".hyper-hover") ||
-            node.parentNode?.closest("script, style, noscript, input, textarea") ||
-            node.parentNode?.closest("#hyper-converter-tooltip") ||
-            node.parentNode?.closest("[contenteditable='true']")) {
+        if (node.parentNode?.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
+            node.parentNode?.closest("#hyper-converter-tooltip")) {
           return NodeFilter.FILTER_REJECT;
         }
-        return NodeFilter.FILTER_ACCEPT;
+        if (/[a-zA-Z0-9¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/.test(node.textContent)) {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+        return NodeFilter.FILTER_REJECT;
       }
     }
   );
 
-  const textNodes = [];
+  const nodes = [];
   let node;
   while (node = walker.nextNode()) {
-    textNodes.push(node);
+    nodes.push(node);
   }
-
-  // Process all text nodes
-  textNodes.forEach(processTextNode);
+  return nodes;
 }
 
-/**
- * Process special cases in a single DOM query
- * Combines: split measurements, AllRecipes ingredients, table measurements
- */
 function processSpecialCases(container) {
   // Single query for all special elements we need to check
   const specialElements = container.querySelectorAll(`
