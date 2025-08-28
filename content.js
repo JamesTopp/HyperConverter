@@ -617,6 +617,8 @@ function processTextNode(textNode) {
             groups: match.groups
         });
     }
+    console.log("Original text:", text);
+    console.log("Found matches:", matches.map(m => `"${m.fullMatch}" at ${m.matchStart}-${m.matchEnd}`));
 
     // If no matches, exit early
     if (matches.length === 0) return;
