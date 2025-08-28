@@ -579,7 +579,7 @@ function processTextNode(textNode) {
     let text = textNode.textContent;
     if (!text.trim()) return;
 
-    // Text "stitching" logic for cousin nodes (no changes here)
+    // "Stitching" logic remains the same
     let stitched = false;
     let previousTextNode = null;
     let p = textNode.previousSibling;
@@ -588,7 +588,6 @@ function processTextNode(textNode) {
     } else if (p && p.nodeType === 1 && p.lastChild && p.lastChild.nodeType === 3) {
         previousTextNode = p.lastChild;
     }
-
     if (previousTextNode) {
         const prevText = previousTextNode.textContent;
         if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
@@ -599,36 +598,29 @@ function processTextNode(textNode) {
     }
 
     const regex = getCompiledRegex();
-    // We MUST reset lastIndex before using exec in a loop
-    regex.lastIndex = 0; 
-    
-    // Quick test to avoid building a fragment if there are no matches
-    if (!regex.test(text)) {
-        return;
-    }
     regex.lastIndex = 0;
-
+    
+    // We can skip the .test() check as the while loop handles no-match cases.
+    
     const fragment = document.createDocumentFragment();
-    let lastIndex = 0;
+    let lastIndex = 0; // This is our bookmark for slicing the string
     let match;
 
     while ((match = regex.exec(text)) !== null) {
-        // --- THIS IS THE CRITICAL FIX ---
-        // Guard against zero-width matches causing an infinite loop.
+        // Guard against zero-width matches causing an infinite loop
         if (match.index === regex.lastIndex) {
             regex.lastIndex++;
         }
-        // --------------------------------
 
         const fullMatch = match[0];
         const matchStart = match.index;
 
-        // Append the text before this match
+        // Append the text that came before this match
         if (matchStart > lastIndex) {
             fragment.appendChild(document.createTextNode(text.slice(lastIndex, matchStart)));
         }
 
-        // Find the conversion and create the span
+        // Find and apply the correct conversion
         let conversionName = null;
         for (const key in match.groups) {
             if (match.groups[key] !== undefined) {
@@ -647,7 +639,7 @@ function processTextNode(textNode) {
                 if (conversionResult) {
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
-                    span.textContent = fullMatch; 
+                    span.textContent = fullMatch;
                     span.dataset.convert = conversionResult;
                     fragment.appendChild(span);
                 } else {
@@ -658,11 +650,11 @@ function processTextNode(textNode) {
             fragment.appendChild(document.createTextNode(fullMatch));
         }
 
-        // Update our position in the string for the next text node we append
-        lastIndex = match.index + fullMatch.length;
+        // VERY IMPORTANT: Update our slicing bookmark to the regex engine's new position
+        lastIndex = regex.lastIndex;
     }
 
-    // Append any remaining text after the last match
+    // Append any final text after the last match
     if (lastIndex < text.length) {
         fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
     }
