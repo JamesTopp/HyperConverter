@@ -718,10 +718,7 @@ function processTextNode(textNode) {
       while (fragment.firstChild) {
         parentNode.insertBefore(fragment.firstChild, nextSibling);
       }
-      console.log("Inserted all fragment children");
-    } catch (e) {
-      console.warn("Could not replace text node:", e);
-    }
+    } catch (e) {    }
   }
 }
 // ===== PHASE 2: UNIFIED HIGH-PERFORMANCE PROCESSOR =====
@@ -1143,6 +1140,10 @@ function convertTableMeasurement(value, unit) {
 document.addEventListener("mouseover", function(e) {
   let target = e.target;
   
+if (target.textContent && (target.textContent.includes('cup') || target.textContent.includes('tbsp'))) {
+    console.log("Hovering over:", target, "has hyper-hover class:", target.classList?.contains("hyper-hover"));
+  }
+
   // Check if target itself has hyper-hover
   if (target && target.classList && target.classList.contains("hyper-hover")) {
     const convertText = target.dataset.convert;
