@@ -579,7 +579,7 @@ function processTextNode(textNode) {
     let text = textNode.textContent;
     if (!text.trim()) return;
 
-    // "Stitching" logic remains the same
+    // Handle stitching logic (unchanged)
     let stitched = false;
     let previousTextNode = null;
     let p = textNode.previousSibling;
@@ -600,25 +600,20 @@ function processTextNode(textNode) {
     const regex = getCompiledRegex();
     regex.lastIndex = 0;
     
-    // We can skip the .test() check as the while loop handles no-match cases.
-    
-    const fragment = document.createDocumentFragment();
-    let lastIndex = 0; // This is our bookmark for slicing the string
+    // FIXED: Build the entire replacement string first, then replace once
+    let processedText = text;
     let match;
+    let offset = 0;  // Track cumulative length changes
 
     while ((match = regex.exec(text)) !== null) {
-        // Guard against zero-width matches causing an infinite loop
+        // Guard against zero-width matches
         if (match.index === regex.lastIndex) {
             regex.lastIndex++;
+            continue;
         }
 
         const fullMatch = match[0];
         const matchStart = match.index;
-
-        // Append the text that came before this match
-        if (matchStart > lastIndex) {
-            fragment.appendChild(document.createTextNode(text.slice(lastIndex, matchStart)));
-        }
 
         // Find and apply the correct conversion
         let conversionName = null;
@@ -637,31 +632,37 @@ function processTextNode(textNode) {
                 const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
 
                 if (conversionResult) {
-                    const span = document.createElement("span");
-                    span.className = "hyper-hover";
-                    span.textContent = fullMatch;
-                    span.dataset.convert = conversionResult;
-                    fragment.appendChild(span);
-                } else {
-                    fragment.appendChild(document.createTextNode(fullMatch));
+                    // Create replacement HTML
+                    const replacement = `<span class="hyper-hover" data-convert="${conversionResult}">${fullMatch}</span>`;
+                    
+                    // Calculate position in processed text (accounting for previous replacements)
+                    const adjustedStart = matchStart + offset;
+                    const adjustedEnd = adjustedStart + fullMatch.length;
+                    
+                    // Replace in processed text
+                    processedText = processedText.slice(0, adjustedStart) + replacement + processedText.slice(adjustedEnd);
+                    
+                    // Update offset for length change
+                    offset += replacement.length - fullMatch.length;
                 }
             }
-        } else {
-            fragment.appendChild(document.createTextNode(fullMatch));
         }
-
-        // VERY IMPORTANT: Update our slicing bookmark to the regex engine's new position
-        lastIndex = regex.lastIndex;
     }
 
-    // Append any final text after the last match
-    if (lastIndex < text.length) {
-        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-    }
-
-    // Replace the original node(s) with our new fragment
-    if (fragment.hasChildNodes()) {
+    // Only modify DOM if we actually made changes
+    if (processedText !== text) {
         try {
+            // Create a temporary container to parse the HTML
+            const temp = document.createElement('div');
+            temp.innerHTML = processedText;
+            
+            // Create fragment from the parsed content
+            const fragment = document.createDocumentFragment();
+            while (temp.firstChild) {
+                fragment.appendChild(temp.firstChild);
+            }
+
+            // Replace the original node(s)
             if (stitched && previousTextNode) {
                 previousTextNode.parentNode.removeChild(previousTextNode);
                 parent.replaceChild(fragment, textNode);
