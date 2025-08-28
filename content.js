@@ -613,8 +613,18 @@ function processTextNode(textNode) {
     let lastIndex = 0;
     let match;
 
+        console.log("📜 Using compiled regex pattern:", regex);
+        console.log("===================================");
+        console.log("Starting new match loop. Searching in text:", text);
+
     // --- NEW, MORE ROBUST LOOP ---
     while ((match = regex.exec(text)) !== null) {
+      console.log("✅ Match found!", {
+            match_text: match[0],
+            match_index: match.index,
+            lastIndex_before_update: regex.lastIndex,
+            match_object: match
+        });
         const fullMatch = match[0];
         const matchStart = match.index;
 
