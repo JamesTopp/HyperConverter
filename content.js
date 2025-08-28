@@ -928,9 +928,9 @@ function getCookingConversion(value, unit) {
 
 // ===== DEBOUNCED MUTATION OBSERVER =====
 
-/**
- * Debounced processing for mutations
- */
+let mutationDebounceTimer = null;
+const MUTATION_DEBOUNCE_DELAY = 150; // ms
+
 function debouncedProcess(container) {
   if (mutationDebounceTimer) {
     clearTimeout(mutationDebounceTimer);
