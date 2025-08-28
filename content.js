@@ -726,6 +726,12 @@ if (fragment.hasChildNodes()) {
     }
 }
 }
+
+// Add after your DOM insertion
+setTimeout(() => {
+    console.log("DOM check 100ms later:", parentNode.innerHTML);
+}, 100);
+
 // ===== PHASE 2: UNIFIED HIGH-PERFORMANCE PROCESSOR =====
 
 function processUnified(container) {
