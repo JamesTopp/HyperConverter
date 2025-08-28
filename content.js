@@ -569,136 +569,156 @@ function hideTooltip() {
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
 function processTextNode(textNode) {
-    if (!textNode || textNode.nodeType !== 3) return;
+  if (!textNode || textNode.nodeType !== 3) return;
 
-    const parent = textNode.parentNode;
-    if (!parent ||
-        parent.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
-        parent.closest("#hyper-converter-tooltip")) return;
+  const parent = textNode.parentNode;
+  if (
+    !parent ||
+    parent.closest(
+      ".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']"
+    ) ||
+    parent.closest("#hyper-converter-tooltip")
+  )
+    return;
 
-    let text = textNode.textContent;
-    if (!text.trim()) return;
+  let text = textNode.textContent;
+  if (!text.trim()) return;
 
-    // Handle stitching logic (unchanged)
-    let stitched = false;
-    let previousTextNode = null;
-    let p = textNode.previousSibling;
-    if (p && p.nodeType === 3) {
-        previousTextNode = p;
-    } else if (p && p.nodeType === 1 && p.lastChild && p.lastChild.nodeType === 3) {
-        previousTextNode = p.lastChild;
+  // Handle stitching logic (unchanged)
+  let stitched = false;
+  let previousTextNode = null;
+  let p = textNode.previousSibling;
+  if (p && p.nodeType === 3) {
+    previousTextNode = p;
+  } else if (
+    p &&
+    p.nodeType === 1 &&
+    p.lastChild &&
+    p.lastChild.nodeType === 3
+  ) {
+    previousTextNode = p.lastChild;
+  }
+  if (previousTextNode) {
+    const prevText = previousTextNode.textContent;
+    if (
+      prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
+      prevText.match(
+        /\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i
+      )
+    ) {
+      text = prevText + text;
+      stitched = true;
     }
-    if (previousTextNode) {
-        const prevText = previousTextNode.textContent;
-        if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
-            prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
-            text = prevText + text;
-            stitched = true;
-        }
+  }
+
+  const regex = getCompiledRegex();
+  regex.lastIndex = 0;
+
+  // Collect all matches first to avoid regex state corruption
+  const matches = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    // Guard against infinite loops
+    if (match.index === regex.lastIndex) {
+      regex.lastIndex++;
+      continue;
     }
 
-    const regex = getCompiledRegex();
-    regex.lastIndex = 0;
-    
-    // Collect all matches first to avoid regex state corruption
-    const matches = [];
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-        // Guard against infinite loops
-        if (match.index === regex.lastIndex) {
-            regex.lastIndex++;
-            continue;
-        }
-        
-        matches.push({
-            fullMatch: match[0],
-            matchStart: match.index,
-            matchEnd: regex.lastIndex,
-            groups: match.groups
-        });
-    }
-    // If no matches, exit early
-    if (matches.length === 0) return;
+    matches.push({
+      fullMatch: match[0],
+      matchStart: match.index,
+      matchEnd: regex.lastIndex,
+      groups: match.groups,
+    });
+  }
+  // If no matches, exit early
+  if (matches.length === 0) return;
 
- // Build the fragment with all replacements
-const fragment = document.createDocumentFragment();
-let lastIndex = 0;
+  // Build the fragment with all replacements
+  const fragment = document.createDocumentFragment();
+  let lastIndex = 0;
 
-// Sort matches by position to ensure correct processing order
-matches.sort((a, b) => a.matchStart - b.matchStart);
+  // Sort matches by position to ensure correct processing order
+  matches.sort((a, b) => a.matchStart - b.matchStart);
 
-for (const matchInfo of matches) {
+  for (const matchInfo of matches) {
     // Add text before this match
     if (matchInfo.matchStart > lastIndex) {
-        const beforeText = text.slice(lastIndex, matchInfo.matchStart);
-        if (beforeText) {
-            fragment.appendChild(document.createTextNode(beforeText));
-        }
+      const beforeText = text.slice(lastIndex, matchInfo.matchStart);
+      if (beforeText) {
+        fragment.appendChild(document.createTextNode(beforeText));
+      }
     }
 
     // Process the match
     let conversionName = null;
     for (const key in matchInfo.groups) {
-        if (matchInfo.groups[key] !== undefined) {
-            conversionName = key;
-            break;
-        }
+      if (matchInfo.groups[key] !== undefined) {
+        conversionName = key;
+        break;
+      }
     }
 
     if (conversionName) {
-        const conversion = conversions.find(c => c.name === conversionName);
-        if (conversion) {
-            const valueRegex = new RegExp(conversion.pattern, "i");
-            const valueMatch = matchInfo.fullMatch.match(valueRegex);
-            const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
+      const conversion = conversions.find((c) => c.name === conversionName);
+      if (conversion) {
+        const valueRegex = new RegExp(conversion.pattern, "i");
+        const valueMatch = matchInfo.fullMatch.match(valueRegex);
+        const conversionResult = valueMatch
+          ? conversion.convert(valueMatch)
+          : null;
 
-            if (conversionResult) {
-                const span = document.createElement("span");
-                span.className = "hyper-hover";
-                span.textContent = matchInfo.fullMatch;
-                span.dataset.convert = conversionResult;
-                console.log(`Created span for "${matchInfo.fullMatch}"`);
-                fragment.appendChild(span);
-            } else {
-                fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
-            }
+        if (conversionResult) {
+          const span = document.createElement("span");
+          span.className = "hyper-hover";
+          span.textContent = matchInfo.fullMatch;
+          span.dataset.convert = conversionResult;
+          console.log(`Created span for "${matchInfo.fullMatch}"`);
+          fragment.appendChild(span);
         } else {
-            fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
+          fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
         }
-    } else {
+      } else {
         fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
+      }
+    } else {
+      fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
     }
 
     // Update lastIndex to end of this match
     lastIndex = matchInfo.matchEnd;
-}
+  }
 
-// Add any remaining text after the last match
-if (lastIndex < text.length) {
+  // Add any remaining text after the last match
+  if (lastIndex < text.length) {
     const remainingText = text.slice(lastIndex);
     if (remainingText) {
-        fragment.appendChild(document.createTextNode(remainingText));
+      fragment.appendChild(document.createTextNode(remainingText));
     }
-}
+  }
 
-console.log("Fragment contents:", fragment.childNodes.length, "nodes");
-for (let i = 0; i < fragment.childNodes.length; i++) {
-    console.log(`Node ${i}:`, fragment.childNodes[i].nodeType === 1 ? `<span>${fragment.childNodes[i].textContent}</span>` : `"${fragment.childNodes[i].textContent}"`);
-}
+  // Replace the original node(s) with the new fragment
+  if (fragment.hasChildNodes()) {
+    try {
+      if (stitched && previousTextNode) {
+        previousTextNode.parentNode.removeChild(previousTextNode);
+      }
 
-    // Replace the original node(s) with the new fragment
-    if (fragment.hasChildNodes()) {
-        try {
-            if (stitched && previousTextNode) {
-                previousTextNode.parentNode.removeChild(previousTextNode);
-                parent.replaceChild(fragment, textNode);
-            } else {
-                parent.replaceChild(fragment, textNode);
-            }
-        } catch (e) {
-            console.warn("Could not replace text node:", e);
-        }
+      // Insert all fragment children individually
+      const nextSibling = textNode.nextSibling;
+      const parentNode = textNode.parentNode;
+
+      // Remove the original text node first
+      parentNode.removeChild(textNode);
+
+      // Insert each fragment child in order
+      while (fragment.firstChild) {
+        parentNode.insertBefore(fragment.firstChild, nextSibling);
+      }
+    } catch (e) {
+      console.warn("Could not replace text node:", e);
     }
+  }
 }
 // ===== PHASE 2: UNIFIED HIGH-PERFORMANCE PROCESSOR =====
 
