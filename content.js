@@ -259,10 +259,10 @@ const conversions = [
       return `${match[0]} = ${(num * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
     },
   },
-  // ======= STANDARD CONVERSIONS =======
+  // ======= STANDARD PRIORITY: Single unit patterns =======
   {
     name: "inches",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:inches?|inch|in)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:inches?|inch|in)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -271,7 +271,7 @@ const conversions = [
   },
   {
     name: "feet",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:feet|foot|ft)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:feet|foot|ft)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -280,7 +280,7 @@ const conversions = [
   },
   {
     name: "centimeters",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:centimetres?|centimeters?|cm|CM)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:centimetres?|centimeters?|cm|CM)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -289,7 +289,7 @@ const conversions = [
   },
   {
     name: "millimeters",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:millimeters?|mm)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:millimeters?|mm)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -298,7 +298,7 @@ const conversions = [
   },
   {
     name: "meters",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:metres?|meters?|m|M)\\b(?![a-zA-Z])`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:metres?|meters?|m|M)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -307,7 +307,7 @@ const conversions = [
   },
   {
     name: "pounds",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -316,7 +316,7 @@ const conversions = [
   },
   {
     name: "kilometers",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:kilometres?|kilometers?|km|KM)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:kilometres?|kilometers?|km|KM)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -325,7 +325,7 @@ const conversions = [
   },
   {
     name: "ounces",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:ounces?|oz)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:ounces?|oz)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -334,7 +334,7 @@ const conversions = [
   },
   {
     name: "grams",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:grams?|g)\\b(?![a-zA-Z])`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:grams?|g)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -343,7 +343,7 @@ const conversions = [
   },
   {
     name: "gallons",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:gallons?|gal)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:gallons?|gal)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -352,7 +352,7 @@ const conversions = [
   },
   {
     name: "liters",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:litres?|liters?|l|L)\\b(?![a-zA-Z])`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:litres?|liters?|l|L)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -361,7 +361,7 @@ const conversions = [
   },
   {
     name: "milliliters",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:millilitres?|milliliters?|ml|mL)\\b(?![a-zA-Z])`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:millilitres?|milliliters?|ml|mL)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -370,7 +370,7 @@ const conversions = [
   },
   {
     name: "cups",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:cups?)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:cups?)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -379,7 +379,7 @@ const conversions = [
   },
   {
     name: "tablespoons",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -388,7 +388,7 @@ const conversions = [
   },
   {
     name: "teaspoons",
-    pattern: `\\b${createNumberPattern()}\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
