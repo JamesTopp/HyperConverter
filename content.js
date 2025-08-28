@@ -432,6 +432,9 @@ function getCompiledRegex() {
   return COMPILED_REGEX;
 }
 
+const CONVERSION_CACHE = new Map();
+const MAX_CACHE_SIZE = 1000;
+
 /**
  * Parses a string that may contain numbers, fractions, or spelled-out words.
  * @param {string} valueString The string to parse.
