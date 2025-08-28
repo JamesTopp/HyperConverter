@@ -620,57 +620,66 @@ function processTextNode(textNode) {
     // If no matches, exit early
     if (matches.length === 0) return;
 
-    // Build the fragment with all replacements
-    const fragment = document.createDocumentFragment();
-    let lastIndex = 0;
+ // Build the fragment with all replacements
+const fragment = document.createDocumentFragment();
+let lastIndex = 0;
 
-    for (const matchInfo of matches) {
-        // Add text before this match
-        if (matchInfo.matchStart > lastIndex) {
-            fragment.appendChild(document.createTextNode(text.slice(lastIndex, matchInfo.matchStart)));
+// Sort matches by position to ensure correct processing order
+matches.sort((a, b) => a.matchStart - b.matchStart);
+
+for (const matchInfo of matches) {
+    // Add text before this match
+    if (matchInfo.matchStart > lastIndex) {
+        const beforeText = text.slice(lastIndex, matchInfo.matchStart);
+        if (beforeText) {
+            fragment.appendChild(document.createTextNode(beforeText));
         }
+    }
 
-        // Find and apply the correct conversion
-        let conversionName = null;
-        for (const key in matchInfo.groups) {
-            if (matchInfo.groups[key] !== undefined) {
-                conversionName = key;
-                break;
-            }
+    // Process the match
+    let conversionName = null;
+    for (const key in matchInfo.groups) {
+        if (matchInfo.groups[key] !== undefined) {
+            conversionName = key;
+            break;
         }
-        if (conversionName) {
-            const conversion = conversions.find(c => c.name === conversionName);
-            
-            if (conversion) {
-                const valueRegex = new RegExp(conversion.pattern, "i");
-                const valueMatch = matchInfo.fullMatch.match(valueRegex);
-                const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
+    }
 
-                if (conversionResult) {
-                    const span = document.createElement("span");
-                    span.className = "hyper-hover";
-                    span.textContent = matchInfo.fullMatch;
-                    span.dataset.convert = conversionResult;
-                        console.log(`Created span for "${matchInfo.fullMatch}" with tooltip: ${conversionResult}`);
+    if (conversionName) {
+        const conversion = conversions.find(c => c.name === conversionName);
+        if (conversion) {
+            const valueRegex = new RegExp(conversion.pattern, "i");
+            const valueMatch = matchInfo.fullMatch.match(valueRegex);
+            const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
 
-                    fragment.appendChild(span);
-                } else {
-                    fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
-                }
+            if (conversionResult) {
+                const span = document.createElement("span");
+                span.className = "hyper-hover";
+                span.textContent = matchInfo.fullMatch;
+                span.dataset.convert = conversionResult;
+                console.log(`Created span for "${matchInfo.fullMatch}"`);
+                fragment.appendChild(span);
             } else {
                 fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
             }
         } else {
             fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
         }
-
-        lastIndex = matchInfo.matchEnd;
+    } else {
+        fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
     }
 
-    // Add any remaining text after the last match
-    if (lastIndex < text.length) {
-        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+    // Update lastIndex to end of this match
+    lastIndex = matchInfo.matchEnd;
+}
+
+// Add any remaining text after the last match
+if (lastIndex < text.length) {
+    const remainingText = text.slice(lastIndex);
+    if (remainingText) {
+        fragment.appendChild(document.createTextNode(remainingText));
     }
+}
 
     // Replace the original node(s) with the new fragment
     if (fragment.hasChildNodes()) {
