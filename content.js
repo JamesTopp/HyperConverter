@@ -649,6 +649,9 @@ function processTextNode(textNode) {
                 const valueMatch = matchInfo.fullMatch.match(valueRegex);
                 const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
 
+                        console.log(`Processing match "${matchInfo.fullMatch}": conversion=${conversionName}, result=${conversionResult}`);
+
+
                 if (conversionResult) {
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
