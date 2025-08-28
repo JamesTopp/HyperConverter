@@ -579,7 +579,7 @@ function processTextNode(textNode) {
     let text = textNode.textContent;
     if (!text.trim()) return;
 
-    // --- The "TEXT STITCHING" LOGIC REMAINS THE SAME ---
+    // Text "stitching" logic for cousin nodes (no changes here)
     let stitched = false;
     let previousTextNode = null;
     let p = textNode.previousSibling;
@@ -598,38 +598,37 @@ function processTextNode(textNode) {
         }
     }
 
-    const regex = getCompiledRegex(); // This gets your global regex
+    const regex = getCompiledRegex();
     // We MUST reset lastIndex before using exec in a loop
     regex.lastIndex = 0; 
     
-    // Only proceed if there's at least one match
+    // Quick test to avoid building a fragment if there are no matches
     if (!regex.test(text)) {
         return;
     }
-    // Reset again after testing
     regex.lastIndex = 0;
 
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
     let match;
 
-    // --- NEW, MORE ROBUST LOOP ---
     while ((match = regex.exec(text)) !== null) {
-      console.log("✅ Match found!", {
-            match_text: match[0],
-            match_index: match.index,
-            lastIndex_before_update: regex.lastIndex,
-            match_object: match
-        });
+        // --- THIS IS THE CRITICAL FIX ---
+        // Guard against zero-width matches causing an infinite loop.
+        if (match.index === regex.lastIndex) {
+            regex.lastIndex++;
+        }
+        // --------------------------------
+
         const fullMatch = match[0];
         const matchStart = match.index;
 
-        // 1. Append the text before this match
+        // Append the text before this match
         if (matchStart > lastIndex) {
             fragment.appendChild(document.createTextNode(text.slice(lastIndex, matchStart)));
         }
 
-        // 2. Find the conversion and create the span
+        // Find the conversion and create the span
         let conversionName = null;
         for (const key in match.groups) {
             if (match.groups[key] !== undefined) {
@@ -641,7 +640,6 @@ function processTextNode(textNode) {
         if (conversionName) {
             const conversion = conversions.find(c => c.name === conversionName);
             if (conversion) {
-                // We need to run the specific pattern again on the fullMatch to get capture groups for the convert function
                 const valueRegex = new RegExp(conversion.pattern, "i");
                 const valueMatch = fullMatch.match(valueRegex);
                 const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
@@ -649,34 +647,30 @@ function processTextNode(textNode) {
                 if (conversionResult) {
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
-                    // This simplifies the stitched logic immensely. The span always contains what was matched.
                     span.textContent = fullMatch; 
                     span.dataset.convert = conversionResult;
                     fragment.appendChild(span);
                 } else {
-                    // If conversion fails for some reason, append the original text
                     fragment.appendChild(document.createTextNode(fullMatch));
                 }
             }
         } else {
-            // If no conversion was found (should be rare), append original text
             fragment.appendChild(document.createTextNode(fullMatch));
         }
 
-        // 3. Update our position in the string
-        lastIndex = regex.lastIndex;
+        // Update our position in the string for the next text node we append
+        lastIndex = match.index + fullMatch.length;
     }
 
-    // 4. Append any remaining text after the last match
+    // Append any remaining text after the last match
     if (lastIndex < text.length) {
         fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
     }
 
-    // 5. Replace the original node(s) with our new fragment
+    // Replace the original node(s) with our new fragment
     if (fragment.hasChildNodes()) {
         try {
             if (stitched && previousTextNode) {
-                // If we stitched, we replace BOTH nodes
                 previousTextNode.parentNode.removeChild(previousTextNode);
                 parent.replaceChild(fragment, textNode);
             } else {
