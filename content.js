@@ -639,14 +639,21 @@ function processTextNode(textNode) {
             }
         }
 
+    console.log(`Match: "${matchInfo.fullMatch}", conversionName: ${conversionName}`);
+
         if (conversionName) {
             const conversion = conversions.find(c => c.name === conversionName);
+            
+                    console.log(`Found conversion: ${conversion ? conversion.name : 'none'}`);
+
             if (conversion) {
                 const valueRegex = new RegExp(conversion.pattern, "i");
                 const valueMatch = matchInfo.fullMatch.match(valueRegex);
+                            console.log(`Pattern match result:`, valueMatch);
+
                 const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
 
-                        console.log(`Processing match "${matchInfo.fullMatch}": conversion=${conversionName}, result=${conversionResult}`);
+            console.log(`Conversion result: ${conversionResult}`);
 
 
                 if (conversionResult) {
