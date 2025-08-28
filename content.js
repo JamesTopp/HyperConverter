@@ -638,29 +638,21 @@ function processTextNode(textNode) {
                 break;
             }
         }
-
-    console.log(`Match: "${matchInfo.fullMatch}", conversionName: ${conversionName}`);
-
         if (conversionName) {
             const conversion = conversions.find(c => c.name === conversionName);
             
-                    console.log(`Found conversion: ${conversion ? conversion.name : 'none'}`);
-
             if (conversion) {
                 const valueRegex = new RegExp(conversion.pattern, "i");
                 const valueMatch = matchInfo.fullMatch.match(valueRegex);
-                            console.log(`Pattern match result:`, valueMatch);
-
                 const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
-
-            console.log(`Conversion result: ${conversionResult}`);
-
 
                 if (conversionResult) {
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
                     span.textContent = matchInfo.fullMatch;
                     span.dataset.convert = conversionResult;
+                        console.log(`Created span for "${matchInfo.fullMatch}" with tooltip: ${conversionResult}`);
+
                     fragment.appendChild(span);
                 } else {
                     fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
