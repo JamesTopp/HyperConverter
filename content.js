@@ -718,6 +718,7 @@ function processTextNode(textNode) {
       while (fragment.firstChild) {
         parentNode.insertBefore(fragment.firstChild, nextSibling);
       }
+      console.log("Inserted all fragment children");
     } catch (e) {
       console.warn("Could not replace text node:", e);
     }
