@@ -701,25 +701,30 @@ function processTextNode(textNode) {
   }
 
   // Replace the original node(s) with the new fragment
-  if (fragment.hasChildNodes()) {
+if (fragment.hasChildNodes()) {
     try {
-      if (stitched && previousTextNode) {
-        previousTextNode.parentNode.removeChild(previousTextNode);
-      }
+        if (stitched && previousTextNode) {
+            previousTextNode.parentNode.removeChild(previousTextNode);
+        }
 
-      // Insert all fragment children individually
-      const nextSibling = textNode.nextSibling;
-      const parentNode = textNode.parentNode;
+        // Convert fragment to array to avoid modification during iteration
+        const fragmentChildren = Array.from(fragment.childNodes);
+        const nextSibling = textNode.nextSibling;
+        const parentNode = textNode.parentNode;
 
-      // Remove the original text node first
-      parentNode.removeChild(textNode);
+        // Remove the original text node first
+        parentNode.removeChild(textNode);
 
-      // Insert each fragment child in order
-      while (fragment.firstChild) {
-        parentNode.insertBefore(fragment.firstChild, nextSibling);
-      }
-    } catch (e) {    }
-  }
+        // Insert each child in order
+        fragmentChildren.forEach(child => {
+            parentNode.insertBefore(child, nextSibling);
+        });
+
+        console.log("Inserted all fragment children");
+    } catch (e) {
+        console.warn("Could not replace text node:", e);
+    }
+}
 }
 // ===== PHASE 2: UNIFIED HIGH-PERFORMANCE PROCESSOR =====
 
