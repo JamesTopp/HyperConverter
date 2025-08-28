@@ -681,6 +681,11 @@ if (lastIndex < text.length) {
     }
 }
 
+console.log("Fragment contents:", fragment.childNodes.length, "nodes");
+for (let i = 0; i < fragment.childNodes.length; i++) {
+    console.log(`Node ${i}:`, fragment.childNodes[i].nodeType === 1 ? `<span>${fragment.childNodes[i].textContent}</span>` : `"${fragment.childNodes[i].textContent}"`);
+}
+
     // Replace the original node(s) with the new fragment
     if (fragment.hasChildNodes()) {
         try {
