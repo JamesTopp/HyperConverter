@@ -600,25 +600,41 @@ function processTextNode(textNode) {
     const regex = getCompiledRegex();
     regex.lastIndex = 0;
     
-    // FIXED: Build the entire replacement string first, then replace once
-    let processedText = text;
+    // Collect all matches first to avoid regex state corruption
+    const matches = [];
     let match;
-    let offset = 0;  // Track cumulative length changes
-
     while ((match = regex.exec(text)) !== null) {
-        // Guard against zero-width matches
+        // Guard against infinite loops
         if (match.index === regex.lastIndex) {
             regex.lastIndex++;
             continue;
         }
+        
+        matches.push({
+            fullMatch: match[0],
+            matchStart: match.index,
+            matchEnd: regex.lastIndex,
+            groups: match.groups
+        });
+    }
 
-        const fullMatch = match[0];
-        const matchStart = match.index;
+    // If no matches, exit early
+    if (matches.length === 0) return;
+
+    // Build the fragment with all replacements
+    const fragment = document.createDocumentFragment();
+    let lastIndex = 0;
+
+    for (const matchInfo of matches) {
+        // Add text before this match
+        if (matchInfo.matchStart > lastIndex) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex, matchInfo.matchStart)));
+        }
 
         // Find and apply the correct conversion
         let conversionName = null;
-        for (const key in match.groups) {
-            if (match.groups[key] !== undefined) {
+        for (const key in matchInfo.groups) {
+            if (matchInfo.groups[key] !== undefined) {
                 conversionName = key;
                 break;
             }
@@ -628,41 +644,36 @@ function processTextNode(textNode) {
             const conversion = conversions.find(c => c.name === conversionName);
             if (conversion) {
                 const valueRegex = new RegExp(conversion.pattern, "i");
-                const valueMatch = fullMatch.match(valueRegex);
+                const valueMatch = matchInfo.fullMatch.match(valueRegex);
                 const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
 
                 if (conversionResult) {
-                    // Create replacement HTML
-                    const replacement = `<span class="hyper-hover" data-convert="${conversionResult}">${fullMatch}</span>`;
-                    
-                    // Calculate position in processed text (accounting for previous replacements)
-                    const adjustedStart = matchStart + offset;
-                    const adjustedEnd = adjustedStart + fullMatch.length;
-                    
-                    // Replace in processed text
-                    processedText = processedText.slice(0, adjustedStart) + replacement + processedText.slice(adjustedEnd);
-                    
-                    // Update offset for length change
-                    offset += replacement.length - fullMatch.length;
+                    const span = document.createElement("span");
+                    span.className = "hyper-hover";
+                    span.textContent = matchInfo.fullMatch;
+                    span.dataset.convert = conversionResult;
+                    fragment.appendChild(span);
+                } else {
+                    fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
                 }
+            } else {
+                fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
             }
+        } else {
+            fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
         }
+
+        lastIndex = matchInfo.matchEnd;
     }
 
-    // Only modify DOM if we actually made changes
-    if (processedText !== text) {
-        try {
-            // Create a temporary container to parse the HTML
-            const temp = document.createElement('div');
-            temp.innerHTML = processedText;
-            
-            // Create fragment from the parsed content
-            const fragment = document.createDocumentFragment();
-            while (temp.firstChild) {
-                fragment.appendChild(temp.firstChild);
-            }
+    // Add any remaining text after the last match
+    if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
 
-            // Replace the original node(s)
+    // Replace the original node(s) with the new fragment
+    if (fragment.hasChildNodes()) {
+        try {
             if (stitched && previousTextNode) {
                 previousTextNode.parentNode.removeChild(previousTextNode);
                 parent.replaceChild(fragment, textNode);
