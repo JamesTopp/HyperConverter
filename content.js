@@ -637,93 +637,64 @@ function processTextNode(textNode) {
   // If no matches, exit early
   if (matches.length === 0) return;
 
-  // Build the fragment with all replacements
-  const fragment = document.createDocumentFragment();
-  let lastIndex = 0;
+  // Process matches one by one from right to left to maintain positions
+matches.sort((a, b) => b.matchStart - a.matchStart); // Sort right to left
 
-  // Sort matches by position to ensure correct processing order
-  matches.sort((a, b) => a.matchStart - b.matchStart);
-
-  for (const matchInfo of matches) {
-    // Add text before this match
-    if (matchInfo.matchStart > lastIndex) {
-      const beforeText = text.slice(lastIndex, matchInfo.matchStart);
-      if (beforeText) {
-        fragment.appendChild(document.createTextNode(beforeText));
-      }
-    }
-
-    // Process the match
+for (const matchInfo of matches) {
+    // Find conversion
     let conversionName = null;
     for (const key in matchInfo.groups) {
-      if (matchInfo.groups[key] !== undefined) {
-        conversionName = key;
-        break;
-      }
+        if (matchInfo.groups[key] !== undefined) {
+            conversionName = key;
+            break;
+        }
     }
-
+    
     if (conversionName) {
-      const conversion = conversions.find((c) => c.name === conversionName);
-      if (conversion) {
-        const valueRegex = new RegExp(conversion.pattern, "i");
-        const valueMatch = matchInfo.fullMatch.match(valueRegex);
-        const conversionResult = valueMatch
-          ? conversion.convert(valueMatch)
-          : null;
-
-        if (conversionResult) {
-          const span = document.createElement("span");
-          span.className = "hyper-hover";
-          span.textContent = matchInfo.fullMatch;
-          span.dataset.convert = conversionResult;
-          console.log(`Created span for "${matchInfo.fullMatch}"`);
-          fragment.appendChild(span);
-        } else {
-          fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
+        const conversion = conversions.find(c => c.name === conversionName);
+        if (conversion) {
+            const valueMatch = matchInfo.fullMatch.match(new RegExp(conversion.pattern, "i"));
+            const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
+            
+            if (conversionResult) {
+                // Split the text at this match position
+                const beforeText = text.substring(0, matchInfo.matchStart);
+                const afterText = text.substring(matchInfo.matchEnd);
+                
+                // Create span element
+                const span = document.createElement("span");
+                span.className = "hyper-hover";
+                span.textContent = matchInfo.fullMatch;
+                span.dataset.convert = conversionResult;
+                console.log(`Processing match: "${matchInfo.fullMatch}"`);
+                
+                // Create text nodes
+                const beforeNode = beforeText ? document.createTextNode(beforeText) : null;
+                const afterNode = afterText ? document.createTextNode(afterText) : null;
+                
+                // Replace the text node with the new structure
+                const parentNode = textNode.parentNode;
+                const nextSibling = textNode.nextSibling;
+                
+                // Remove original text node
+                parentNode.removeChild(textNode);
+                
+                // Insert new nodes in order
+                if (beforeNode) parentNode.insertBefore(beforeNode, nextSibling);
+                parentNode.insertBefore(span, nextSibling);
+                if (afterNode) parentNode.insertBefore(afterNode, nextSibling);
+                
+                // Update textNode reference for next iteration (use the last text node created)
+                textNode = afterNode || beforeNode;
+                text = afterNode ? afterText : beforeText;
+            }
         }
-      } else {
-        fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
-      }
-    } else {
-      fragment.appendChild(document.createTextNode(matchInfo.fullMatch));
     }
+}
 
-    // Update lastIndex to end of this match
-    lastIndex = matchInfo.matchEnd;
-  }
-
-  // Add any remaining text after the last match
-  if (lastIndex < text.length) {
-    const remainingText = text.slice(lastIndex);
-    if (remainingText) {
-      fragment.appendChild(document.createTextNode(remainingText));
-    }
-  }
-
-  // Replace the original node(s) with the new fragment
-if (fragment.hasChildNodes()) {
-    try {
-        if (stitched && previousTextNode) {
-            previousTextNode.parentNode.removeChild(previousTextNode);
-        }
-
-        // Convert fragment to array to avoid modification during iteration
-        const fragmentChildren = Array.from(fragment.childNodes);
-        const nextSibling = textNode.nextSibling;
-        const parentNode = textNode.parentNode;
-
-        // Remove the original text node first
-        parentNode.removeChild(textNode);
-
-        // Insert each child in order
-        fragmentChildren.forEach(child => {
-            parentNode.insertBefore(child, nextSibling);
-        });
-
-        console.log("Inserted all fragment children");
-    } catch (e) {
-        console.warn("Could not replace text node:", e);
-    }
+// Handle stitched nodes
+if (stitched && previousTextNode) {
+    previousTextNode.parentNode.removeChild(previousTextNode);
 }
 }
 
