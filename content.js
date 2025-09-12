@@ -112,9 +112,8 @@ const conversions = [
   },
   {
     name: "multi_dimensions",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|to|–)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,    convert: (match) => {
-      console.log("Ranges pattern matched:", match[0]);
-      console.log("Number 1:", match[1], "Number 2:", match[2], "Unit:", match[3]);
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|to|–)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,    
+    convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
@@ -140,7 +139,7 @@ const conversions = [
   },
   {
     name: "ranges",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|to|–)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)\\b`,
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         const val1 = parseMeasurementValue(match[1]);
@@ -314,6 +313,15 @@ const conversions = [
       if (isNaN(num)) return null;
       return `${match[0]} = ${(num * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
     },
+  },
+  {
+  name: "kilograms",
+  pattern: `${createNumberPattern()}\\s*-?\\s*(?:kilograms?|kg)\\b`,
+  convert: (match) => {
+    const num = parseMeasurementValue(match[1]);
+    if (isNaN(num)) return null;
+    return `${match[0]} = ${(num / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
+  },
   },
   {
     name: "kilometers",
@@ -667,7 +675,6 @@ for (const matchInfo of matches) {
                 span.className = "hyper-hover";
                 span.textContent = matchInfo.fullMatch;
                 span.dataset.convert = conversionResult;
-                console.log(`Processing match: "${matchInfo.fullMatch}"`);
                 
                 // Create text nodes
                 const beforeNode = beforeText ? document.createTextNode(beforeText) : null;
