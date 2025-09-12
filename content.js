@@ -398,7 +398,7 @@ const conversions = [
   // ======= TEMPERATURE CONVERSIONS =======
   {
     name: "fahrenheit",
-    pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:°\\s?f|degrees?\\s?f|fahrenheit)\\b`,
+    pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:[°º]\\s?f|degrees?\\s?f|degrees?\\s?fahrenheit|fahrenheit)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
@@ -407,7 +407,7 @@ const conversions = [
   },
   {
     name: "celsius",
-    pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:°\\s?c|degrees?\\s?c|celsius)\\b`,
+    pattern: `(-?\\d+(?:\\.\\d+)?)\\s*(?:[°º]\\s?c|degrees?\\s?c|degrees?\\s?celsius|celsius)\\b`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
