@@ -63,7 +63,7 @@ const createUniversalPattern = () => {
   const wordPhrases = `(?:(?:${baseWords})\\s+(?:of\\s+)?(?:a|an)\\s+)`;
   
   // Single words from measurementWords
-  const singleWords = `(?:${Object.keys(measurementWords).join('|')})`;
+  const singleWords = `(?:\\b(?:${Object.keys(measurementWords).join('|')})\\b)`;
   
   return `(${numbers}|${unicodes}|${wordPhrases}|${singleWords})`;
 };
