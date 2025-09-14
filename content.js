@@ -669,11 +669,9 @@ function processTextNode(textNode) {
     const regex = getCompiledRegex();
     regex.lastIndex = 0;
 
-    // Step 1: Find all matches and store them. No DOM changes yet.
     const matches = [];
     let match;
     while ((match = regex.exec(text)) !== null) {
-        // Guard against zero-width matches causing an infinite loop
         if (match.index === regex.lastIndex) {
             regex.lastIndex++;
         }
@@ -682,7 +680,6 @@ function processTextNode(textNode) {
 
     if (matches.length === 0) return;
 
-    // Step 2: Build the new structure in a DocumentFragment.
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
 
@@ -690,13 +687,11 @@ function processTextNode(textNode) {
         const matchStart = currentMatch.index;
         const fullMatch = currentMatch[0];
 
-        // Append the text *before* this match
         const beforeText = text.slice(lastIndex, matchStart);
         if (beforeText) {
             fragment.appendChild(document.createTextNode(beforeText));
         }
 
-        // Find the conversion for this match
         let conversionName = null;
         for (const key in currentMatch.groups) {
             if (currentMatch.groups[key] !== undefined) {
@@ -707,36 +702,30 @@ function processTextNode(textNode) {
 
         if (conversionName) {
             const conversion = conversions.find(c => c.name === conversionName);
-            const valueMatch = fullMatch.match(new RegExp(conversion.pattern, "i"));
-            const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
+            
+            const conversionResult = conversion ? conversion.convert(currentMatch) : null;
 
             if (conversionResult) {
-                // Create and append the highlighted <span>
                 const span = document.createElement("span");
                 span.className = "hyper-hover";
                 span.textContent = fullMatch;
                 span.dataset.convert = conversionResult;
                 fragment.appendChild(span);
             } else {
-                // If conversion fails, append the original text
                 fragment.appendChild(document.createTextNode(fullMatch));
             }
         }
 
-        // Update our position in the string
         lastIndex = currentMatch.index + fullMatch.length;
     }
 
-    // Append any final text that came *after* the last match
     const afterText = text.slice(lastIndex);
     if (afterText) {
         fragment.appendChild(document.createTextNode(afterText));
     }
 
-    // Step 3: Perform ONE single, safe DOM replacement.
     try {
         if (stitched && previousTextNode) {
-            // If we stitched text, we need to remove the previous node as well
             previousTextNode.parentNode.removeChild(previousTextNode);
         }
         parent.replaceChild(fragment, textNode);
