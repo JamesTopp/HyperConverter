@@ -137,11 +137,11 @@ const conversions = [
         return `${res1}\n${res2}`;
     }
   },
-  {
+ {
     name: "ranges",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
-      console.log("Ranges convert called with:", match);
+        console.log("Ranges convert called with:", match);
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
@@ -149,34 +149,85 @@ const conversions = [
         if (isNaN(val1) || isNaN(val2)) return null;
         
         let res1, res2, resUnit;
+        
+        // Length conversions
         if (unit.startsWith("in") || unit === '"' || unit === '"' || unit === '″') {
             res1 = (val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
             res2 = (val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
             resUnit = 'cm';
-        } else if (unit.startsWith("cm")) {
+        } else if (unit.startsWith("cm") || unit.startsWith("centimeter") || unit.startsWith("centimetre")) {
             res1 = (val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
             res2 = (val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
             resUnit = 'in';
-        } else if (unit.startsWith("ft") || unit === "'") {
+        } else if (unit.startsWith("ft") || unit.startsWith("feet") || unit.startsWith("foot") || unit === "'") {
             res1 = (val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
             res2 = (val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
             resUnit = 'm';
-        } else if (unit.startsWith("m")) {
+        } else if (unit.startsWith("mm") || unit.startsWith("millimeter") || unit.startsWith("millimetre")) {
+            res1 = (val1 * 0.0393701).toFixed(1); 
+            res2 = (val2 * 0.0393701).toFixed(1); 
+            resUnit = 'in';
+        } else if (unit.startsWith("km") || unit.startsWith("kilometer") || unit.startsWith("kilometre")) {
+            res1 = (val1 * 0.621371).toFixed(1); 
+            res2 = (val2 * 0.621371).toFixed(1); 
+            resUnit = 'mi';
+        } else if ((unit.startsWith("m") && !unit.startsWith("mm") && !unit.startsWith("ml")) || unit.startsWith("meter") || unit.startsWith("metre")) {
             res1 = (val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
             res2 = (val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
             resUnit = 'ft';
+            
+        // Weight conversions
         } else if (unit.startsWith("lb") || unit.startsWith("pound")) {
             res1 = (val1 * CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
             res2 = (val2 * CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
             resUnit = 'kg';
-        } else if (unit.startsWith("kg")) {
+        } else if (unit.startsWith("kg") || unit.startsWith("kilogram")) {
             res1 = (val1 / CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
             res2 = (val2 / CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
-            resUnit = 'lb';
-        } else { return null; }
+            resUnit = 'lbs';
+        } else if (unit.startsWith("oz") || unit.startsWith("ounce")) {
+            res1 = (val1 * CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
+            resUnit = 'g';
+        } else if (unit.startsWith("g") && !unit.startsWith("gal") && unit !== "g") {
+            res1 = (val1 / CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
+            resUnit = 'oz';
+            
+        // Volume conversions
+        } else if (unit.startsWith("gal") || unit.startsWith("gallon")) {
+            res1 = (val1 * CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
+            resUnit = 'L';
+        } else if ((unit.startsWith("l") && !unit.startsWith("lb")) || unit.startsWith("liter") || unit.startsWith("litre")) {
+            res1 = (val1 / CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
+            resUnit = 'gal';
+        } else if (unit.startsWith("ml") || unit.startsWith("milliliter") || unit.startsWith("millilitre")) {
+            res1 = (val1 / CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
+            resUnit = 'tsp';
+            
+        // Cooking conversions
+        } else if (unit.startsWith("cup")) {
+            res1 = (val1 * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0); 
+            res2 = (val2 * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0); 
+            resUnit = 'ml';
+        } else if (unit.startsWith("tbsp") || unit.startsWith("tablespoon")) {
+            res1 = (val1 * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1); 
+            resUnit = 'ml';
+        } else if (unit.startsWith("tsp") || unit.startsWith("teaspoon")) {
+            res1 = (val1 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
+            resUnit = 'ml';
+        } else { 
+            return null; 
+        }
+        
         return `${match[0]} = ${res1}–${res2} ${resUnit}`;
     }
-  },
+},
   // ======= HIGH PRIORITY: "Fraction of" patterns =======
   {
     name: "fraction_of_tablespoon",
@@ -441,6 +492,10 @@ function getCompiledRegex() {
   
   return COMPILED_REGEX;
 }
+
+const regex = getCompiledRegex();
+console.log("Compiled regex pattern:", regex.source);
+console.log("Pattern includes 'ranges':", regex.source.includes("ranges"));
 
 const CONVERSION_CACHE = new Map();
 const MAX_CACHE_SIZE = 1000;
