@@ -112,7 +112,7 @@ const conversions = [
   },
   {
     name: "ranges_and_dimensions",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]| x )\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         
