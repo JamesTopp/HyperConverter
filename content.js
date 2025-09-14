@@ -745,11 +745,6 @@ function processTextNode(textNode) {
     }
 }
 
-// Handle stitched nodes
-if (stitched && previousTextNode) {
-    previousTextNode.parentNode.removeChild(previousTextNode);
-}
-
 // ===== PHASE 2: UNIFIED HIGH-PERFORMANCE PROCESSOR =====
 
 function processUnified(container) {
