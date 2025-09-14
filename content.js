@@ -581,13 +581,6 @@ function hideTooltip() {
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
 function processTextNode(textNode) {
-      let text = textNode.textContent;
-    if (text.includes("1 to 3 kg") || text.includes("2-5 pounds")) {
-        const rangesPattern = /(\d+(?:\.\d+)?)\s*(?:-|—|–|to)\s*(\d+(?:\.\d+)?)\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\s|$|[^a-zA-Z])/gi;
-        
-        console.log("Testing ranges on text:", text);
-        console.log("Ranges matches:", text.match(rangesPattern));
-    }
   if (!textNode || textNode.nodeType !== 3) return;
 
   const parent = textNode.parentNode;
@@ -600,6 +593,7 @@ function processTextNode(textNode) {
   )
     return;
 
+  let text = textNode.textContent;
   if (!text.trim()) return;
 
   // Handle stitching logic (unchanged)
