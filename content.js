@@ -112,7 +112,7 @@ const conversions = [
   },
   {
     name: "ranges_and_dimensions",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]| x )\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         
@@ -123,36 +123,37 @@ const conversions = [
         
         if (isNaN(val1) || isNaN(val2)) return null;
         
-        // For dimensions (x separator), convert each measurement separately
-        if (separator === 'x') {
-            let res1, res2, resUnit;
-            
-            if (unit.startsWith("in") || unit === '"' || unit === '"' || unit === '″') {
-                res1 = `${val1} in = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-                res2 = `${val2} in = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-            } else if (unit.startsWith("cm")) {
-                res1 = `${val1} cm = ${(val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
-                res2 = `${val2} cm = ${(val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
-            } else if (unit.startsWith("ft") || unit === "'") {
-                res1 = `${val1} ft = ${(val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
-                res2 = `${val2} ft = ${(val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
-            } else if ((unit.startsWith("m") && !unit.startsWith("mm"))) {
-                res1 = `${val1} m = ${(val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
-                res2 = `${val2} m = ${(val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
-            } else {
-                return null;
-            }
-            
-            return `${res1}\n${res2}`;
-        }
+      // For dimensions (x separator), convert each measurement separately
+      if (separator === 'x') {
+          let res1, res2;
+          
+        if (unit.startsWith("in") || unit.startsWith("inch") || unit === '"' || unit === '"' || unit === '″') {              res1 = `${val1} in = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+              res2 = `${val2} in = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+          } else if (unit.startsWith("cm") || unit.startsWith("centimeter") || unit.startsWith("centimetre")) {
+              res1 = `${val1} cm = ${(val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+              res2 = `${val2} cm = ${(val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+          } else if (unit.startsWith("ft") || unit.startsWith("feet") || unit.startsWith("foot") || unit === "'") {
+              res1 = `${val1} ft = ${(val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+              res2 = `${val2} ft = ${(val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+          } else if (unit.startsWith("mm") || unit.startsWith("millimeter") || unit.startsWith("millimetre")) {
+              res1 = `${val1} mm = ${(val1 * 0.0393701).toFixed(1)} in`;
+              res2 = `${val2} mm = ${(val2 * 0.0393701).toFixed(1)} in`;
+          } else if ((unit.startsWith("m") && !unit.startsWith("mm") && !unit.startsWith("ml")) || unit.startsWith("meter") || unit.startsWith("metre")) {
+              res1 = `${val1} m = ${(val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+              res2 = `${val2} m = ${(val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+          } else {
+              return null;
+          }
+          
+          return `${res1}\n${res2}`;
+      }
         
         // For ranges (-, to separator), convert as a range
         else {
             let res1, res2, resUnit;
             
            // Length conversions
-        if (unit.startsWith("in") || unit === '"' || unit === '"' || unit === '″') {
-            res1 = (val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+      if (unit.startsWith("in") || unit.startsWith("inch") || unit === '"' || unit === '"' || unit === '″') {            res1 = (val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
             res2 = (val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
             resUnit = 'cm';
         } else if (unit.startsWith("cm") || unit.startsWith("centimeter") || unit.startsWith("centimetre")) {
