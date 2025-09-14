@@ -141,6 +141,7 @@ const conversions = [
     name: "ranges",
     pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
+      console.log("Ranges convert called with:", match);
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
