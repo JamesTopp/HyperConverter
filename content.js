@@ -114,7 +114,6 @@ const conversions = [
     name: "ranges_and_dimensions",
     pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×])\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
-        console.log("Ranges/dimensions convert called with:", match);
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         
         const val1 = parseMeasurementValue(match[1]);
@@ -496,8 +495,6 @@ function getCompiledRegex() {
 }
 
 const regex = getCompiledRegex();
-console.log("Compiled regex pattern:", regex.source);
-console.log("Pattern includes 'ranges':", regex.source.includes("ranges"));
 
 const CONVERSION_CACHE = new Map();
 const MAX_CACHE_SIZE = 1000;
@@ -1182,10 +1179,6 @@ function convertTableMeasurement(value, unit) {
 
 document.addEventListener("mouseover", function(e) {
   let target = e.target;
-  
-if (target.textContent && (target.textContent.includes('cup') || target.textContent.includes('tbsp'))) {
-    console.log("Hovering over:", target, "has hyper-hover class:", target.classList?.contains("hyper-hover"));
-  }
 
   // Check if target itself has hyper-hover
   if (target && target.classList && target.classList.contains("hyper-hover")) {
