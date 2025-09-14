@@ -83,24 +83,102 @@ const createNumberPattern = () => createUniversalPattern();
 
 const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
-   {
-    name: "ranges",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
+  {
+    name: "feet_and_inches",
+    pattern: `${createNumberPattern()}\\s*(?:'|ft|feet)\\s*${createNumberPattern()}\\s*(?:"|″|"|inches?|inch|in)`,
     convert: (match) => {
-           console.log("Ranges convert called with full match array:", match);
-           console.log("match[0]:", match[0]);
-            console.log("match[1]:", match[1]); 
-            console.log("match[2]:", match[2]);
-            console.log("match[3]:", match[3]);
+      const feet = parseMeasurementValue(match[1]);
+      const inches = parseMeasurementValue(match[2]);
+      if (isNaN(feet) || isNaN(inches)) return null;
+      
+      const totalInches = feet * 12 + inches;
+      const totalCm = totalInches * CONVERSION_FACTORS.INCH_TO_CM;
+      return `${match[0]} = ${totalCm.toFixed(1)} cm`;
+    }
+  },
+  {
+    name: "multi_dimensions_symbol", 
+    pattern: `${createNumberPattern()}(?:"|″|")\\s*[xX×]\\s*${createNumberPattern()}(?:"|″|")`,
+    convert: (match) => {
+        if (!match || !match[1] || !match[2]) return null;
+        const val1 = parseMeasurementValue(match[1]);
+        const val2 = parseMeasurementValue(match[2]);
+        if (isNaN(val1) || isNaN(val2)) return null;
+
+        const res1 = `${match[1]}" = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+        const res2 = `${match[2]}" = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+        return `${res1}\n${res2}`;
+    }
+  },
+  {
+    name: "multi_dimensions",
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|to|–)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,    
+    convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[3]) return null;
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
         const unit = match[3].toLowerCase();
         if (isNaN(val1) || isNaN(val2)) return null;
+
+        let res1, res2;
+        if (unit.startsWith("in")) {
+            res1 = `${match[1]} in = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+            res2 = `${match[2]} in = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+        } else if (unit.startsWith("centimeter") || unit.startsWith("cm")) {
+            res1 = `${match[1]} cm = ${(val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+            res2 = `${match[2]} cm = ${(val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+        } else if (unit.startsWith("feet") || unit.startsWith("ft")) {
+            res1 = `${match[1]} ft = ${(val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+            res2 = `${match[2]} ft = ${(val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+        } else if (unit.startsWith("meter") || unit.startsWith("m")) {
+            res1 = `${match[1]} m = ${(val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+            res2 = `${match[2]} m = ${(val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+        } else { return null; }
+        return `${res1}\n${res2}`;
+    }
+  },
+  {
+    name: "ranges_and_dimensions",
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×])\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
+    convert: (match) => {
+        console.log("Ranges/dimensions convert called with:", match);
+        if (!match || !match[1] || !match[2] || !match[3]) return null;
         
-        let res1, res2, resUnit;
+        const val1 = parseMeasurementValue(match[1]);
+        const val2 = parseMeasurementValue(match[2]);
+        const unit = match[3].toLowerCase();
+        const separator = match[0].match(/[xX×]/) ? 'x' : 'range';
         
-        // Length conversions
+        if (isNaN(val1) || isNaN(val2)) return null;
+        
+        // For dimensions (x separator), convert each measurement separately
+        if (separator === 'x') {
+            let res1, res2, resUnit;
+            
+            if (unit.startsWith("in") || unit === '"' || unit === '"' || unit === '″') {
+                res1 = `${val1} in = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+                res2 = `${val2} in = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+            } else if (unit.startsWith("cm")) {
+                res1 = `${val1} cm = ${(val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+                res2 = `${val2} cm = ${(val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+            } else if (unit.startsWith("ft") || unit === "'") {
+                res1 = `${val1} ft = ${(val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+                res2 = `${val2} ft = ${(val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+            } else if ((unit.startsWith("m") && !unit.startsWith("mm"))) {
+                res1 = `${val1} m = ${(val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+                res2 = `${val2} m = ${(val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+            } else {
+                return null;
+            }
+            
+            return `${res1}\n${res2}`;
+        }
+        
+        // For ranges (-, to separator), convert as a range
+        else {
+            let res1, res2, resUnit;
+            
+           // Length conversions
         if (unit.startsWith("in") || unit === '"' || unit === '"' || unit === '″') {
             res1 = (val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
             res2 = (val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
@@ -171,68 +249,14 @@ const conversions = [
             res1 = (val1 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
             res2 = (val2 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
             resUnit = 'ml';
-        } else { 
-            return null; 
+         } else {
+                return null;
+            }
+            
+            return `${match[0]} = ${res1}–${res2} ${resUnit}`;
         }
-        
-        return `${match[0]} = ${res1}–${res2} ${resUnit}`;
     }
 },
-  {
-    name: "feet_and_inches",
-    pattern: `${createNumberPattern()}\\s*(?:'|ft|feet)\\s*${createNumberPattern()}\\s*(?:"|″|"|inches?|inch|in)`,
-    convert: (match) => {
-      const feet = parseMeasurementValue(match[1]);
-      const inches = parseMeasurementValue(match[2]);
-      if (isNaN(feet) || isNaN(inches)) return null;
-      
-      const totalInches = feet * 12 + inches;
-      const totalCm = totalInches * CONVERSION_FACTORS.INCH_TO_CM;
-      return `${match[0]} = ${totalCm.toFixed(1)} cm`;
-    }
-  },
-  {
-    name: "multi_dimensions_symbol", 
-    pattern: `${createNumberPattern()}(?:"|″|")\\s*[xX×]\\s*${createNumberPattern()}(?:"|″|")`,
-    convert: (match) => {
-        if (!match || !match[1] || !match[2]) return null;
-        const val1 = parseMeasurementValue(match[1]);
-        const val2 = parseMeasurementValue(match[2]);
-        if (isNaN(val1) || isNaN(val2)) return null;
-
-        const res1 = `${match[1]}" = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-        const res2 = `${match[2]}" = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-        return `${res1}\n${res2}`;
-    }
-  },
-  {
-    name: "multi_dimensions",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|to|–)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|mm|millimeters?|km|kilometers?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,    
-    convert: (match) => {
-        if (!match || !match[1] || !match[2] || !match[3]) return null;
-        const val1 = parseMeasurementValue(match[1]);
-        const val2 = parseMeasurementValue(match[2]);
-        const unit = match[3].toLowerCase();
-        if (isNaN(val1) || isNaN(val2)) return null;
-
-        let res1, res2;
-        if (unit.startsWith("in")) {
-            res1 = `${match[1]} in = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-            res2 = `${match[2]} in = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-        } else if (unit.startsWith("centimeter") || unit.startsWith("cm")) {
-            res1 = `${match[1]} cm = ${(val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
-            res2 = `${match[2]} cm = ${(val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
-        } else if (unit.startsWith("feet") || unit.startsWith("ft")) {
-            res1 = `${match[1]} ft = ${(val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
-            res2 = `${match[2]} ft = ${(val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
-        } else if (unit.startsWith("meter") || unit.startsWith("m")) {
-            res1 = `${match[1]} m = ${(val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
-            res2 = `${match[2]} m = ${(val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
-        } else { return null; }
-        return `${res1}\n${res2}`;
-    }
-  },
-
   // ======= HIGH PRIORITY: "Fraction of" patterns =======
   {
     name: "fraction_of_tablespoon",
