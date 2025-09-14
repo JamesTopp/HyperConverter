@@ -637,6 +637,9 @@ function hideTooltip() {
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
 function processTextNode(textNode) {
+  if (text.includes("350") || text.includes("2 cups") || text.includes("1 tsp")) {
+    console.log("Processing text node:", `"${text}"`);
+}
     if (!textNode || textNode.nodeType !== 3) return;
 
     const parent = textNode.parentNode;
