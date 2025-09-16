@@ -16,73 +16,38 @@ const CONVERSION_FACTORS = {
 };
 
 // Enhanced word-based measurement dictionary
-const MeasurementWords = {
-  // Core numbers 0-100  
+const measurementWords = {
+  // Numbers 0-100
   'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
   'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
   'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
   'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+  'twenty-one': 21, 'twenty-two': 22, 'twenty-three': 23, 'twenty-four': 24, 'twenty-five': 25,
   'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
   'hundred': 100, 'thousand': 1000,
   
-  // Complete fraction system
-  'half': 0.5, 'halves': 0.5,
-  'quarter': 0.25, 'quarters': 0.25,
-  'third': 0.333, 'thirds': 0.333,
-  'eighth': 0.125, 'eighths': 0.125,
-  'sixteenth': 0.0625, 'sixteenths': 0.0625,
+  // Complete fraction system (eighths and sixteenths)
+  'half': 0.5, 'quarter': 0.25, 'third': 0.333, 
+  'eighth': 0.125, 'three-eighths': 0.375, 'five-eighths': 0.625, 'seven-eighths': 0.875,
+  'sixteenth': 0.0625, 'three-sixteenths': 0.1875, 'five-sixteenths': 0.3125, 
+  'seven-sixteenths': 0.4375, 'nine-sixteenths': 0.5625, 'eleven-sixteenths': 0.6875,
+  'thirteen-sixteenths': 0.8125, 'fifteen-sixteenths': 0.9375,
   
-  // Detailed fraction combinations
-  'three-quarters': 0.75, 'three quarters': 0.75,
-  'two-thirds': 0.667, 'two thirds': 0.667,
-  'three-eighths': 0.375, 'three eighths': 0.375,
-  'five-eighths': 0.625, 'five eighths': 0.625,
-  'seven-eighths': 0.875, 'seven eighths': 0.875,
-  'three-sixteenths': 0.1875, 'three sixteenths': 0.1875,
-  'five-sixteenths': 0.3125, 'five sixteenths': 0.3125,
-  'seven-sixteenths': 0.4375, 'seven sixteenths': 0.4375,
-  'nine-sixteenths': 0.5625, 'nine sixteenths': 0.5625,
-  'eleven-sixteenths': 0.6875, 'eleven sixteenths': 0.6875,
-  'thirteen-sixteenths': 0.8125, 'thirteen sixteenths': 0.8125,
-  'fifteen-sixteenths': 0.9375, 'fifteen sixteenths': 0.9375,
+  // Articles and common words
+  'a': 1, 'an': 1, 'couple': 2, 'few': 3,
   
-  // Informal quantifiers
-  'a': 1, 'an': 1, 'couple': 2, 'few': 3, 'several': 4,
-  
-  // COMPOUND NUMBERS
-  'one and half': 1.5, 'one and a half': 1.5,
-  'two and half': 2.5, 'two and a half': 2.5, 
-  'three and half': 3.5, 'three and a half': 3.5,
-  'four and half': 4.5, 'four and a half': 4.5,
-  'five and half': 5.5, 'five and a half': 5.5,
-  'one and quarter': 1.25, 'one and a quarter': 1.25,
-  'two and quarter': 2.25, 'two and a quarter': 2.25,
-  'three and quarter': 3.25, 'three and a quarter': 3.25,
-  'four and quarter': 4.25, 'four and a quarter': 4.25,
-  'one and third': 1.333, 'one and a third': 1.333,
-  'two and third': 2.333, 'two and a third': 2.333,
-  
-  // Even more compound variations
-  'one and three quarters': 1.75, 'one and three-quarters': 1.75,
-  'two and three quarters': 2.75, 'two and three-quarters': 2.75,
-  'one and two thirds': 1.667, 'one and two-thirds': 1.667,
-  
-  // CASUAL/SLOPPY GRAMMAR
+  // Phrase variants with "a/an"
   'half a': 0.5, 'half an': 0.5,
-  'quarter': 0.25, // Can be used without article
-  'couple': 2, // Used without "of" 
-  'few': 3, // Used without "of"
+  'quarter a': 0.25, 'quarter an': 0.25, 
+  'third a': 0.333, 'third an': 0.333,
+  'eighth a': 0.125, 'eighth an': 0.125,
   
-  // Missing articles (your examples)
-  'quarter mile': 0.25, 'half mile': 0.5,
-  'couple miles': 2, 'few miles': 3,
-  
-  // FORMAL "OF" CONSTRUCTIONS
+  // Phrase variants with "of a/an"  
   'half of a': 0.5, 'half of an': 0.5,
   'quarter of a': 0.25, 'quarter of an': 0.25,
   'third of a': 0.333, 'third of an': 0.333,
-  'couple of': 2, 'few of': 3,
-  'half of': 0.5, 'quarter of': 0.25, 'third of': 0.333
+  'eighth of a': 0.125, 'eighth of an': 0.125,
+  'couple of': 2, 'few of': 3
 };
 
 const createUniversalPattern = () => {
@@ -565,60 +530,65 @@ const regex = getCompiledRegex();
 const CONVERSION_CACHE = new Map();
 const MAX_CACHE_SIZE = 1000;
 
+/**
+ * Parses a string that may contain numbers, fractions, or spelled-out words.
+ * @param {string} valueString The string to parse.
+ * @returns {number} The parsed numeric value, or NaN if parsing fails.
+ */
 function parseMeasurementValue(valueString) {
-  const originalStr = String(valueString).trim();
-  let cleanStr = originalStr.toLowerCase();
+  const valStr = String(valueString).toLowerCase().trim();
+
+  // Check measurement words first (including "of" phrases)
+  if (measurementWords[valStr]) return measurementWords[valStr];
   
-  // Step 1: Handle special compound phrases first
-  if (measurementWords[cleanStr]) {
-    return measurementWords[cleanStr];
+  // Handle "of" phrases like "half of a", "quarter of an"
+  if (valStr.includes(' of ')) {
+    const cleanStr = valStr.replace(/ of (?:a|an)\s*$/, '').replace(/ of$/, '');
+    if (measurementWords[cleanStr]) return measurementWords[cleanStr];
   }
+
+  // Unicode fractions
+  if (unicodeFractions[valStr]) return unicodeFractions[valStr];
+
+  // Legacy word-to-number dictionary (keeping for backwards compatibility)
+  const wordToNumber = {
+    // Numbers 0-19
+    'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+    'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+    'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19,
+    // Tens
+    'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
+    'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
+    // Large scale numbers
+    'hundred': 100, 'thousand': 1000, 'million': 1000000, 'billion': 1000000000,
+    // Articles and fractions (now handled by measurementWords, but kept for safety)
+    'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
+  };
+  if (wordToNumber[valStr]) return wordToNumber[valStr];
   
-  // Step 2: Handle "X and Y" patterns (like "two and half")
-  const compoundMatch = cleanStr.match(/^(\w+(?:\s+\w+)?)\s+and\s+(?:a\s+)?(\w+(?:\s+\w+)?)$/);
-  if (compoundMatch) {
-    const first = measurementWords[compoundMatch[1]];
-    const second = measurementWords[compoundMatch[2]];
+  // Handle complex phrases like "one and a half", "two and a quarter"
+  const complexMatch = valStr.match(/^(\w+)\s+and\s+(?:a\s+)?(\w+)$/);
+  if (complexMatch) {
+    const first = measurementWords[complexMatch[1]] || wordToNumber[complexMatch[1]];
+    const second = measurementWords[complexMatch[2]] || wordToNumber[complexMatch[2]];
     if (!isNaN(first) && !isNaN(second)) {
       return first + second;
     }
   }
   
-  // Step 3: Handle hyphenated numbers like "twenty-one"
-  const hyphenMatch = cleanStr.match(/^(\w+)-(\w+)$/);
-  if (hyphenMatch) {
-    const first = measurementWords[hyphenMatch[1]] || 0;
-    const second = measurementWords[hyphenMatch[2]] || 0;
-    if (first >= 20 && first <= 90 && second >= 1 && second <= 9) {
-      return first + second;
-    }
-  }
-  
-  // Step 4: Handle "of" phrases like "half of a", "quarter of an"
-  if (cleanStr.includes(' of ')) {
-    const cleanOfStr = cleanStr.replace(/ of (?:a|an)\s*$/, '').replace(/ of$/, '');
-    if (measurementWords[cleanOfStr]) return measurementWords[cleanOfStr];
-  }
-
-  // Step 5: Unicode fractions
-  if (unicodeFractions[cleanStr]) {
-    return unicodeFractions[cleanStr];
-  }
-
-  // Step 6: Regular fractions like "1/3"
-  if (cleanStr.includes("/")) {
-    const parts = cleanStr.split("/");
+  // Handle text fractions like "1/3"
+  if (valStr.includes("/")) {
+    const parts = valStr.split("/");
     if (parts.length === 2) {
       const num = parseFloat(parts[0]);
       const den = parseFloat(parts[1]);
-      if (den !== 0 && !isNaN(num) && !isNaN(den)) {
-        return num / den;
-      }
+      if (den !== 0 && !isNaN(num) && !isNaN(den)) return num / den;
     }
   }
 
-  // Step 7: Standard numbers
-  return parseFloat(cleanStr);
+  // Handle standard numbers, including negatives
+  return parseFloat(valStr);
 }
 
 // 🧰 Tooltip setup
