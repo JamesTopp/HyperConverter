@@ -120,13 +120,8 @@ const conversions = [
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
         const hasThirdDimension = match[3] && match[4]; // Third number AND unit exists
-        const unitIndex = hasThirdDimension ? 4 : 3;
-
-        // Safety check for unit
-        if (!match[unitIndex]) return null;
-
         const val3 = hasThirdDimension ? parseMeasurementValue(match[3]) : null;
-        const unit = match[unitIndex].toLowerCase();
+        const unit = (hasThirdDimension ? match[4] : match[3]).toLowerCase();
         const separator = match[0].match(/[xX×]/) ? 'x' : 'range';
         
         if (isNaN(val1) || isNaN(val2) || (hasThirdDimension && isNaN(val3))) return null;
