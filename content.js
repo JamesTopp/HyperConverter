@@ -242,7 +242,7 @@ const conversions = [
                 res2 = (val2 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
                 resUnit = 'ml';
 
-                // Temperature conversions
+            // Temperature conversions
             } else if (rangeUnit.match(/[°º]\s?f|degrees?\s?f|degrees?\s?fahrenheit|fahrenheit/i)) {
                 res1 = (((val1 - 32) * 5) / 9).toFixed(1); 
                 res2 = (((val2 - 32) * 5) / 9).toFixed(1); 
