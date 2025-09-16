@@ -110,25 +110,19 @@ const conversions = [
         return `${res1}\n${res2}`;
     }
   },
- {
+{
     name: "ranges_and_dimensions",
     pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d+(?:\\.\\d+)?)(?:\\s*(?:[xX×]|x)\\s*(\\d+(?:\\.\\d+)?))?\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
-        // Check if we have at least 2 dimensions
-        if (!match || !match[1] || !match[2]) return null;
+        if (!match || !match[1] || !match[2] || !match[4]) return null; // match[4] is always the unit
         
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
-        const hasThirdDimension = match[3] !== undefined; // Only check if third number exists
-        const unitIndex = 4; // Unit is always in match[4] due to optional group structure
-
-        // Safety check for unit
-        if (!match[unitIndex]) return null;
-
+        const hasThirdDimension = match[3] !== undefined;
         const val3 = hasThirdDimension ? parseMeasurementValue(match[3]) : null;
-        const unit = match[unitIndex].toLowerCase();
+        const unit = match[4].toLowerCase(); // Unit is always in match[4]
         const separator = match[0].match(/\d+\s*[xX×]\s*\d+/) ? 'x' : 'range';
-
+        
         if (isNaN(val1) || isNaN(val2) || (hasThirdDimension && isNaN(val3))) return null;
         
         // For dimensions (x separator), convert each measurement separately
@@ -175,8 +169,7 @@ const conversions = [
         // For ranges (-, to separator), convert as a range (only uses first two values)
         else {
             let res1, res2, resUnit;
-            const rangeUnit = match[3].toLowerCase(); // For ranges, unit is always in match[3]
-            
+            const rangeUnit = match[4].toLowerCase();            
             // Length conversions
             if (rangeUnit.startsWith("in") || rangeUnit.startsWith("inch") || rangeUnit === '"' || rangeUnit === '"' || rangeUnit === '″') {
                 res1 = (val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
