@@ -15,8 +15,7 @@ const CONVERSION_FACTORS = {
   TSP_TO_ML: 4.929,
 };
 
-// Enhanced word-based measurement dictionary
-const MeasurementWords = {
+const measurementWords = {
   // Core numbers 0-100  
   'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
   'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
