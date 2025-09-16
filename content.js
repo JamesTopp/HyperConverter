@@ -576,14 +576,28 @@ function parseMeasurementValue(valueString) {
   if (measurementWords[valStr]) return measurementWords[valStr];
   
   // Handle "X and Y" patterns (like "two and half", "one and quarter")
-  const compoundMatch = valStr.match(/^(\w+(?:\s+\w+)?)\s+and\s+(?:a\s+)?(\w+(?:\s+\w+)?)$/);
-  if (compoundMatch) {
-    const first = measurementWords[compoundMatch[1]];
-    const second = measurementWords[compoundMatch[2]];
-    if (!isNaN(first) && !isNaN(second)) {
-      return first + second;
-    }
+const compoundMatch = valStr.match(/^(\w+(?:\s+\w+)?)\s+and\s+(?:a\s+)?(\w+(?:\s+\w+)?)$/);
+if (compoundMatch) {
+  const first = measurementWords[compoundMatch[1]];
+  let second = measurementWords[compoundMatch[2]];
+  
+  // Special case: handle sloppy grammar for common fractions without "a"
+  const sloppyFractions = {
+    'half': 0.5,
+    'quarter': 0.25,
+    'third': 0.333,
+    'eighth': 0.125,
+    'sixteenth': 0.0625
+  };
+
+  if (sloppyFractions[compoundMatch[2]] && !valStr.includes(`and a ${compoundMatch[2]}`)) {
+    second = sloppyFractions[compoundMatch[2]];
   }
+  
+  if (!isNaN(first) && !isNaN(second)) {
+    return first + second;
+  }
+}
   
   // Handle hyphenated numbers like "twenty-one"
   const hyphenMatch = valStr.match(/^(\w+)-(\w+)$/);
