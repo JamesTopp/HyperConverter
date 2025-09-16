@@ -127,8 +127,8 @@ const conversions = [
 
         const val3 = hasThirdDimension ? parseMeasurementValue(match[3]) : null;
         const unit = match[unitIndex].toLowerCase();
-        const separator = match[0].match(/[xX×]/) ? 'x' : 'range';
-        
+        const separator = match[0].match(/\d+\s*[xX×]\s*\d+/) ? 'x' : 'range';
+
         if (isNaN(val1) || isNaN(val2) || (hasThirdDimension && isNaN(val3))) return null;
         
         // For dimensions (x separator), convert each measurement separately
