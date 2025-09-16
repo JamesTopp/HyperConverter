@@ -31,41 +31,56 @@
             margin-bottom: 28px;
         }
 
-        .logo {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #FFC8A2, #B4A7D6);
-            border-radius: 12px;
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(180, 167, 214, 0.3);
-            position: relative;
-        }
-
         .logo::before {
             content: '';
-            width: 24px;
-            height: 24px;
-            border: 3px solid white;
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid white;
             border-radius: 50%;
-            border-top-color: transparent;
-            border-right-color: transparent;
-            position: relative;
+            border-bottom-color: transparent;
+            border-left-color: transparent;
+            transform: rotate(45deg);
+            top: 14px;
+            left: 14px;
         }
 
         .logo::after {
             content: '';
             position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            border-right-color: transparent;
+            transform: rotate(45deg);
+            top: 14px;
+            left: 14px;
+        }
+
+        .logo .arrow1 {
+            position: absolute;
             width: 0;
             height: 0;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            border-bottom: 6px solid white;
-            top: 14px;
-            right: 16px;
-            transform: rotate(-45deg);
+            border-left: 3px solid transparent;
+            border-right: 3px solid transparent;
+            border-bottom: 5px solid white;
+            top: 10px;
+            right: 12px;
+            transform: rotate(45deg);
+        }
+
+        .logo .arrow2 {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 3px solid transparent;
+            border-right: 3px solid transparent;
+            border-top: 5px solid white;
+            bottom: 10px;
+            left: 12px;
+            transform: rotate(45deg);
         }
 
         h1 {
