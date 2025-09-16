@@ -708,7 +708,7 @@ style.textContent = `
   }
   
   .hyper-hover:hover {
-    background: radial-gradient(ellipse 30px 20px at 0% 100%, #C8B5DB 0%, #C8B5DB 20%, #FFEFE6 100%) !important;
+    background: radial-gradient(ellipse 30px 20px at 0% 100%, #C8B5DB 0%, #C8B5DB 5%, #FFEFE6 100%) !important;
     border-radius: 3px !important;
     transition: background-color 0.2s ease !important;
   }
