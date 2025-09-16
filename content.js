@@ -95,7 +95,10 @@ const createUniversalPattern = () => {
   // Single words from measurementWords (escape special regex characters)
   const singleWords = `(?:\\b(?:${allWordKeys.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b)`;
   
-  return `(${numbers}|${unicodes}|${wordPhrases}|${singleWords})`;
+  // Compound phrases like "one and half"
+  const compoundPhrases = `(?:\\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\\s+and\\s+(?:a\\s+)?(?:half|quarter|third|eighth|sixteenth)\\b)`;
+
+return `(${numbers}|${unicodes}|${compoundPhrases}|${wordPhrases}|${singleWords})`;
 };
 
 const createEnhancedFractionPattern = () => {
