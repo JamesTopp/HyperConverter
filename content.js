@@ -16,39 +16,71 @@ const CONVERSION_FACTORS = {
 };
 
 // Enhanced word-based measurement dictionary
-const measurementWords = {
-  // Numbers 0-100
+const MeasurementWords = {
+  // Core numbers 0-100  
   'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
   'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
   'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
   'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
-  'twenty-one': 21, 'twenty-two': 22, 'twenty-three': 23, 'twenty-four': 24, 'twenty-five': 25,
   'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
   'hundred': 100, 'thousand': 1000,
   
-  // Complete fraction system (eighths and sixteenths)
-  'half': 0.5, 'quarter': 0.25, 'third': 0.333, 
-  'eighth': 0.125, 'three-eighths': 0.375, 'five-eighths': 0.625, 'seven-eighths': 0.875,
-  'sixteenth': 0.0625, 'three-sixteenths': 0.1875, 'five-sixteenths': 0.3125, 
-  'seven-sixteenths': 0.4375, 'nine-sixteenths': 0.5625, 'eleven-sixteenths': 0.6875,
-  'thirteen-sixteenths': 0.8125, 'fifteen-sixteenths': 0.9375,
+  // Complete fraction system
+  'half': 0.5, 'halves': 0.5,
+  'quarter': 0.25, 'quarters': 0.25,
+  'third': 0.333, 'thirds': 0.333,
+  'eighth': 0.125, 'eighths': 0.125,
+  'sixteenth': 0.0625, 'sixteenths': 0.0625,
   
-  // Articles and common words
-  'a': 1, 'an': 1, 'couple': 2, 'few': 3,
+  // Detailed fraction combinations
+  'three-quarters': 0.75, 'three quarters': 0.75,
+  'two-thirds': 0.667, 'two thirds': 0.667,
+  'three-eighths': 0.375, 'three eighths': 0.375,
+  'five-eighths': 0.625, 'five eighths': 0.625,
+  'seven-eighths': 0.875, 'seven eighths': 0.875,
+  'three-sixteenths': 0.1875, 'three sixteenths': 0.1875,
+  'five-sixteenths': 0.3125, 'five sixteenths': 0.3125,
+  'seven-sixteenths': 0.4375, 'seven sixteenths': 0.4375,
+  'nine-sixteenths': 0.5625, 'nine sixteenths': 0.5625,
+  'eleven-sixteenths': 0.6875, 'eleven sixteenths': 0.6875,
+  'thirteen-sixteenths': 0.8125, 'thirteen sixteenths': 0.8125,
+  'fifteen-sixteenths': 0.9375, 'fifteen sixteenths': 0.9375,
   
-  // Phrase variants with "a/an"
+  // Informal quantifiers
+  'a': 1, 'an': 1, 'couple': 2, 'few': 3, 'several': 4,
+  
+  // COMPOUND NUMBERS
+  'one and half': 1.5, 'one and a half': 1.5,
+  'two and half': 2.5, 'two and a half': 2.5, 
+  'three and half': 3.5, 'three and a half': 3.5,
+  'four and half': 4.5, 'four and a half': 4.5,
+  'five and half': 5.5, 'five and a half': 5.5,
+  'one and quarter': 1.25, 'one and a quarter': 1.25,
+  'two and quarter': 2.25, 'two and a quarter': 2.25,
+  'three and quarter': 3.25, 'three and a quarter': 3.25,
+  'four and quarter': 4.25, 'four and a quarter': 4.25,
+  'one and third': 1.333, 'one and a third': 1.333,
+  'two and third': 2.333, 'two and a third': 2.333,
+  
+  // Even more compound variations
+  'one and three quarters': 1.75, 'one and three-quarters': 1.75,
+  'two and three quarters': 2.75, 'two and three-quarters': 2.75,
+  'one and two thirds': 1.667, 'one and two-thirds': 1.667,
+  
+  // CASUAL/SLOPPY GRAMMAR
   'half a': 0.5, 'half an': 0.5,
-  'quarter a': 0.25, 'quarter an': 0.25, 
-  'third a': 0.333, 'third an': 0.333,
-  'eighth a': 0.125, 'eighth an': 0.125,
+  'quarter': 0.25, // Can be used without article
+  'couple': 2, // Used without "of" 
+  'few': 3, // Used without "of"
   
-  // Phrase variants with "of a/an"  
+  // FORMAL "OF" CONSTRUCTIONS
   'half of a': 0.5, 'half of an': 0.5,
   'quarter of a': 0.25, 'quarter of an': 0.25,
   'third of a': 0.333, 'third of an': 0.333,
-  'eighth of a': 0.125, 'eighth of an': 0.125,
-  'couple of': 2, 'few of': 3
+  'couple of': 2, 'few of': 3,
+  'half of': 0.5, 'quarter of': 0.25, 'third of': 0.333
 };
+
 
 const createUniversalPattern = () => {
   const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
@@ -395,6 +427,15 @@ const conversions = [
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
       return `${match[0]} = ${(num * 0.621371).toFixed(2)} miles`;
+    },
+  },
+  {
+  name: "miles",
+  pattern: `${createNumberPattern()}\\s*-?\\s*(?:miles?|mi)\\b`,
+  convert: (match) => {
+    const num = parseMeasurementValue(match[1]);
+    if (isNaN(num)) return null;
+    return `${match[0]} = ${(num * 1.60934).toFixed(2)} km`;
     },
   },
   {
