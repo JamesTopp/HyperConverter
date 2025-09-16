@@ -701,7 +701,7 @@ style.textContent = `
     left: 0px !important;
     width: 6px !important;
     height: 6px !important;
-    background-color: #9B7EBF !important;
+    background-color: #B8A9C9 !important;
     pointer-events: none !important;
     z-index: 1 !important;
     clip-path: polygon(0% 0%, 0% 100%, 100% 100%) !important;
