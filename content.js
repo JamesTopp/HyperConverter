@@ -741,7 +741,6 @@ function processTextNode(textNode) {
         }
         parent.replaceChild(fragment, textNode);
     } catch (e) {
-        console.warn("HyperConverter: Could not replace text node.", e);
     }
 }
 
@@ -781,15 +780,6 @@ function collectTextNodes(container) {
 }
 
 function processSpecialCases(container) {
-  const testElements = container.querySelectorAll('li');
-  testElements.forEach(element => {
-    const text = element.textContent.trim();
-    if (text.includes('350') || text.includes('2 cups')) {
-      console.log('Checking li element:', text);
-      console.log('Multi-measurement pattern matches:', 
-        text.match(/\d+.*?(°F|°C|degrees|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz).*\d+.*?(°F|°C|degrees|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz)/));
-    }
-  });
   // Single query for all special elements we need to check
   const specialElements = container.querySelectorAll(`
     em, strong, b, i,
@@ -1005,7 +995,6 @@ function getCookingConversion(value, unit) {
 }
 
 function processRecipeInstruction(element, text) {
-    console.log("processRecipeInstruction called for:", text);
   // Get the compiled regex to find all measurements in the text
   const regex = getCompiledRegex();
   regex.lastIndex = 0;
