@@ -112,7 +112,7 @@ const conversions = [
   },
 {
     name: "ranges_and_dimensions",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d+(?:\\.\\d+)?)(?:\\s*(?:[xX×]|x)\\s*(\\d+(?:\\.\\d+)?))?\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d+(?:\\.\\d+)?)(?:\\s*(?:[xX×]|x)\\s*(\\d+(?:\\.\\d+)?))?\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?|[°º]\\s?[fFcC]|degrees?\\s?[fFcC]|degrees?\\s?fahrenheit|degrees?\\s?celsius|fahrenheit|celsius)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[4]) return null; // match[4] is always the unit
         
@@ -241,6 +241,17 @@ const conversions = [
                 res1 = (val1 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
                 res2 = (val2 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
                 resUnit = 'ml';
+
+                // Temperature conversions
+            } else if (rangeUnit.match(/[°º]\s?f|degrees?\s?f|degrees?\s?fahrenheit|fahrenheit/i)) {
+                res1 = (((val1 - 32) * 5) / 9).toFixed(1); 
+                res2 = (((val2 - 32) * 5) / 9).toFixed(1); 
+                resUnit = '°C';
+            } else if (rangeUnit.match(/[°º]\s?c|degrees?\s?c|degrees?\s?celsius|celsius/i)) {
+                res1 = ((val1 * 9) / 5 + 32).toFixed(1); 
+                res2 = ((val2 * 9) / 5 + 32).toFixed(1); 
+                resUnit = '°F';
+                
             } else {
                 return null;
             }
