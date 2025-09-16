@@ -529,16 +529,31 @@ const regex = getCompiledRegex();
 const CONVERSION_CACHE = new Map();
 const MAX_CACHE_SIZE = 1000;
 
-/**
- * Parses a string that may contain numbers, fractions, or spelled-out words.
- * @param {string} valueString The string to parse.
- * @returns {number} The parsed numeric value, or NaN if parsing fails.
- */
 function parseMeasurementValue(valueString) {
   const valStr = String(valueString).toLowerCase().trim();
 
-  // Check measurement words first (including "of" phrases)
+  // Check measurement words first (including compound phrases)
   if (measurementWords[valStr]) return measurementWords[valStr];
+  
+  // Handle "X and Y" patterns (like "two and half", "one and quarter")
+  const compoundMatch = valStr.match(/^(\w+(?:\s+\w+)?)\s+and\s+(?:a\s+)?(\w+(?:\s+\w+)?)$/);
+  if (compoundMatch) {
+    const first = measurementWords[compoundMatch[1]];
+    const second = measurementWords[compoundMatch[2]];
+    if (!isNaN(first) && !isNaN(second)) {
+      return first + second;
+    }
+  }
+  
+  // Handle hyphenated numbers like "twenty-one"
+  const hyphenMatch = valStr.match(/^(\w+)-(\w+)$/);
+  if (hyphenMatch) {
+    const first = measurementWords[hyphenMatch[1]] || 0;
+    const second = measurementWords[hyphenMatch[2]] || 0;
+    if (first >= 20 && first <= 90 && second >= 1 && second <= 9) {
+      return first + second;
+    }
+  }
   
   // Handle "of" phrases like "half of a", "quarter of an"
   if (valStr.includes(' of ')) {
@@ -549,7 +564,7 @@ function parseMeasurementValue(valueString) {
   // Unicode fractions
   if (unicodeFractions[valStr]) return unicodeFractions[valStr];
 
-  // Legacy word-to-number dictionary (keeping for backwards compatibility)
+  // Legacy word-to-number dictionary (keeping the rest of your existing logic)
   const wordToNumber = {
     // Numbers 0-19
     'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
