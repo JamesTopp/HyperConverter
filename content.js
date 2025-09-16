@@ -662,7 +662,7 @@ if (compoundMatch) {
   return parseFloat(valStr);
 }
 
-// 🧰 Tooltip setup
+// Tooltip setup
 const tooltip = document.createElement("div");
 tooltip.id = "hyper-converter-tooltip";
 Object.assign(tooltip.style, {
@@ -708,7 +708,7 @@ style.textContent = `
   }
   
   .hyper-hover:hover {
-    background-color: #FFEFE6 !important;
+    background: radial-gradient(ellipse 24px 16px at 0% 100%, #C8B5DB 0%, #C8B5DB 60%, #FFEFE6 100%) !important;
     border-radius: 3px !important;
     transition: background-color 0.2s ease !important;
   }
