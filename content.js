@@ -54,16 +54,15 @@ const createUniversalPattern = () => {
   const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
   const unicodes = Object.keys(unicodeFractions).join('|');
   
-  // Create word phrases using the measurementWords keys
-  const baseWords = Object.keys(measurementWords).filter(word => 
-    ['half', 'quarter', 'third', 'eighth', 'couple', 'few'].includes(word)
-  ).join('|');
+  // Use all measurementWords keys instead of filtering
+  const allWordKeys = Object.keys(measurementWords);
   
   // Word phrases with "a/an" and "of a/an" support  
-  const wordPhrases = `(?:(?:${baseWords})\\s+(?:of\\s+)?(?:a|an)\\s+)`;
+  const baseWords = ['half', 'quarter', 'third', 'eighth', 'couple', 'few']; // Keep the existing base words for patterns
+  const wordPhrases = `(?:(?:${baseWords.join('|')})\\s+(?:of\\s+)?(?:a|an)\\s+)`;
   
-  // Single words from measurementWords
-  const singleWords = `(?:\\b(?:${Object.keys(measurementWords).join('|')})\\b)`;
+  // Single words from measurementWords (escape special regex characters)
+  const singleWords = `(?:\\b(?:${allWordKeys.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b)`;
   
   return `(${numbers}|${unicodes}|${wordPhrases}|${singleWords})`;
 };
