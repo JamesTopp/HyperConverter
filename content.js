@@ -662,12 +662,12 @@ if (compoundMatch) {
   return parseFloat(valStr);
 }
 
-// 🧰 Tooltip setup
+// Tooltip setup
 const tooltip = document.createElement("div");
 tooltip.id = "hyper-converter-tooltip";
 Object.assign(tooltip.style, {
   position: "absolute",
-  background: "#FFEFE6",
+  background: "radial-gradient(ellipse 60px 40px at 0% 100%, #C8B5DB 0%, #C8B5DB 50%, #FFEFE6 100%)",  
   color: "#2D2D2D",
   padding: "8px 12px",
   borderRadius: "8px",
@@ -676,12 +676,12 @@ Object.assign(tooltip.style, {
   pointerEvents: "none",
   display: "none",
   boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-  maxWidth: "300px", // Increased max-width for multi-line
-  whiteSpace: "pre-wrap", // Allows wrapping and respects newlines
+  maxWidth: "300px",
+  whiteSpace: "pre-wrap",
   fontFamily: "Arial, sans-serif",
   border: "none",
   fontWeight: "500",
-  lineHeight: "1.4", // Added for better multi-line readability
+  lineHeight: "1.4",
 });
 
 const style = document.createElement("style");
