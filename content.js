@@ -807,7 +807,7 @@ function processSpecialCases(container) {
     }
     
     // MULTI-MEASUREMENT LINES (li tags with multiple measurements)
-    else if (tagName === 'li' && text && text.match(/\d+.*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?).*\d+.*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?)/)) {
+    else if (tagName === 'li' && text && text.match(/(\d+|half|quarter|third|one|two|three|four|five|¼|½|¾|⅓|⅔).*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?).*(\d+|half|quarter|third|one|two|three|four|five|¼|½|¾|⅓|⅔).*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?)/)) {
       processRecipeInstruction(element, text);
     }
 
