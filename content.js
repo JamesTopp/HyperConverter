@@ -120,7 +120,7 @@ const conversions = [
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
         const hasThirdDimension = match[3] && match[4]; // Third number AND unit exists
-        const unitIndex = hasThirdDimension ? 4 : 3;
+        const unitIndex = 4; // Unit is always in match[4] due to optional group structure
 
         // Safety check for unit
         if (!match[unitIndex]) return null;
