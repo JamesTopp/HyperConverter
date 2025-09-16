@@ -110,140 +110,119 @@ const conversions = [
         return `${res1}\n${res2}`;
     }
   },
- {
+  {
     name: "ranges_and_dimensions",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d+(?:\\.\\d+)?)(?:\\s*(?:[xX×]|x)\\s*(\\d+(?:\\.\\d+)?))?\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
+    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d+(?:\\.\\d+)?)\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?)(?=\\s|$|[^a-zA-Z])`,
     convert: (match) => {
-        // Check if we have at least 2 dimensions
-        if (!match || !match[1] || !match[2]) return null;
+        if (!match || !match[1] || !match[2] || !match[3]) return null;
         
         const val1 = parseMeasurementValue(match[1]);
         const val2 = parseMeasurementValue(match[2]);
-        const hasThirdDimension = match[3] && match[4]; // Third number AND unit exists
-        const val3 = hasThirdDimension ? parseMeasurementValue(match[3]) : null;
-        const unit = (hasThirdDimension ? match[4] : match[3]).toLowerCase();
+        const unit = match[3].toLowerCase();
         const separator = match[0].match(/[xX×]/) ? 'x' : 'range';
         
-        if (isNaN(val1) || isNaN(val2) || (hasThirdDimension && isNaN(val3))) return null;
+        if (isNaN(val1) || isNaN(val2)) return null;
         
-        // For dimensions (x separator), convert each measurement separately
-        if (separator === 'x') {
-            let res1, res2, res3;
-            
-            if (unit.startsWith("in") || unit.startsWith("inch") || unit === '"' || unit === '"' || unit === '″') {
-                res1 = `${val1} in = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-                res2 = `${val2} in = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-                if (hasThirdDimension) {
-                    res3 = `${val3} in = ${(val3 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
-                }
-            } else if (unit.startsWith("cm") || unit.startsWith("centimeter") || unit.startsWith("centimetre")) {
-                res1 = `${val1} cm = ${(val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
-                res2 = `${val2} cm = ${(val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
-                if (hasThirdDimension) {
-                    res3 = `${val3} cm = ${(val3 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
-                }
-            } else if (unit.startsWith("ft") || unit.startsWith("feet") || unit.startsWith("foot") || unit === "'") {
-                res1 = `${val1} ft = ${(val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
-                res2 = `${val2} ft = ${(val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
-                if (hasThirdDimension) {
-                    res3 = `${val3} ft = ${(val3 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
-                }
-            } else if (unit.startsWith("mm") || unit.startsWith("millimeter") || unit.startsWith("millimetre")) {
-                res1 = `${val1} mm = ${(val1 * 0.0393701).toFixed(1)} in`;
-                res2 = `${val2} mm = ${(val2 * 0.0393701).toFixed(1)} in`;
-                if (hasThirdDimension) {
-                    res3 = `${val3} mm = ${(val3 * 0.0393701).toFixed(1)} in`;
-                }
-            } else if ((unit.startsWith("m") && !unit.startsWith("mm") && !unit.startsWith("ml")) || unit.startsWith("meter") || unit.startsWith("metre")) {
-                res1 = `${val1} m = ${(val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
-                res2 = `${val2} m = ${(val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
-                if (hasThirdDimension) {
-                    res3 = `${val3} m = ${(val3 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
-                }
-            } else {
-                return null;
-            }
-            
-            return hasThirdDimension ? `${res1}\n${res2}\n${res3}` : `${res1}\n${res2}`;
-        }
+      // For dimensions (x separator), convert each measurement separately
+      if (separator === 'x') {
+          let res1, res2;
+          
+        if (unit.startsWith("in") || unit.startsWith("inch") || unit === '"' || unit === '"' || unit === '″') {              res1 = `${val1} in = ${(val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+              res2 = `${val2} in = ${(val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} cm`;
+          } else if (unit.startsWith("cm") || unit.startsWith("centimeter") || unit.startsWith("centimetre")) {
+              res1 = `${val1} cm = ${(val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+              res2 = `${val2} cm = ${(val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1)} in`;
+          } else if (unit.startsWith("ft") || unit.startsWith("feet") || unit.startsWith("foot") || unit === "'") {
+              res1 = `${val1} ft = ${(val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+              res2 = `${val2} ft = ${(val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} m`;
+          } else if (unit.startsWith("mm") || unit.startsWith("millimeter") || unit.startsWith("millimetre")) {
+              res1 = `${val1} mm = ${(val1 * 0.0393701).toFixed(1)} in`;
+              res2 = `${val2} mm = ${(val2 * 0.0393701).toFixed(1)} in`;
+          } else if ((unit.startsWith("m") && !unit.startsWith("mm") && !unit.startsWith("ml")) || unit.startsWith("meter") || unit.startsWith("metre")) {
+              res1 = `${val1} m = ${(val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+              res2 = `${val2} m = ${(val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1)} ft`;
+          } else {
+              return null;
+          }
+          
+          return `${res1}\n${res2}`;
+      }
         
-        // For ranges (-, to separator), convert as a range (only uses first two values)
+        // For ranges (-, to separator), convert as a range
         else {
             let res1, res2, resUnit;
-            const rangeUnit = match[3].toLowerCase(); // For ranges, unit is always in match[3]
             
-            // Length conversions
-            if (rangeUnit.startsWith("in") || rangeUnit.startsWith("inch") || rangeUnit === '"' || rangeUnit === '"' || rangeUnit === '″') {
-                res1 = (val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
-                res2 = (val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
-                resUnit = 'cm';
-            } else if (rangeUnit.startsWith("cm") || rangeUnit.startsWith("centimeter") || rangeUnit.startsWith("centimetre")) {
-                res1 = (val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
-                res2 = (val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
-                resUnit = 'in';
-            } else if (rangeUnit.startsWith("ft") || rangeUnit.startsWith("feet") || rangeUnit.startsWith("foot") || rangeUnit === "'") {
-                res1 = (val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
-                res2 = (val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
-                resUnit = 'm';
-            } else if (rangeUnit.startsWith("mm") || rangeUnit.startsWith("millimeter") || rangeUnit.startsWith("millimetre")) {
-                res1 = (val1 * 0.0393701).toFixed(1); 
-                res2 = (val2 * 0.0393701).toFixed(1); 
-                resUnit = 'in';
-            } else if (rangeUnit.startsWith("km") || rangeUnit.startsWith("kilometer") || rangeUnit.startsWith("kilometre")) {
-                res1 = (val1 * 0.621371).toFixed(1); 
-                res2 = (val2 * 0.621371).toFixed(1); 
-                resUnit = 'mi';
-            } else if ((rangeUnit.startsWith("m") && !rangeUnit.startsWith("mm") && !rangeUnit.startsWith("ml")) || rangeUnit.startsWith("meter") || rangeUnit.startsWith("metre")) {
-                res1 = (val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
-                res2 = (val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
-                resUnit = 'ft';
-                
-            // Weight conversions
-            } else if (rangeUnit.startsWith("lb") || rangeUnit.startsWith("pound")) {
-                res1 = (val1 * CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
-                res2 = (val2 * CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
-                resUnit = 'kg';
-            } else if (rangeUnit.startsWith("kg") || rangeUnit.startsWith("kilogram")) {
-                res1 = (val1 / CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
-                res2 = (val2 / CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
-                resUnit = 'lbs';
-            } else if (rangeUnit.startsWith("oz") || rangeUnit.startsWith("ounce")) {
-                res1 = (val1 * CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
-                res2 = (val2 * CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
-                resUnit = 'g';
-            } else if (rangeUnit.startsWith("g") && !rangeUnit.startsWith("gal") && rangeUnit !== "g") {
-                res1 = (val1 / CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
-                res2 = (val2 / CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
-                resUnit = 'oz';
-                
-            // Volume conversions
-            } else if (rangeUnit.startsWith("gal") || rangeUnit.startsWith("gallon")) {
-                res1 = (val1 * CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
-                res2 = (val2 * CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
-                resUnit = 'L';
-            } else if ((rangeUnit.startsWith("l") && !rangeUnit.startsWith("lb")) || rangeUnit.startsWith("liter") || rangeUnit.startsWith("litre")) {
-                res1 = (val1 / CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
-                res2 = (val2 / CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
-                resUnit = 'gal';
-            } else if (rangeUnit.startsWith("ml") || rangeUnit.startsWith("milliliter") || rangeUnit.startsWith("millilitre")) {
-                res1 = (val1 / CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
-                res2 = (val2 / CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
-                resUnit = 'tsp';
-                
-            // Cooking conversions
-            } else if (rangeUnit.startsWith("cup")) {
-                res1 = (val1 * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0); 
-                res2 = (val2 * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0); 
-                resUnit = 'ml';
-            } else if (rangeUnit.startsWith("tbsp") || rangeUnit.startsWith("tablespoon")) {
-                res1 = (val1 * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1); 
-                res2 = (val2 * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1); 
-                resUnit = 'ml';
-            } else if (rangeUnit.startsWith("tsp") || rangeUnit.startsWith("teaspoon")) {
-                res1 = (val1 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
-                res2 = (val2 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
-                resUnit = 'ml';
-            } else {
+           // Length conversions
+      if (unit.startsWith("in") || unit.startsWith("inch") || unit === '"' || unit === '"' || unit === '″') {            res1 = (val1 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+            resUnit = 'cm';
+        } else if (unit.startsWith("cm") || unit.startsWith("centimeter") || unit.startsWith("centimetre")) {
+            res1 = (val1 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.INCH_TO_CM).toFixed(1); 
+            resUnit = 'in';
+        } else if (unit.startsWith("ft") || unit.startsWith("feet") || unit.startsWith("foot") || unit === "'") {
+            res1 = (val1 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
+            resUnit = 'm';
+        } else if (unit.startsWith("mm") || unit.startsWith("millimeter") || unit.startsWith("millimetre")) {
+            res1 = (val1 * 0.0393701).toFixed(1); 
+            res2 = (val2 * 0.0393701).toFixed(1); 
+            resUnit = 'in';
+        } else if (unit.startsWith("km") || unit.startsWith("kilometer") || unit.startsWith("kilometre")) {
+            res1 = (val1 * 0.621371).toFixed(1); 
+            res2 = (val2 * 0.621371).toFixed(1); 
+            resUnit = 'mi';
+        } else if ((unit.startsWith("m") && !unit.startsWith("mm") && !unit.startsWith("ml")) || unit.startsWith("meter") || unit.startsWith("metre")) {
+            res1 = (val1 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.FOOT_TO_M).toFixed(1); 
+            resUnit = 'ft';
+            
+        // Weight conversions
+        } else if (unit.startsWith("lb") || unit.startsWith("pound")) {
+            res1 = (val1 * CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
+            resUnit = 'kg';
+        } else if (unit.startsWith("kg") || unit.startsWith("kilogram")) {
+            res1 = (val1 / CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.LB_TO_KG).toFixed(1); 
+            resUnit = 'lbs';
+        } else if (unit.startsWith("oz") || unit.startsWith("ounce")) {
+            res1 = (val1 * CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
+            resUnit = 'g';
+        } else if (unit.startsWith("g") && !unit.startsWith("gal") && unit !== "g") {
+            res1 = (val1 / CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.OZ_TO_G).toFixed(1); 
+            resUnit = 'oz';
+            
+        // Volume conversions
+        } else if (unit.startsWith("gal") || unit.startsWith("gallon")) {
+            res1 = (val1 * CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
+            resUnit = 'L';
+        } else if ((unit.startsWith("l") && !unit.startsWith("lb")) || unit.startsWith("liter") || unit.startsWith("litre")) {
+            res1 = (val1 / CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.GALLON_TO_L).toFixed(1); 
+            resUnit = 'gal';
+        } else if (unit.startsWith("ml") || unit.startsWith("milliliter") || unit.startsWith("millilitre")) {
+            res1 = (val1 / CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
+            res2 = (val2 / CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
+            resUnit = 'tsp';
+            
+        // Cooking conversions
+        } else if (unit.startsWith("cup")) {
+            res1 = (val1 * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0); 
+            res2 = (val2 * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0); 
+            resUnit = 'ml';
+        } else if (unit.startsWith("tbsp") || unit.startsWith("tablespoon")) {
+            res1 = (val1 * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1); 
+            resUnit = 'ml';
+        } else if (unit.startsWith("tsp") || unit.startsWith("teaspoon")) {
+            res1 = (val1 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
+            res2 = (val2 * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1); 
+            resUnit = 'ml';
+         } else {
                 return null;
             }
             
