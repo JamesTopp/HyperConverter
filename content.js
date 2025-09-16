@@ -360,24 +360,6 @@ const conversions = [
     },
   },
   {
-    name: "pounds",
-    pattern: `${createNumberPattern()}\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
-    convert: (match) => {
-      const num = parseMeasurementValue(match[1]);
-      if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
-    },
-  },
-  {
-  name: "kilograms",
-  pattern: `${createNumberPattern()}\\s*-?\\s*(?:kilograms?|kg)\\b`,
-  convert: (match) => {
-    const num = parseMeasurementValue(match[1]);
-    if (isNaN(num)) return null;
-    return `${match[0]} = ${(num / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
-  },
-  },
-  {
     name: "kilometers",
     pattern: `${createNumberPattern()}\\s*-?\\s*(?:kilometres?|kilometers?|km|KM)\\b`,
     convert: (match) => {
@@ -387,6 +369,15 @@ const conversions = [
     },
   },
   {
+    name: "pounds",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
+    },
+    },
+    {
     name: "ounces",
     pattern: `${createNumberPattern()}\\s*-?\\s*(?:ounces?|oz)\\b`,
     convert: (match) => {
@@ -403,6 +394,15 @@ const conversions = [
       if (isNaN(num)) return null;
       return `${match[0]} = ${(num / CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} oz`;
     },
+  },
+  {
+  name: "kilograms",
+  pattern: `${createNumberPattern()}\\s*-?\\s*(?:kilograms?|kg)\\b`,
+  convert: (match) => {
+    const num = parseMeasurementValue(match[1]);
+    if (isNaN(num)) return null;
+    return `${match[0]} = ${(num / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
+  },
   },
   {
     name: "gallons",
@@ -806,8 +806,8 @@ function processSpecialCases(container) {
       processSplitMeasurement(element, text);
     }
     
-    // RECIPE INSTRUCTIONS (li tags with multiple measurements)
-    else if (tagName === 'li' && text && text.match(/\d+.*?(°F|°C|degrees|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz).*\d+.*?(°F|°C|degrees|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz)/)) {
+    // MULTI-MEASUREMENT LINES (li tags with multiple measurements)
+    else if (tagName === 'li' && text && text.match(/\d+.*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?).*\d+.*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?)/)) {
       processRecipeInstruction(element, text);
     }
 
