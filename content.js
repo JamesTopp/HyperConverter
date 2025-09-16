@@ -647,10 +647,6 @@ function processTextNode(textNode) {
     let text = textNode.textContent;
     if (!text.trim()) return;
 
-    if (text.includes("350") || text.includes("2 cups") || text.includes("1 tsp")) {
-    console.log("Processing text node:", `"${text}"`);
-}
-
     // "Stitching" logic for finding measurements split across elements (no changes needed here)
     let stitched = false;
     let previousTextNode = null;
@@ -815,7 +811,12 @@ function processSpecialCases(container) {
     else if (tagName === 'li' && text) {
       processIngredientItem(element, text);
     }
-    
+
+    // RECIPE INSTRUCTIONS (li tags with multiple measurements)
+    else if (tagName === 'li' && text && text.match(/\d+.*?(°F|°C|degrees|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz).*\d+.*?(°F|°C|degrees|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz)/)) {
+      processRecipeInstruction(element, text);
+    }
+        
     // TABLE MEASUREMENTS (dd tags)
     else if (tagName === 'dd' && element.closest('dl[class*="acl-dl"]')) {
       processTableMeasurement(element, text);
@@ -992,6 +993,62 @@ function getCookingConversion(value, unit) {
     return `${value} ${unit} = ${(numericValue * CONVERSION_FACTORS.OZ_TO_G).toFixed(1)} g`;
   }
   return null;
+}
+
+function processRecipeInstruction(element, text) {
+  // Get the compiled regex to find all measurements in the text
+  const regex = getCompiledRegex();
+  regex.lastIndex = 0;
+  
+  // Find all matches in the complete text
+  const matches = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index === regex.lastIndex) {
+      regex.lastIndex++;
+      continue;
+    }
+    matches.push(match);
+  }
+  
+  if (matches.length <= 1) return; // Only process if multiple measurements
+  
+  // Build replacement HTML with all measurements converted
+  let processedHTML = text;
+  let offset = 0;
+  
+  for (const currentMatch of matches) {
+    const matchStart = currentMatch.index + offset;
+    const fullMatch = currentMatch[0];
+    
+    // Find the conversion
+    let conversionName = null;
+    for (const key in currentMatch.groups) {
+      if (currentMatch.groups[key] !== undefined) {
+        conversionName = key;
+        break;
+      }
+    }
+    
+    if (conversionName) {
+      const conversion = conversions.find(c => c.name === conversionName);
+      if (conversion) {
+        const valueMatch = fullMatch.match(new RegExp(conversion.pattern, "i"));
+        const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
+        
+        if (conversionResult) {
+          const replacement = `<span class="hyper-hover" data-convert="${conversionResult}">${fullMatch}</span>`;
+          processedHTML = processedHTML.slice(0, matchStart) + replacement + processedHTML.slice(matchStart + fullMatch.length);
+          offset += replacement.length - fullMatch.length;
+        }
+      }
+    }
+  }
+  
+  // Replace the element's innerHTML if changes were made
+  if (processedHTML !== text) {
+    element.innerHTML = processedHTML;
+  }
 }
 
 // ===== DEBOUNCED MUTATION OBSERVER =====
