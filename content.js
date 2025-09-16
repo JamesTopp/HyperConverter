@@ -816,14 +816,14 @@ function processSpecialCases(container) {
       processSplitMeasurement(element, text);
     }
     
-    // ALLRECIPES INGREDIENTS (li tags)
-    else if (tagName === 'li' && text) {
-      processIngredientItem(element, text);
-    }
-
     // RECIPE INSTRUCTIONS (li tags with multiple measurements)
     else if (tagName === 'li' && text && text.match(/\d+.*?(°F|°C|degrees|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz).*\d+.*?(°F|°C|degrees|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz)/)) {
       processRecipeInstruction(element, text);
+    }
+
+    // ALLRECIPES INGREDIENTS (li tags)
+    else if (tagName === 'li' && text) {
+      processIngredientItem(element, text);
     }
         
     // TABLE MEASUREMENTS (dd tags)
@@ -1005,6 +1005,7 @@ function getCookingConversion(value, unit) {
 }
 
 function processRecipeInstruction(element, text) {
+    console.log("processRecipeInstruction called for:", text);
   // Get the compiled regex to find all measurements in the text
   const regex = getCompiledRegex();
   regex.lastIndex = 0;
