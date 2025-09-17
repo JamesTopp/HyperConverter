@@ -87,8 +87,6 @@ function updateToggleUI() {
     const toggleSwitch = document.getElementById('toggleSwitch');
     const statusText = document.getElementById('statusText');
     const disableOptions = document.getElementById('disableOptions');
-    const neverRunPrompt = document.getElementById('neverRunPrompt');
-    const neverRunButton = document.getElementById('neverRunButton');
     
     if (globallyDisabled) {
         toggleSwitch.classList.remove('active');
@@ -106,15 +104,6 @@ function updateToggleUI() {
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Disabled on this page';
         disableOptions.style.display = 'block';
-        
-        // Show/hide the "never run" prompt based on whether site is already blacklisted
-        if (isCurrentSiteBlacklisted()) {
-            neverRunPrompt.style.display = 'none';
-            neverRunButton.style.display = 'none';
-        } else {
-            neverRunPrompt.style.display = 'block';
-            neverRunButton.style.display = 'block';
-        }
     }
 }
 
