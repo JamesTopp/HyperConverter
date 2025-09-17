@@ -708,7 +708,7 @@ style.textContent = `
   }
   
   .hyper-hover:hover {
-    background-color: #E6DCEF !important;
+    background-color: #FFEFE6 !important;
     border-radius: 3px !important;
     transition: background-color 0.2s ease !important;
   }

@@ -351,8 +351,15 @@
                 <span class="status-text" id="statusText">Active on this page</span>
             </div>
             <div class="disable-options" id="disableOptions" style="display: none;">
-                <button class="button button-secondary" id="disableAllPages" style="margin-top: 8px; font-size: 11px; padding: 6px 12px;">
+                <p class="never-run-prompt" id="neverRunPrompt" style="font-size: 11px; color: #666; margin: 8px 0 4px 0; text-align: center;">Never run on this page?</p>
+                <button class="button button-secondary" id="neverRunButton" style="margin-bottom: 4px; font-size: 11px; padding: 6px 12px;">
+                    🚫 Yes, blacklist this site
+                </button>
+                <button class="button button-secondary" id="disableAllPages" style="margin-bottom: 4px; font-size: 11px; padding: 6px 12px;">
                     🌐 Disable on all pages
+                </button>
+                <button class="button button-secondary" id="manageBlacklist" style="font-size: 11px; padding: 6px 12px;">
+                    ⚙️ Manage blocked sites
                 </button>
             </div>
         </div>
