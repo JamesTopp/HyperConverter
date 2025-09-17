@@ -54,6 +54,8 @@ document.getElementById('neverRunButton').addEventListener('click', function() {
     if (currentDomain && !blacklistedSites.includes(currentDomain)) {
         blacklistedSites.push(currentDomain);
         extensionEnabled = false;
+        // Update button text
+        this.textContent = `🚫 Disabled on ${currentDomain}`;
         if (typeof chrome !== 'undefined' && chrome.storage) {
             chrome.storage.sync.set({blacklistedSites: blacklistedSites, enabled: false});
         }

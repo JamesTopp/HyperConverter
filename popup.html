@@ -351,17 +351,18 @@
                 <span class="status-text" id="statusText">Active on this page</span>
             </div>
             <div class="disable-options" id="disableOptions" style="display: none;">
-                <button class="button button-secondary" id="neverRunButton" style="margin-bottom: 4px; font-size: 11px; padding: 6px 12px;">
-                    🚫 Never run on this page
-                </button>
-                <button class="button button-secondary" id="disableAllPages" style="margin-bottom: 4px; font-size: 11px; padding: 6px 12px;">
+                <button class="button button-secondary" id="disableAllPages" style="margin-bottom: 8px; font-size: 11px; padding: 6px 12px;">
                     🌐 Disable on all pages
                 </button>
-                <button class="button button-secondary" id="manageBlacklist" style="font-size: 11px; padding: 6px 12px;">
-                    ⚙️ Manage blocked sites
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="button button-secondary" id="neverRunButton" style="flex: 1; margin-bottom: 0; font-size: 11px; padding: 6px 12px;">
+                        🚫 Never run on this page?
+                    </button>
+                    <button class="button button-secondary" id="manageBlacklist" style="flex: 1; margin-bottom: 0; font-size: 11px; padding: 6px 12px;">
+                        ⚙️ Manage blocked sites
+                    </button>
+                </div>
             </div>
-        </div>
 
         <!-- Stats Section -->
         <div class="stats">
