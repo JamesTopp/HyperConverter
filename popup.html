@@ -344,17 +344,22 @@
             </div>
             <h1>HyperConverter</h1>
             <p class="subtitle">Just hover. We'll do the math.</p>
-            <div class="status" id="extensionToggle">
-                <div class="toggle-switch active" id="toggleSwitch">
-                    <div class="toggle-dot"></div>
+           <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="status" id="extensionToggle">
+                    <div class="toggle-switch active" id="toggleSwitch">
+                        <div class="toggle-dot"></div>
+                    </div>
+                    <span class="status-text" id="statusText">Active on this page</span>
                 </div>
-                <span class="status-text" id="statusText">Active on this page</span>
+                <button class="gear-button" id="gearButton" style="display: none; background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(180, 167, 214, 0.2); border-radius: 20px; padding: 8px 10px; cursor: pointer; font-size: 12px; transition: all 0.2s ease;">
+                    ⚙️
+                </button>
             </div>
             <div class="disable-options" id="disableOptions" style="display: none;">
-                <button class="button button-secondary" id="disableAllPages" style="margin-bottom: 8px; font-size: 11px; padding: 6px 12px;">
+                <button class="button button-secondary" id="disableAllPages" style="margin-bottom: 12px; font-size: 11px; padding: 6px 12px;">
                     🌐 Disable on all pages
                 </button>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 12px;">
                     <button class="button button-secondary" id="neverRunButton" style="flex: 1; margin-bottom: 0; font-size: 11px; padding: 6px 12px;">
                         🚫 Never run on this page?
                     </button>
