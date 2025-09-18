@@ -64,13 +64,22 @@ document.getElementById('neverRunButton').addEventListener('click', function() {
 });
 
 document.getElementById('disableAllPages').addEventListener('click', function() {
-    globallyDisabled = true;
-    extensionEnabled = false;
-    updateToggleUI();
-    // Save state (only works in actual extension)
-    if (typeof chrome !== 'undefined' && chrome.storage) {
-        chrome.storage.sync.set({enabled: false, globallyDisabled: true});
+    if (globallyDisabled) {
+        // Turn extension back on
+        globallyDisabled = false;
+        this.textContent = '🔴 Turn off extension';
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+            chrome.storage.sync.set({globallyDisabled: false});
+        }
+    } else {
+        // Turn extension off
+        globallyDisabled = true;
+        this.textContent = '🟢 Turn on extension';
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+            chrome.storage.sync.set({globallyDisabled: true});
+        }
     }
+    updateToggleUI();
 });
 
 document.getElementById('manageBlacklist').addEventListener('click', function() {
@@ -90,27 +99,36 @@ function updateToggleUI() {
     const statusText = document.getElementById('statusText');
     const disableOptions = document.getElementById('disableOptions');
     const gearButton = document.getElementById('gearButton');
+    const extensionToggle = document.getElementById('extensionToggle');
     
     if (globallyDisabled) {
         toggleSwitch.classList.remove('active');
-        statusText.textContent = 'Disabled everywhere';
+        statusText.textContent = 'Extension is off';
         disableOptions.style.display = 'none';
         gearButton.style.display = 'inline-block';
+        extensionToggle.style.opacity = '0.5';
+        extensionToggle.style.cursor = 'pointer';
     } else if (isCurrentSiteBlacklisted()) {
         toggleSwitch.classList.remove('active');
         statusText.textContent = `Disabled on ${currentDomain}`;
         disableOptions.style.display = 'none';
         gearButton.style.display = 'inline-block';
+        extensionToggle.style.opacity = '1';
+        extensionToggle.style.cursor = 'pointer';
     } else if (extensionEnabled) {
         toggleSwitch.classList.add('active');
         statusText.textContent = 'Active on this page';
         disableOptions.style.display = 'none';
         gearButton.style.display = 'inline-block';
+        extensionToggle.style.opacity = '1';
+        extensionToggle.style.cursor = 'pointer';
     } else {
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Disabled on this page';
         disableOptions.style.display = 'block';
         gearButton.style.display = 'none';
+        extensionToggle.style.opacity = '1';
+        extensionToggle.style.cursor = 'pointer';
     }
 }
 
