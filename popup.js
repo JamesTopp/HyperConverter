@@ -89,23 +89,28 @@ function updateToggleUI() {
     const toggleSwitch = document.getElementById('toggleSwitch');
     const statusText = document.getElementById('statusText');
     const disableOptions = document.getElementById('disableOptions');
+    const gearButton = document.getElementById('gearButton');
     
     if (globallyDisabled) {
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Disabled everywhere';
         disableOptions.style.display = 'none';
+        gearButton.style.display = 'inline-block';
     } else if (isCurrentSiteBlacklisted()) {
         toggleSwitch.classList.remove('active');
         statusText.textContent = `Disabled on ${currentDomain}`;
         disableOptions.style.display = 'none';
+        gearButton.style.display = 'inline-block';
     } else if (extensionEnabled) {
         toggleSwitch.classList.add('active');
         statusText.textContent = 'Active on this page';
         disableOptions.style.display = 'none';
+        gearButton.style.display = 'inline-block';
     } else {
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Disabled on this page';
         disableOptions.style.display = 'block';
+        gearButton.style.display = 'none';
     }
 }
 
@@ -152,6 +157,18 @@ emailInput.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         emailSubmit.click();
     }
+});
+
+document.getElementById('gearButton').addEventListener('click', function() {
+    if (blacklistedSites.length === 0) {
+        alert('No blocked sites yet');
+        return;
+    }
+    
+    const sitesList = blacklistedSites.map((site, index) => 
+        `${index + 1}. ${site}`).join('\n');
+    const message = `Blocked sites:\n\n${sitesList}\n\nTo unblock a site, visit it and click the toggle.`;
+    alert(message);
 });
 
 emailSubmit.addEventListener('click', async function() {
