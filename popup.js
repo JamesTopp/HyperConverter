@@ -108,6 +108,7 @@ function updateToggleUI() {
         gearButton.style.display = 'inline-block';
         extensionToggle.style.opacity = '0.5';
         extensionToggle.style.cursor = 'pointer';
+        document.getElementById('disableAllPages').textContent = '🟢 Turn on extension';
     } else if (isCurrentSiteBlacklisted()) {
         toggleSwitch.classList.remove('active');
         statusText.textContent = `Disabled on ${currentDomain}`;
@@ -122,6 +123,7 @@ function updateToggleUI() {
         gearButton.style.display = 'inline-block';
         extensionToggle.style.opacity = '1';
         extensionToggle.style.cursor = 'pointer';
+        document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
     } else {
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Disabled on this page';
@@ -129,6 +131,7 @@ function updateToggleUI() {
         gearButton.style.display = 'none';
         extensionToggle.style.opacity = '1';
         extensionToggle.style.cursor = 'pointer';
+        document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
     }
 }
 
