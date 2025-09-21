@@ -787,34 +787,44 @@ function processTextNode(textNode) {
     let text = textNode.textContent;
     if (!text.trim()) return;
 
-    // "Stitching" logic for finding measurements split across elements (no changes needed here)
+    // --- COMBINED STITCHING LOGIC (GEMINI + CLAUDE REFINEMENT) ---
+    let nodesToReplace = [textNode];
     let stitched = false;
-    let previousTextNode = null;
-    let p = textNode.previousSibling;
-    if (p && p.nodeType === 3) {
-        previousTextNode = p;
-    } else if (p && p.nodeType === 1 && p.lastChild && p.lastChild.nodeType === 3) {
-        previousTextNode = p.lastChild;
+
+    // STEP 1: PRIORITIZE FORWARD STITCHING (for "1" + "½ cup")
+    // Check if the current node is just a number.
+    if (text.match(/^\d+\s*$/)) {
+        let nextNode = textNode.nextSibling;
+        // Use Claude's refined, safer regex to check the next node.
+        if (nextNode && nextNode.nodeType === 3 && nextNode.textContent.match(/^[⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]\s+[a-zA-Z]/)) {
+            text += nextNode.textContent; // Stitch forward
+            nodesToReplace.push(nextNode); // Mark the next node to be removed
+            stitched = true;
+        }
     }
 
-    if (previousTextNode) {
-        const prevText = previousTextNode.textContent;
-        if (prevText.match(/\d+\s*$/) || 
-            prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
-            prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
-            text = prevText + text;
-            stitched = true;
+    // STEP 2: FALL BACK TO BACKWARD STITCHING (if no forward stitch happened)
+    if (!stitched) {
+        let prevNode = textNode.previousSibling;
+        if (prevNode && prevNode.nodeType === 3) {
+            const prevText = prevNode.textContent;
+            // Check for dimension patterns or word-based numbers.
+            if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
+                prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
+                text = prevText + text; // Stitch backward
+                nodesToReplace.unshift(prevNode); // Mark the previous node to be removed
+                stitched = true;
+            }
         }
     }
 
     const regex = getCompiledRegex();
     regex.lastIndex = 0;
 
-    // Step 1: Find all matches and store them. No DOM changes yet.
+    // Find all matches in the (potentially stitched) text
     const matches = [];
     let match;
     while ((match = regex.exec(text)) !== null) {
-        // Guard against zero-width matches causing an infinite loop
         if (match.index === regex.lastIndex) {
             regex.lastIndex++;
         }
@@ -823,21 +833,18 @@ function processTextNode(textNode) {
 
     if (matches.length === 0) return;
 
-    // Step 2: Build the new structure in a DocumentFragment.
+    // Build the replacement structure in a DocumentFragment
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
-
     for (const currentMatch of matches) {
         const matchStart = currentMatch.index;
         const fullMatch = currentMatch[0];
 
-        // Append the text *before* this match
         const beforeText = text.slice(lastIndex, matchStart);
         if (beforeText) {
             fragment.appendChild(document.createTextNode(beforeText));
         }
 
-        // Find the conversion for this match
         let conversionName = null;
         for (const key in currentMatch.groups) {
             if (currentMatch.groups[key] !== undefined) {
@@ -848,40 +855,42 @@ function processTextNode(textNode) {
 
         if (conversionName) {
             const conversion = conversions.find(c => c.name === conversionName);
-            const valueMatch = fullMatch.match(new RegExp(conversion.pattern, "i"));
-            const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
+            if (conversion) {
+                const valueMatch = fullMatch.match(new RegExp(conversion.pattern, "i"));
+                const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
 
-            if (conversionResult) {
-                // Create and append the highlighted <span>
-                const span = document.createElement("span");
-                span.className = "hyper-hover";
-                span.textContent = fullMatch;
-                span.dataset.convert = conversionResult;
-                fragment.appendChild(span);
-            } else {
-                // If conversion fails, append the original text
-                fragment.appendChild(document.createTextNode(fullMatch));
+                if (conversionResult) {
+                    const span = document.createElement("span");
+                    span.className = "hyper-hover";
+                    span.textContent = fullMatch;
+                    span.dataset.convert = conversionResult;
+                    fragment.appendChild(span);
+                } else {
+                    fragment.appendChild(document.createTextNode(fullMatch));
+                }
             }
         }
-
-        // Update our position in the string
         lastIndex = currentMatch.index + fullMatch.length;
     }
-
-    // Append any final text that came *after* the last match
     const afterText = text.slice(lastIndex);
     if (afterText) {
         fragment.appendChild(document.createTextNode(afterText));
     }
 
-    // Step 3: Perform ONE single, safe DOM replacement.
+    // Perform the final, safe DOM replacement
     try {
-        if (stitched && previousTextNode) {
-            // If we stitched text, we need to remove the previous node as well
-            previousTextNode.parentNode.removeChild(previousTextNode);
+        const primaryNode = nodesToReplace.shift();
+        if(primaryNode && primaryNode.parentNode) {
+            primaryNode.parentNode.replaceChild(fragment, primaryNode);
         }
-        parent.replaceChild(fragment, textNode);
+
+        nodesToReplace.forEach(node => {
+            if (node && node.parentNode) {
+                node.parentNode.removeChild(node);
+            }
+        });
     } catch (e) {
+        console.warn("HyperConverter: Could not replace text node.", e);
     }
 }
 
