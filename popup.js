@@ -106,10 +106,12 @@ function updateToggleUI() {
     } else if (isCurrentSiteBlacklisted()) {
         toggleSwitch.classList.remove('active');
         statusText.textContent = `Disabled on ${currentDomain}`;
-        disableOptions.style.display = 'none';
-        gearButton.style.display = 'inline-block';
+        disableOptions.style.display = 'block';
+        gearButton.style.display = 'none';
         extensionToggle.style.opacity = '1';
         extensionToggle.style.cursor = 'pointer';
+        extensionToggle.style.pointerEvents = 'auto';
+        document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
     } else if (extensionEnabled) {
         toggleSwitch.classList.add('active');
         statusText.textContent = 'Active on this page';
