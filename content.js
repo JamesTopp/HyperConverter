@@ -123,6 +123,13 @@ const conversions = [
       const wholeNumber = parseFloat(match[1]);
       const fractionValue = unicodeFractions[match[2]];
       const unit = match[3].toLowerCase();
+
+          console.log("📦 Mixed number match:", {
+        whole: wholeNumber,
+        fraction: fractionValue,
+        unit: unit,
+        fullMatch: match[0]
+    });
       
       if (isNaN(wholeNumber) || fractionValue === undefined) return null;
       
