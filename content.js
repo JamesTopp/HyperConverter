@@ -837,8 +837,9 @@ function processTextNode(textNode) {
     if (text.match(/^\d+\s*$/)) {
         let nextNode = textNode.nextSibling;
         // Use Claude's refined, safer regex to check the next node.
-        if (nextNode && nextNode.nodeType === 3 && nextNode.textContent.match(/^\s*[⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]\s+[a-zA-Z]/)) {
-              text += nextNode.textContent; // Stitch forward
+        if (nextNode && nextNode.nodeType === 3 && nextNode.textContent.match(/^\s*[⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]/)) {
+            console.log("Forward stitching:", text, "+", nextNode.textContent);
+            text += nextNode.textContent; // Stitch forward
             nodesToReplace.push(nextNode); // Mark the next node to be removed
             stitched = true;
         }
@@ -855,6 +856,7 @@ function processTextNode(textNode) {
                 text = prevText + text; // Stitch backward
                 nodesToReplace.unshift(prevNode); // Mark the previous node to be removed
                 stitched = true;
+                console.log("Backward stitching:", prevText, "+", text, "=", prevText + text);
             }
         }
     }
@@ -906,6 +908,9 @@ function processTextNode(textNode) {
                 const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
 
                 if (conversionResult) {
+                    // Debug: log what we're creating
+                    console.log("Creating span for:", fullMatch, "with conversion:", conversionResult);
+                    
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
                     span.textContent = fullMatch;
