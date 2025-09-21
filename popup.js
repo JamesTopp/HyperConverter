@@ -23,14 +23,7 @@ function isCurrentSiteBlacklisted() {
 
 document.getElementById('extensionToggle').addEventListener('click', function() {
     if (globallyDisabled) {
-        // If globally disabled, re-enable globally
-        globallyDisabled = false;
-        extensionEnabled = true;
-        updateToggleUI();
-        // Save state (only works in actual extension)
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-            chrome.storage.sync.set({enabled: true, globallyDisabled: false});
-        }
+        return;
     } else if (isCurrentSiteBlacklisted()) {
         // If site is blacklisted, remove from blacklist
         blacklistedSites = blacklistedSites.filter(site => site !== currentDomain);
@@ -104,10 +97,11 @@ function updateToggleUI() {
     if (globallyDisabled) {
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Extension is off';
-        disableOptions.style.display = 'none';
-        gearButton.style.display = 'inline-block';
+        disableOptions.style.display = 'block';
+        gearButton.style.display = 'none';
         extensionToggle.style.opacity = '0.5';
-        extensionToggle.style.cursor = 'pointer';
+        extensionToggle.style.cursor = 'not-allowed';
+        extensionToggle.style.pointerEvents = 'none';
         document.getElementById('disableAllPages').textContent = '🟢 Turn on extension';
     } else if (isCurrentSiteBlacklisted()) {
         toggleSwitch.classList.remove('active');
@@ -123,6 +117,7 @@ function updateToggleUI() {
         gearButton.style.display = 'inline-block';
         extensionToggle.style.opacity = '1';
         extensionToggle.style.cursor = 'pointer';
+        extensionToggle.style.pointerEvents = 'auto';
         document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
     } else {
         toggleSwitch.classList.remove('active');
@@ -131,6 +126,7 @@ function updateToggleUI() {
         gearButton.style.display = 'none';
         extensionToggle.style.opacity = '1';
         extensionToggle.style.cursor = 'pointer';
+        extensionToggle.style.pointerEvents = 'auto';
         document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
     }
 }
