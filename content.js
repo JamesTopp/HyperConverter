@@ -117,6 +117,35 @@ const createNumberPattern = () => createUniversalPattern();
 const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
   {
+    name: "number_unicode_fraction_units",
+    pattern: `(\\d+)\\s+([${Object.keys(unicodeFractions).join('')}])\\s+(cups?|teaspoons?|tsp|tablespoons?|tbsp|ounces?|oz|pounds?|lbs?|inches?|in|feet|ft|cm|mm|m|km|liters?|litres?|l|ml|gallons?|gal)\\b`,
+    convert: (match) => {
+      const wholeNumber = parseFloat(match[1]);
+      const fractionValue = unicodeFractions[match[2]];
+      const unit = match[3];
+      
+      if (isNaN(wholeNumber) || fractionValue === undefined) return null;
+      
+      const totalValue = wholeNumber + fractionValue;
+      const fullMatch = `${wholeNumber} ${match[2]} ${unit}`;
+      
+      // Route to appropriate conversion based on unit
+      if (unit.includes('cup')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
+      } else if (unit.includes('tsp') || unit.includes('teaspoon')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
+      } else if (unit.includes('tbsp') || unit.includes('tablespoon')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
+      } else if (unit.includes('oz') || unit.includes('ounce')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.OZ_TO_G).toFixed(1)} g`;
+      } else if (unit.includes('in') || unit.includes('inch')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
+      }
+      // Add more units as needed
+      return null;
+    }
+  },
+  {
     name: "feet_and_inches",
     pattern: `${createNumberPattern()}\\s*(?:'|ft|feet)\\s*${createNumberPattern()}\\s*(?:"|″|"|inches?|inch|in)`,
     convert: (match) => {
