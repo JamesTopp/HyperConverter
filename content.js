@@ -796,8 +796,8 @@ function processTextNode(textNode) {
     if (text.match(/^\d+\s*$/)) {
         let nextNode = textNode.nextSibling;
         // Use Claude's refined, safer regex to check the next node.
-        if (nextNode && nextNode.nodeType === 3 && nextNode.textContent.match(/^[⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]\s+[a-zA-Z]/)) {
-            text += nextNode.textContent; // Stitch forward
+        if (nextNode && nextNode.nodeType === 3 && nextNode.textContent.match(/^\s*[⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]\s+[a-zA-Z]/)) {
+              text += nextNode.textContent; // Stitch forward
             nodesToReplace.push(nextNode); // Mark the next node to be removed
             stitched = true;
         }
