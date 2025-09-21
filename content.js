@@ -603,7 +603,7 @@ if (compoundMatch) {
 }
 
 // Handle "number + unicode fraction" patterns (like "1 ½")
-const numberUnicodeMatch = valStr.match(/^(\d+)\s+([${Object.keys(unicodeFractions).join('')}])$/);
+const numberUnicodeMatch = valStr.match(/^(\d+)\s+([${Object.keys(unicodeFractions).join('')}])/);
 if (numberUnicodeMatch) {
   const wholeNumber = parseFloat(numberUnicodeMatch[1]);
   const fractionValue = unicodeFractions[numberUnicodeMatch[2]];
