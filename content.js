@@ -799,7 +799,8 @@ function processTextNode(textNode) {
 
     if (previousTextNode) {
         const prevText = previousTextNode.textContent;
-        if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
+        if (prevText.match(/\d+\s*$/) || 
+            prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
             prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
             text = prevText + text;
             stitched = true;
