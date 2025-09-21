@@ -95,8 +95,8 @@ const createUniversalPattern = () => {
   // Single words from measurementWords (escape special regex characters)
   const singleWords = `(?:\\b(?:${allWordKeys.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b)`;
   
-  // Compound phrases like "one and half"
-  const compoundPhrases = `(?:\\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\\s+and\\s+(?:a\\s+)?(?:half|quarter|third|eighth|sixteenth)\\b)`;
+// Compound phrases like "one and half" and "1 ½" (number + unicode fraction)
+const compoundPhrases = `(?:\\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\\s+and\\s+(?:a\\s+)?(?:half|quarter|third|eighth|sixteenth)\\b|\\d+\\s+[${Object.keys(unicodeFractions).join('')}])`;
 
 return `(${numbers}|${unicodes}|${compoundPhrases}|${wordPhrases}|${singleWords})`;
 };
@@ -599,6 +599,16 @@ if (compoundMatch) {
   
   if (!isNaN(first) && !isNaN(second)) {
     return first + second;
+  }
+}
+
+// Handle "number + unicode fraction" patterns (like "1 ½")
+const numberUnicodeMatch = valStr.match(/^(\d+)\s+([${Object.keys(unicodeFractions).join('')}])$/);
+if (numberUnicodeMatch) {
+  const wholeNumber = parseFloat(numberUnicodeMatch[1]);
+  const fractionValue = unicodeFractions[numberUnicodeMatch[2]];
+  if (!isNaN(wholeNumber) && fractionValue !== undefined) {
+    return wholeNumber + fractionValue;
   }
 }
   
