@@ -82,7 +82,7 @@ const measurementWords = {
 
 
 const createUniversalPattern = () => {
-  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
+  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?|\\d+\\s+[${Object.keys(unicodeFractions).join('')}]`;
   const unicodes = Object.keys(unicodeFractions).join('|');
   
   // Use all measurementWords keys instead of filtering
