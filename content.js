@@ -140,6 +140,10 @@ const conversions = [
         return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.OZ_TO_G).toFixed(1)} g`;
       } else if (unit.includes('in') || unit.includes('inch')) {
         return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
+      } else if (unit.includes('lb') || unit.includes('pound')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
+      } else if (unit.includes('ft') || unit.includes('feet') || unit.includes('foot')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
       }
       // Add more units as needed
       return null;
