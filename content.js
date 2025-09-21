@@ -118,34 +118,64 @@ const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
   {
     name: "number_unicode_fraction_units",
-    pattern: `(\\d+)\\s+([${Object.keys(unicodeFractions).join('')}])\\s+(cups?|teaspoons?|tsp|tablespoons?|tbsp|ounces?|oz|pounds?|lbs?|inches?|in|feet|ft|cm|mm|m|km|liters?|litres?|l|ml|gallons?|gal)\\b`,
+    pattern: `(\\d+)\\s+([${Object.keys(unicodeFractions).join('')}])\\s+(cups?|teaspoons?|tsp|tablespoons?|tbsp|ounces?|oz|pounds?|lbs?|lb|inches?|in|feet|ft|centimeters?|centimetres?|cm|millimeters?|millimetres?|mm|meters?|metres?|m|kilometers?|kilometres?|km|miles?|mi|grams?|g|kilograms?|kg|gallons?|gal|liters?|litres?|l|milliliters?|millilitres?|ml|fahrenheit|celsius|[°º]\\s?[fFcC]|degrees?\\s?[fFcC]|degrees?\\s?fahrenheit|degrees?\\s?celsius)\\b`,
     convert: (match) => {
       const wholeNumber = parseFloat(match[1]);
       const fractionValue = unicodeFractions[match[2]];
-      const unit = match[3];
+      const unit = match[3].toLowerCase();
       
       if (isNaN(wholeNumber) || fractionValue === undefined) return null;
       
       const totalValue = wholeNumber + fractionValue;
       const fullMatch = `${wholeNumber} ${match[2]} ${unit}`;
       
-      // Route to appropriate conversion based on unit
-      if (unit.includes('cup')) {
+      // Length conversions
+      if (unit.includes('in') || unit.includes('inch')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
+      } else if (unit.includes('ft') || unit.includes('feet') || unit.includes('foot')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
+      } else if (unit.includes('cm') || unit.includes('centimeter') || unit.includes('centimetre')) {
+        return `${fullMatch} = ${(totalValue / CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} in`;
+      } else if (unit.includes('mm') || unit.includes('millimeter') || unit.includes('millimetre')) {
+        return `${fullMatch} = ${(totalValue * 0.0393701).toFixed(2)} in`;
+      } else if ((unit.startsWith('m') && !unit.includes('mm') && !unit.includes('ml') && !unit.includes('mi')) || unit.includes('meter') || unit.includes('metre')) {
+        return `${fullMatch} = ${(totalValue / CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} ft`;
+      } else if (unit.includes('km') || unit.includes('kilometer') || unit.includes('kilometre')) {
+        return `${fullMatch} = ${(totalValue * 0.621371).toFixed(2)} miles`;
+      } else if (unit.includes('mi') || unit.includes('mile')) {
+        return `${fullMatch} = ${(totalValue * 1.60934).toFixed(2)} km`;
+      
+      // Weight conversions
+      } else if (unit.includes('lb') || unit.includes('pound')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
+      } else if (unit.includes('oz') || unit.includes('ounce')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.OZ_TO_G).toFixed(1)} g`;
+      } else if (unit.startsWith('g') && !unit.includes('gal') && unit !== 'g') {
+        return `${fullMatch} = ${(totalValue / CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} oz`;
+      } else if (unit.includes('kg') || unit.includes('kilogram')) {
+        return `${fullMatch} = ${(totalValue / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
+      
+      // Volume conversions
+      } else if (unit.includes('cup')) {
         return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
       } else if (unit.includes('tsp') || unit.includes('teaspoon')) {
         return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
       } else if (unit.includes('tbsp') || unit.includes('tablespoon')) {
         return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
-      } else if (unit.includes('oz') || unit.includes('ounce')) {
-        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.OZ_TO_G).toFixed(1)} g`;
-      } else if (unit.includes('in') || unit.includes('inch')) {
-        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
-      } else if (unit.includes('lb') || unit.includes('pound')) {
-        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
-      } else if (unit.includes('ft') || unit.includes('feet') || unit.includes('foot')) {
-        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
+      } else if (unit.includes('gal') || unit.includes('gallon')) {
+        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} L`;
+      } else if ((unit.includes('l') && !unit.includes('lb') && !unit.includes('ml')) || unit.includes('liter') || unit.includes('litre')) {
+        return `${fullMatch} = ${(totalValue / CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} gal`;
+      } else if (unit.includes('ml') || unit.includes('milliliter') || unit.includes('millilitre')) {
+        return `${fullMatch} = ${(totalValue / CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} tsp`;
+      
+      // Temperature conversions
+      } else if (unit.match(/[°º]\s?f|degrees?\s?f|degrees?\s?fahrenheit|fahrenheit/i)) {
+        return `${fullMatch} = ${(((totalValue - 32) * 5) / 9).toFixed(1)} °C`;
+      } else if (unit.match(/[°º]\s?c|degrees?\s?c|degrees?\s?celsius|celsius/i)) {
+        return `${fullMatch} = ${((totalValue * 9) / 5 + 32).toFixed(1)} °F`;
       }
-      // Add more units as needed
+      
       return null;
     }
   },
