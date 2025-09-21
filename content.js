@@ -163,12 +163,12 @@ const conversions = [
         return `${fullMatch} = ${(totalValue / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
       
       // Volume conversions
-      } else if (unit.includes('cup')) {
-        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
-      } else if (unit.includes('tsp') || unit.includes('teaspoon')) {
-        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
-      } else if (unit.includes('tbsp') || unit.includes('tablespoon')) {
-        return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
+      } else if (unit.match(/cups?/i)) {
+          return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
+      } else if (unit.match(/tsp|teaspoons?/i)) {
+          return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
+      } else if (unit.match(/tbsp|tablespoons?/i)) {
+          return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
       } else if (unit.includes('gal') || unit.includes('gallon')) {
         return `${fullMatch} = ${(totalValue * CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} L`;
       } else if ((unit.includes('l') && !unit.includes('lb') && !unit.includes('ml')) || unit.includes('liter') || unit.includes('litre')) {
@@ -859,6 +859,11 @@ function processTextNode(textNode) {
         }
     }
 
+    // Debug logging to see what was stitched
+    if (stitched) {
+        console.log("📦 Stitched text:", text, "from", nodesToReplace.length, "nodes");
+    }
+
     const regex = getCompiledRegex();
     regex.lastIndex = 0;
 
@@ -920,16 +925,27 @@ function processTextNode(textNode) {
 
     // Perform the final, safe DOM replacement
     try {
-        const primaryNode = nodesToReplace.shift();
-        if(primaryNode && primaryNode.parentNode) {
-            primaryNode.parentNode.replaceChild(fragment, primaryNode);
-        }
-
-        nodesToReplace.forEach(node => {
-            if (node && node.parentNode) {
-                node.parentNode.removeChild(node);
+        if (nodesToReplace.length > 1) {
+            // Multiple nodes were stitched - handle specially
+            const firstNode = nodesToReplace[0];
+            const parent = firstNode.parentNode;
+            
+            // Insert our new fragment before the first node
+            parent.insertBefore(fragment, firstNode);
+            
+            // Remove ALL the original nodes that were stitched
+            nodesToReplace.forEach(node => {
+                if (node && node.parentNode) {
+                    node.parentNode.removeChild(node);
+                }
+            });
+        } else {
+            // Single node - use existing logic
+            const primaryNode = nodesToReplace.shift();
+            if(primaryNode && primaryNode.parentNode) {
+                primaryNode.parentNode.replaceChild(fragment, primaryNode);
             }
-        });
+        }
     } catch (e) {
         console.warn("HyperConverter: Could not replace text node.", e);
     }
