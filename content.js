@@ -861,10 +861,14 @@ function processTextNode(textNode) {
         }
     }
 
-    // Debug logging to see what was stitched
-    if (stitched) {
-        console.log("📦 Stitched text:", text, "from", nodesToReplace.length, "nodes");
-    }
+  // Debug logging to see what was stitched
+  if (stitched) {
+      console.log("📦 STITCHING DETAILS:", {
+          combinedText: text,
+          nodeCount: nodesToReplace.length,
+          nodes: nodesToReplace.map(n => n.textContent)
+      });
+  }
 
     const regex = getCompiledRegex();
     regex.lastIndex = 0;
@@ -916,6 +920,14 @@ function processTextNode(textNode) {
                     span.textContent = fullMatch;
                     span.dataset.convert = conversionResult;
                     fragment.appendChild(span);
+                    // Temporary: Check what's actually being highlighted for mixed numbers
+                    if (fullMatch.includes('½') || fullMatch.includes('¼') || fullMatch.includes('¾')) {
+                        console.log("MIXED NUMBER SPAN CHECK:", {
+                            textContent: span.textContent,
+                            dataset: span.dataset.convert,
+                            fullMatch: fullMatch
+                        });
+                    }
                 } else {
                     fragment.appendChild(document.createTextNode(fullMatch));
                 }
@@ -927,6 +939,15 @@ function processTextNode(textNode) {
     if (afterText) {
         fragment.appendChild(document.createTextNode(afterText));
     }
+
+// Debug: Check what nodes are being replaced
+if (stitched) {
+    console.log("REPLACEMENT CHECK - Stitched nodes:", nodesToReplace.length);
+    nodesToReplace.forEach((node, i) => {
+        console.log(`  Node ${i}: "${node.textContent}"`);
+    });
+    console.log("  Fragment contains:", fragment.textContent);
+}
 
     // Perform the final, safe DOM replacement
     try {
