@@ -747,60 +747,6 @@ function hideTooltip() {
 // This uses named capture groups based on the 'name' property in objects.
 const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join("|");
 
-function protectMixedNumbers(container) {
-    // Find all text nodes that contain mixed numbers with unicode fractions
-    const walker = document.createTreeWalker(
-        container,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-    );
-    
-    const textNodes = [];
-    let node;
-    while (node = walker.nextNode()) {
-        if (node.textContent.match(/\d+\s+[½¼¾⅛⅜⅝⅞⅓⅔⅙⅚]\s+(cups?|teaspoons?|tsp|tablespoons?|tbsp|ounces?|oz)/i)) {
-            textNodes.push(node);
-        }
-    }
-    
-    // Process each text node that contains mixed numbers
-    textNodes.forEach(textNode => {
-        const text = textNode.textContent;
-        const mixedNumberRegex = /(\d+\s+[½¼¾⅛⅜⅝⅞⅓⅔⅙⅚]\s+(?:cups?|teaspoons?|tsp|tablespoons?|tbsp|ounces?|oz))/gi;
-        
-        let match;
-        const matches = [];
-        while ((match = mixedNumberRegex.exec(text)) !== null) {
-            matches.push({
-                text: match[0],
-                index: match.index
-            });
-        }
-        
-        if (matches.length > 0) {
-            // Wrap mixed numbers in a protective span
-            let newHTML = text;
-            let offset = 0;
-            
-            matches.forEach(m => {
-                const protectedSpan = `<span class="mixed-number-protect">${m.text}</span>`;
-                const insertPos = m.index + offset;
-                newHTML = newHTML.slice(0, insertPos) + protectedSpan + newHTML.slice(insertPos + m.text.length);
-                offset += protectedSpan.length - m.text.length;
-            });
-            
-            // Replace the text node with the new HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = newHTML;
-            while (tempDiv.firstChild) {
-                textNode.parentNode.insertBefore(tempDiv.firstChild, textNode);
-            }
-            textNode.parentNode.removeChild(textNode);
-        }
-    });
-}
-
 function processTextNode(textNode) {
     if (!textNode || textNode.nodeType !== 3) return;
 
