@@ -883,12 +883,35 @@ function processTextNode(textNode) {
 
     // Find all matches in the (potentially stitched) text
     const matches = [];
+    const processedRanges = []; // Track what we've already processed
     let match;
+
     while ((match = regex.exec(text)) !== null) {
         if (match.index === regex.lastIndex) {
             regex.lastIndex++;
+            continue;
         }
-        matches.push(match);
+        
+        const matchStart = match.index;
+        const matchEnd = match.index + match[0].length;
+        
+        // Check if this match overlaps with any already processed range
+        const overlaps = processedRanges.some(range => 
+            (matchStart >= range.start && matchStart < range.end) ||
+            (matchEnd > range.start && matchEnd <= range.end)
+        );
+        
+        if (!overlaps) {
+            matches.push(match);
+            processedRanges.push({ start: matchStart, end: matchEnd });
+            
+            // Special handling for mixed numbers - mark the fraction portion as processed too
+            if (match[0].match(/\d+\s*[½¼¾⅛⅜⅝⅞⅓⅔⅙⅚]/)) {
+                console.log("📌 Marking mixed number range as processed:", match[0]);
+            }
+        } else {
+            console.log("⏭️ Skipping overlapping match:", match[0]);
+        }
     }
 
     if (matches.length === 0) return;
