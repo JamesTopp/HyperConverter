@@ -834,14 +834,22 @@ function processTextNode(textNode) {
 
     // STEP 1: PRIORITIZE FORWARD STITCHING (for "1" + "½ cup")
     // Check if the current node is just a number.
+    console.log("🔍 Checking node:", JSON.stringify(text));
     if (text.match(/^\d+\s*$/)) {
+        console.log("  ✓ Node is a number");
         let nextNode = textNode.nextSibling;
-        // Use Claude's refined, safer regex to check the next node.
-        if (nextNode && nextNode.nodeType === 3 && nextNode.textContent.match(/^\s*[⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]/)) {
-            console.log("Forward stitching:", text, "+", nextNode.textContent);
-            text += nextNode.textContent; // Stitch forward
-            nodesToReplace.push(nextNode); // Mark the next node to be removed
-            stitched = true;
+        if (nextNode) {
+            console.log("  → Next node type:", nextNode.nodeType, "content:", JSON.stringify(nextNode.textContent));
+            if (nextNode.nodeType === 3 && nextNode.textContent.match(/^\s*[⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]/)) {
+                console.log("  ✅ STITCHING FORWARD!");
+                text += nextNode.textContent;
+                nodesToReplace.push(nextNode);
+                stitched = true;
+            } else {
+                console.log("  ❌ Next node doesn't match pattern");
+            }
+        } else {
+            console.log("  ❌ No next sibling");
         }
     }
 
