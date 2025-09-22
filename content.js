@@ -820,6 +820,12 @@ const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join(
 function processTextNode(textNode) {
     if (!textNode || textNode.nodeType !== 3) return;
 
+        console.log("📝 Processing node:", {
+        text: textNode.textContent,
+        nextSibling: textNode.nextSibling ? textNode.nextSibling.textContent : 'none',
+        prevSibling: textNode.previousSibling ? textNode.previousSibling.textContent : 'none'
+    });
+
     const parent = textNode.parentNode;
     if (!parent ||
         parent.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
