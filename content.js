@@ -820,12 +820,6 @@ const combinedPattern = conversions.map(c => `(?<${c.name}>${c.pattern})`).join(
 function processTextNode(textNode) {
     if (!textNode || textNode.nodeType !== 3) return;
 
-        console.log("📝 Processing node:", {
-        text: textNode.textContent,
-        nextSibling: textNode.nextSibling ? textNode.nextSibling.textContent : 'none',
-        prevSibling: textNode.previousSibling ? textNode.previousSibling.textContent : 'none'
-    });
-
     const parent = textNode.parentNode;
     if (!parent ||
         parent.closest(".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true']") ||
@@ -840,22 +834,16 @@ function processTextNode(textNode) {
 
     // STEP 1: PRIORITIZE FORWARD STITCHING (for "1" + "½ cup")
     // Check if the current node is just a number.
-    console.log("🔍 Checking node:", JSON.stringify(text));
     if (text.match(/^\d+\s*$/)) {
-        console.log("  ✓ Node is a number");
         let nextNode = textNode.nextSibling;
         if (nextNode) {
-            console.log("  → Next node type:", nextNode.nodeType, "content:", JSON.stringify(nextNode.textContent));
             if (nextNode.nodeType === 3 && nextNode.textContent.match(/^\s*[⅛⅙⅕¼⅓⅜⅖½⅔⅗¾⅘⅚⅞]/)) {
-                console.log("  ✅ STITCHING FORWARD!");
                 text += nextNode.textContent;
                 nodesToReplace.push(nextNode);
                 stitched = true;
             } else {
-                console.log("  ❌ Next node doesn't match pattern");
             }
         } else {
-            console.log("  ❌ No next sibling");
         }
     }
 
@@ -922,14 +910,31 @@ function processTextNode(textNode) {
 
     if (matches.length === 0) return;
 
+    // Sort matches by index to process them in order
+    matches.sort((a, b) => a.index - b.index);
+
     // Build the replacement structure in a DocumentFragment
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
+    const usedRanges = [];
+
     for (const currentMatch of matches) {
         const matchStart = currentMatch.index;
+        const matchEnd = currentMatch.index + currentMatch[0].length;
+        
+        // Check if this match overlaps with any already used range
+        const isOverlapping = usedRanges.some(range => 
+            (matchStart < range.end && matchEnd > range.start)
+        );
+        
+        if (isOverlapping) {
+            console.log("⏭️ Skipping overlapping match in fragment building:", currentMatch[0]);
+            continue;
+        }
+        
         const fullMatch = currentMatch[0];
-
         const beforeText = text.slice(lastIndex, matchStart);
+        
         if (beforeText) {
             fragment.appendChild(document.createTextNode(beforeText));
         }
@@ -949,9 +954,6 @@ function processTextNode(textNode) {
                 const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
 
                 if (conversionResult) {
-                    // Debug: log what we're creating
-                    console.log("Creating span for:", fullMatch, "with conversion:", conversionResult);
-                    
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
                     span.textContent = fullMatch;
@@ -969,9 +971,10 @@ function processTextNode(textNode) {
                     fragment.appendChild(document.createTextNode(fullMatch));
                 }
             }
-        }
-        lastIndex = currentMatch.index + fullMatch.length;
-    }
+            // Mark this range as used
+    usedRanges.push({ start: matchStart, end: matchEnd });
+    lastIndex = matchEnd;
+        }    }
     const afterText = text.slice(lastIndex);
     if (afterText) {
         fragment.appendChild(document.createTextNode(afterText));
