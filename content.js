@@ -340,15 +340,6 @@ const conversions = [
     }
   },
   {
-    name: "fraction_of_pound",
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(pounds?|lbs?|lb)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
-    }
-  },
-  {
     name: "fraction_of_ounce",
     pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(ounces?|oz)\\b`,
     convert: (match) => {
