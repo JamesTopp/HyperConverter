@@ -440,15 +440,6 @@ const conversions = [
     return `${match[0]} = ${(num * 1.60934).toFixed(2)} km`;
     },
   },
-  {
-    name: "pounds",
-    pattern: `${createNumberPattern()}\\s*-?\\s*(?:pounds?|lbs?|lb)\\b`,
-    convert: (match) => {
-      const num = parseMeasurementValue(match[1]);
-      if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
-    },
-    },
     {
     name: "ounces",
     pattern: `${createNumberPattern()}\\s*-?\\s*(?:ounces?|oz)\\b`,
