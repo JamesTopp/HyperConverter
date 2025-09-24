@@ -422,7 +422,7 @@ document.getElementById('authorLink').addEventListener('click', function(e) {
     e.preventDefault();
     // Replace with your website/social media
     if (typeof chrome !== 'undefined' && chrome.tabs) {
-        chrome.tabs.create({url: 'https://your-website.com'});
+        chrome.tabs.create({url: 'https://jamestopp.github.io/'});
     }
 });
 
