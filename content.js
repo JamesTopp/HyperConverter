@@ -304,24 +304,6 @@ const conversions = [
     }
   },
   {
-    name: "fraction_of_teaspoon", 
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(teaspoons?|tsp?)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
-    }
-  },
-  {
-    name: "fraction_of_cup",
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(cups?)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
-    }
-  },
-  {
     name: "fraction_of_inch",
     pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(inches?|inch|in)\\b`,
     convert: (match) => {
