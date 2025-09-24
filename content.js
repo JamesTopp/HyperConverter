@@ -1071,11 +1071,6 @@ function processSpecialCases(container) {
     else if (tagName === 'li' && text && text.match(/(\d+|half|quarter|third|one|two|three|four|five|⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞|[\u2150-\u215F]).*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?).*(\d+|half|quarter|third|one|two|three|four|five|⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞|[\u2150-\u215F]).*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?)/)) {
         processRecipeInstruction(element, text);
     }
-
-    // ALLRECIPES INGREDIENTS (li tags)
-    else if (tagName === 'li' && text && !element.querySelector('.hyper-hover')) {
-      processIngredientItem(element, text);
-    }
         
     // TABLE MEASUREMENTS (dd tags)
     else if (tagName === 'dd' && element.closest('dl[class*="acl-dl"]')) {
@@ -1122,32 +1117,6 @@ function processSplitMeasurement(element, unitText) {
         // Replace the unit element with our wrapper
         element.parentNode.replaceChild(wrapper, element);
       }
-    }
-  }
-}
-
-function processIngredientItem(element, text) {
-  // Check if this contains cooking measurements
-  if (!hasCookingMeasurement(text)) return;
-    
-  // Try to match cooking patterns
-  const match = text.match(
-    /(½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\d+(?:\/\d+)?)\s+(teaspoon|teaspoons|cup|cups|tablespoon|tablespoons|tsp|tbsp|ounce|ounces|oz)/i
-  );
-  
-  if (match) {
-    const value = match[1];
-    const unit = match[2];
-    
-    // Get conversion using centralized factors
-    const conversion = getCookingConversion(value, unit);
-    
-    if (conversion) {
-      const measurementText = `${value} ${unit}`;
-      element.innerHTML = text.replace(
-        measurementText,
-        `<span class="hyper-hover" data-convert="${conversion}">${measurementText}</span>`
-      );
     }
   }
 }
@@ -1200,13 +1169,6 @@ function isUnitWord(text) {
     UNIT_PATTERN = new RegExp(`^(${unitWords.join('|')})$`, 'i');
   }
   return UNIT_PATTERN.test(text);
-}
-
-/**
- * Check if text contains cooking measurements
- */
-function hasCookingMeasurement(text) {
-  return /(\d+|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs)/i.test(text);
 }
 
 /**
