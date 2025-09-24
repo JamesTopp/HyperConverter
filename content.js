@@ -1073,7 +1073,7 @@ function processSpecialCases(container) {
     }
 
     // ALLRECIPES INGREDIENTS (li tags)
-    else if (tagName === 'li' && text) {
+    else if (tagName === 'li' && text && !element.querySelector('.hyper-hover')) {
       processIngredientItem(element, text);
     }
         
