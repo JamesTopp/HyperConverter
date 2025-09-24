@@ -9,8 +9,7 @@ function getCurrentDomain() {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
             const url = new URL(tabs[0].url);
             currentDomain = url.hostname;
-            // FIXED: Reload blacklist data when getting domain
-            loadCurrentState();
+            updateToggleUI();
         });
     } else {
         currentDomain = 'example.com'; // For preview
@@ -19,103 +18,136 @@ function getCurrentDomain() {
 }
 
 function isCurrentSiteBlacklisted() {
-    // .some() checks if at least one item in the array passes the test.
     return blacklistedSites.some(site =>
-        // The test: is the current domain an EXACT match for the blacklisted site,
-        // OR does the current domain END WITH "." + the blacklisted site (making it a subdomain)?
         currentDomain === site || currentDomain.endsWith('.' + site)
     );
 }
 
-// FIXED: New function to reload current state from storage
-function loadCurrentState() {
+// Blacklist management functions
+function renderBlacklist() {
+    const blacklistList = document.getElementById('blacklistList');
+    blacklistList.innerHTML = '';
+
+    if (blacklistedSites.length === 0) {
+        blacklistList.innerHTML = '<li class="blacklist-item empty">No sites blocked yet.</li>';
+        return;
+    }
+
+    blacklistedSites.forEach(site => {
+        const li = document.createElement('li');
+        li.className = 'blacklist-item';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'site-checkbox';
+        checkbox.checked = true;
+        checkbox.dataset.site = site;
+
+        const label = document.createElement('span');
+        label.className = 'site-label';
+        label.textContent = site;
+        
+        li.appendChild(checkbox);
+        li.appendChild(label);
+        blacklistList.appendChild(li);
+    });
+}
+
+function removeSiteFromBlacklist(site) {
+    const confirmation = confirm(`Remove ${site} from the blacklist?`);
+    
+    if (confirmation) {
+        blacklistedSites = blacklistedSites.filter(s => s !== site);
+        
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+            chrome.storage.sync.set({ blacklistedSites: blacklistedSites }, function() {
+                console.log(`${site} has been removed from the blacklist.`);
+                renderBlacklist();
+                updateToggleUI();
+            });
+        }
+    }
+}
+
+function addNewSite() {
+    const newSiteInput = document.getElementById('newSiteInput');
+    let newSite = newSiteInput.value.trim();
+    
+    if (!newSite) {
+        return;
+    }
+
+    try {
+        if (!newSite.startsWith('http')) {
+            newSite = 'https://' + newSite;
+        }
+        const url = new URL(newSite);
+        newSite = url.hostname; 
+    } catch (error) {
+        alert('Please enter a valid domain name (e.g., example.com)');
+        return;
+    }
+
+    if (blacklistedSites.includes(newSite)) {
+        alert(`${newSite} is already on the blacklist.`);
+        return;
+    }
+
+    blacklistedSites.push(newSite);
+
     if (typeof chrome !== 'undefined' && chrome.storage) {
-        chrome.storage.sync.get(['enabled', 'globallyDisabled', 'blacklistedSites'], function(result) {
-            extensionEnabled = result.enabled !== false;
-            globallyDisabled = result.globallyDisabled || false;
-            blacklistedSites = result.blacklistedSites || [];
+        chrome.storage.sync.set({ blacklistedSites: blacklistedSites }, function() {
+            console.log(`${newSite} has been added to the blacklist.`);
+            newSiteInput.value = '';
+            renderBlacklist();
             updateToggleUI();
         });
     }
 }
 
+// Main toggle functionality
 document.getElementById('extensionToggle').addEventListener('click', function() {
     if (globallyDisabled) {
-        // If the entire extension is off, this toggle should do nothing.
         return;
     } 
     
-    // FIXED: Always reload the blacklist before checking
-    loadCurrentState();
+    // SIMPLIFIED: If site is blacklisted, make toggle non-interactive
+    if (isCurrentSiteBlacklisted()) {
+        return;
+    }
     
-    // Add a small delay to ensure storage is loaded
-    setTimeout(() => {
-        if (isCurrentSiteBlacklisted()) {
-            // 1. Ask the user for confirmation first.
-            const confirmation = confirm(`Remove ${currentDomain} from the blacklist?`);
-            
-            // 2. Only proceed if the user clicks "OK".
-            if (confirmation) {
-                // Remove the site from the blacklist array.
-                blacklistedSites = blacklistedSites.filter(site => site !== currentDomain);
-                extensionEnabled = true; // Set the page to active.
-                document.getElementById('neverRunButton').textContent = '🚫 Never run on this page?';
-                document.getElementById('neverRunButton').style.opacity = '1';
-                document.getElementById('neverRunButton').style.cursor = 'pointer';
-                // Save the updated state to Chrome storage.
-                if (typeof chrome !== 'undefined' && chrome.storage) {
-                    chrome.storage.sync.set({enabled: true, blacklistedSites: blacklistedSites});
-                     // Send a message to the content script telling it to reload the page.
-                    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                        chrome.tabs.sendMessage(tabs[0].id, {action: "reloadPage"});
-                    });
-                }
-                
-                // Update the entire UI to reflect the new "Active" state.
-                updateToggleUI();
-            }
-            // If the user clicks "Cancel", nothing happens.
-
-        } else {
-            // This is the normal toggle logic for a non-blacklisted page.
-            extensionEnabled = !extensionEnabled;
-            
-            // Save the new state.
-            if (typeof chrome !== 'undefined' && chrome.storage) {
-                chrome.storage.sync.set({enabled: extensionEnabled});
-            }
-            
-            // Update the UI.
-            updateToggleUI();
-        }
-    }, 100); // Small delay to ensure storage is loaded
+    extensionEnabled = !extensionEnabled;
+    
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.sync.set({enabled: extensionEnabled});
+    }
+    
+    updateToggleUI();
 });
 
 document.getElementById('neverRunButton').addEventListener('click', function() {
     if (currentDomain && !blacklistedSites.includes(currentDomain)) {
         blacklistedSites.push(currentDomain);
         extensionEnabled = false;
-        // Update button text
         this.textContent = `🚫 Disabled on ${currentDomain}`;
         this.style.opacity = '0.6';
         this.style.cursor = 'default';
         if (typeof chrome !== 'undefined' && chrome.storage) {
             chrome.storage.sync.set({blacklistedSites: blacklistedSites, enabled: false});
         }
+        renderBlacklist(); // Update the accordion list
         updateToggleUI();
     }
 });
 
 document.getElementById('disableAllPages').addEventListener('click', function() {
     if (globallyDisabled) {
-        // Turn extension back on
         globallyDisabled = false;
         this.textContent = '🔴 Turn off extension';
         if (typeof chrome !== 'undefined' && chrome.storage) {
             chrome.storage.sync.set({globallyDisabled: false});
         }
     } else {
-        // Turn extension off
         globallyDisabled = true;
         this.textContent = '🟢 Turn on extension';
         if (typeof chrome !== 'undefined' && chrome.storage) {
@@ -125,21 +157,51 @@ document.getElementById('disableAllPages').addEventListener('click', function() 
     updateToggleUI();
 });
 
-// This function will handle opening the manager window.
-function openManager() {
-    if (typeof chrome !== 'undefined' && chrome.windows) {
-        chrome.windows.create({
-            url: 'manager.html',
-            type: 'popup',
-            width: 400,
-            height: 550
-        });
+// Accordion toggle functionality
+document.getElementById('manageBlacklist').addEventListener('click', function() {
+    const blacklistSection = document.getElementById('blacklistSection');
+    const gearButton = document.getElementById('gearButton');
+    
+    if (blacklistSection.classList.contains('show')) {
+        blacklistSection.classList.remove('show');
+        this.textContent = '⚙️ Manage blocked sites';
+    } else {
+        blacklistSection.classList.add('show');
+        this.textContent = '✕ Close';
+        renderBlacklist(); // Refresh the list when opening
     }
-}
+});
 
-// Attach the function to BOTH buttons.
-document.getElementById('manageBlacklist').addEventListener('click', openManager);
-document.getElementById('gearButton').addEventListener('click', openManager);
+document.getElementById('gearButton').addEventListener('click', function() {
+    const blacklistSection = document.getElementById('blacklistSection');
+    const manageButton = document.getElementById('manageBlacklist');
+    
+    if (blacklistSection.classList.contains('show')) {
+        blacklistSection.classList.remove('show');
+        manageButton.textContent = '⚙️ Manage blocked sites';
+    } else {
+        blacklistSection.classList.add('show');
+        manageButton.textContent = '✕ Close';
+        renderBlacklist();
+    }
+});
+
+// Blacklist event listeners
+document.getElementById('blacklistList').addEventListener('click', function(e) {
+    if (e.target.type === 'checkbox' && !e.target.checked) {
+        const site = e.target.dataset.site;
+        removeSiteFromBlacklist(site);
+        e.preventDefault(); 
+    }
+});
+
+document.getElementById('addSiteButton').addEventListener('click', addNewSite);
+
+document.getElementById('newSiteInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        addNewSite();
+    }
+});
 
 function updateToggleUI() {
     const toggleSwitch = document.getElementById('toggleSwitch');
@@ -147,7 +209,7 @@ function updateToggleUI() {
     const disableOptions = document.getElementById('disableOptions');
     const gearButton = document.getElementById('gearButton');
     const extensionToggle = document.getElementById('extensionToggle');
-    const neverRunButton = document.getElementById('neverRunButton'); // Get a reference to the button
+    const neverRunButton = document.getElementById('neverRunButton');
 
     if (globallyDisabled) {
         toggleSwitch.classList.remove('active');
@@ -159,20 +221,19 @@ function updateToggleUI() {
         extensionToggle.style.pointerEvents = 'none';
         document.getElementById('disableAllPages').textContent = '🟢 Turn on extension';
     } else if (isCurrentSiteBlacklisted()) {
+        // SIMPLIFIED: Make toggle non-interactive for blacklisted sites
         toggleSwitch.classList.remove('active');
         statusText.textContent = `Disabled on ${currentDomain}`;
         disableOptions.style.display = 'block';
         gearButton.style.display = 'none';
-        extensionToggle.style.opacity = '1';
-        extensionToggle.style.cursor = 'pointer';
-        extensionToggle.style.pointerEvents = 'auto';
+        extensionToggle.style.opacity = '0.6';
+        extensionToggle.style.cursor = 'not-allowed';
+        extensionToggle.style.pointerEvents = 'none';
         document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
 
-        // Explicitly set the button to its "disabled" state.
         neverRunButton.textContent = `🚫 Disabled on ${currentDomain}`;
         neverRunButton.style.opacity = '0.6';
         neverRunButton.style.cursor = 'default';
-        // -------------------------
 
     } else if (extensionEnabled) {
         toggleSwitch.classList.add('active');
@@ -184,13 +245,11 @@ function updateToggleUI() {
         extensionToggle.style.pointerEvents = 'auto';
         document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
 
-        // Explicitly reset the button to its default "enabled" state.
         neverRunButton.textContent = '🚫 Never run on this page?';
         neverRunButton.style.opacity = '1';
         neverRunButton.style.cursor = 'pointer';
-        // --------------------------------
 
-    } else { // "Disabled on this page" (but not blacklisted)
+    } else {
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Disabled on this page';
         disableOptions.style.display = 'block';
@@ -200,16 +259,24 @@ function updateToggleUI() {
         extensionToggle.style.pointerEvents = 'auto';
         document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
 
-        // Also ensure the button is in its default state here.
         neverRunButton.textContent = '🚫 Never run on this page?';
         neverRunButton.style.opacity = '1';
         neverRunButton.style.cursor = 'pointer';
-        // --------------------------------
     }
 }
 
-// FIXED: Load current state when popup opens
-getCurrentDomain();
+// Load current state when popup opens
+if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.sync.get(['enabled', 'globallyDisabled', 'blacklistedSites'], function(result) {
+        extensionEnabled = result.enabled !== false;
+        globallyDisabled = result.globallyDisabled || false;
+        blacklistedSites = result.blacklistedSites || [];
+        getCurrentDomain();
+    });
+} else {
+    // For preview - just set initial state
+    getCurrentDomain();
+}
 
 // Email validation and submission
 const emailInput = document.getElementById('emailInput');
