@@ -9,7 +9,8 @@ function getCurrentDomain() {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
             const url = new URL(tabs[0].url);
             currentDomain = url.hostname;
-            updateToggleUI();
+            // FIXED: Reload blacklist data when getting domain
+            loadCurrentState();
         });
     } else {
         currentDomain = 'example.com'; // For preview
@@ -26,50 +27,68 @@ function isCurrentSiteBlacklisted() {
     );
 }
 
+// FIXED: New function to reload current state from storage
+function loadCurrentState() {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.sync.get(['enabled', 'globallyDisabled', 'blacklistedSites'], function(result) {
+            extensionEnabled = result.enabled !== false;
+            globallyDisabled = result.globallyDisabled || false;
+            blacklistedSites = result.blacklistedSites || [];
+            updateToggleUI();
+        });
+    }
+}
+
 document.getElementById('extensionToggle').addEventListener('click', function() {
     if (globallyDisabled) {
         // If the entire extension is off, this toggle should do nothing.
         return;
     } 
     
-    if (isCurrentSiteBlacklisted()) {
-        // 1. Ask the user for confirmation first.
-        const confirmation = confirm(`Remove ${currentDomain} from the blacklist?`);
-        
-        // 2. Only proceed if the user clicks "OK".
-        if (confirmation) {
-            // Remove the site from the blacklist array.
-            blacklistedSites = blacklistedSites.filter(site => site !== currentDomain);
-            extensionEnabled = true; // Set the page to active.
-            document.getElementById('neverRunButton').textContent = '🚫 Never run on this page?';
-            document.getElementById('neverRunButton').style.opacity = '1';
-            document.getElementById('neverRunButton').style.cursor = 'pointer';
-            // Save the updated state to Chrome storage.
+    // FIXED: Always reload the blacklist before checking
+    loadCurrentState();
+    
+    // Add a small delay to ensure storage is loaded
+    setTimeout(() => {
+        if (isCurrentSiteBlacklisted()) {
+            // 1. Ask the user for confirmation first.
+            const confirmation = confirm(`Remove ${currentDomain} from the blacklist?`);
+            
+            // 2. Only proceed if the user clicks "OK".
+            if (confirmation) {
+                // Remove the site from the blacklist array.
+                blacklistedSites = blacklistedSites.filter(site => site !== currentDomain);
+                extensionEnabled = true; // Set the page to active.
+                document.getElementById('neverRunButton').textContent = '🚫 Never run on this page?';
+                document.getElementById('neverRunButton').style.opacity = '1';
+                document.getElementById('neverRunButton').style.cursor = 'pointer';
+                // Save the updated state to Chrome storage.
+                if (typeof chrome !== 'undefined' && chrome.storage) {
+                    chrome.storage.sync.set({enabled: true, blacklistedSites: blacklistedSites});
+                     // Send a message to the content script telling it to reload the page.
+                    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                        chrome.tabs.sendMessage(tabs[0].id, {action: "reloadPage"});
+                    });
+                }
+                
+                // Update the entire UI to reflect the new "Active" state.
+                updateToggleUI();
+            }
+            // If the user clicks "Cancel", nothing happens.
+
+        } else {
+            // This is the normal toggle logic for a non-blacklisted page.
+            extensionEnabled = !extensionEnabled;
+            
+            // Save the new state.
             if (typeof chrome !== 'undefined' && chrome.storage) {
-                chrome.storage.sync.set({enabled: true, blacklistedSites: blacklistedSites});
-                 // Send a message to the content script telling it to reload the page.
-                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, {action: "reloadPage"});
-                });
+                chrome.storage.sync.set({enabled: extensionEnabled});
             }
             
-            // Update the entire UI to reflect the new "Active" state.
+            // Update the UI.
             updateToggleUI();
         }
-        // If the user clicks "Cancel", nothing happens.
-
-    } else {
-        // This is the normal toggle logic for a non-blacklisted page.
-        extensionEnabled = !extensionEnabled;
-        
-        // Save the new state.
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-            chrome.storage.sync.set({enabled: extensionEnabled});
-        }
-        
-        // Update the UI.
-        updateToggleUI();
-    }
+    }, 100); // Small delay to ensure storage is loaded
 });
 
 document.getElementById('neverRunButton').addEventListener('click', function() {
@@ -189,18 +208,8 @@ function updateToggleUI() {
     }
 }
 
-// Load current state when popup opens (only works in actual extension)
-if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.sync.get(['enabled', 'globallyDisabled', 'blacklistedSites'], function(result) {
-        extensionEnabled = result.enabled !== false;
-        globallyDisabled = result.globallyDisabled || false;
-        blacklistedSites = result.blacklistedSites || [];
-        getCurrentDomain();
-    });
-} else {
-    // For preview - just set initial state
-    getCurrentDomain();
-}
+// FIXED: Load current state when popup opens
+getCurrentDomain();
 
 // Email validation and submission
 const emailInput = document.getElementById('emailInput');
