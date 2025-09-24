@@ -923,7 +923,6 @@ function processUnified(container) {
   if (!container) return;
   const textNodes = collectTextNodes(container);
   textNodes.forEach(processTextNode);
-  processSpecialCases(container);
 }
 
 function collectTextNodes(container) {
@@ -952,136 +951,7 @@ function collectTextNodes(container) {
   return nodes;
 }
 
-function processSpecialCases(container) {
-  // Single query for all special elements we need to check
-  const specialElements = container.querySelectorAll(`
-    em, strong, b, i,
-    ul li,
-    dl[class*="acl-dl"] dd,
-    .mm-recipes-structured-ingredients__list li,
-    ul[class*="ingredient"] li,
-    ul[class*="recipe"] li,
-    .ingredients ul li,
-    .recipe-ingredients ul li
-  `);
-  
-  const processedElements = new Set(); // Avoid double-processing
-  
-  specialElements.forEach(element => {
-    if (processedElements.has(element)) return;
-    processedElements.add(element);
-    
-    const tagName = element.tagName.toLowerCase();
-    const text = element.textContent.trim();
-    
-    // SPLIT MEASUREMENTS (em, strong, b, i tags)
-    if (['em', 'strong', 'b', 'i'].includes(tagName)) {
-      processSplitMeasurement(element, text);
-    }
-    
-    // MULTI-MEASUREMENT LINES (li tags with multiple measurements)
-    else if (tagName === 'li' && text && text.match(/(\d+|half|quarter|third|one|two|three|four|five|⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞|[\u2150-\u215F]).*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?).*(\d+|half|quarter|third|one|two|three|four|five|⅛|⅙|⅕|¼|⅓|⅜|⅖|½|⅔|⅗|¾|⅘|⅚|⅞|[\u2150-\u215F]).*?(°F|°C|degrees|fahrenheit|celsius|cups?|tsp|teaspoons?|tbsp|tablespoons?|pounds?|lbs?|ounces?|oz|inches?|inch|in|feet|foot|ft|cm|centimeters?|centimetres?|mm|millimeters?|millimetres?|meters?|metres?|m|km|kilometers?|kilometres?|kg|kilograms?|g|grams?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?)/)) {
-        processRecipeInstruction(element, text);
-    }
-        
-    // TABLE MEASUREMENTS (dd tags)
-    else if (tagName === 'dd' && element.closest('dl[class*="acl-dl"]')) {
-      processTableMeasurement(element, text);
-    }
-  });
-}
-
-
- // Process split measurements (like "1/64 <em>inch</em>" or "3/4 <strong>teaspoon</strong>")
-function processSplitMeasurement(element, unitText) {
-  // Check if this element contains a unit word
-  if (!isUnitWord(unitText)) return;
-  
-  // Look at the text immediately before this element
-  const prevNode = element.previousSibling;
-  if (prevNode && prevNode.nodeType === 3) { // text node
-    const prevText = prevNode.textContent;
-    
-    // Enhanced pattern that includes Unicode fractions AND regular fractions
-    const fractionPattern = `([\\d\\/]+|${Object.keys(unicodeFractions).join('|')})\\s*$`;
-    const match = prevText.match(new RegExp(fractionPattern));
-    
-    if (match) {
-      const numberPart = match[1];
-      const fullMeasurement = numberPart + ' ' + unitText;
-      
-      // Find conversion
-      const conversionResult = findConversion(fullMeasurement);
-      
-      if (conversionResult) {
-        // Create a wrapper span around BOTH the number and unit
-        const wrapper = document.createElement('span');
-        wrapper.className = 'hyper-hover';
-        wrapper.dataset.convert = conversionResult;
-        
-        // Update the previous text node to remove the number part
-        const newPrevText = prevText.replace(new RegExp(fractionPattern), '');
-        prevNode.textContent = newPrevText;
-        
-        // Add number + unit to wrapper
-        wrapper.textContent = numberPart + ' ' + unitText;
-        
-        // Replace the unit element with our wrapper
-        element.parentNode.replaceChild(wrapper, element);
-      }
-    }
-  }
-}
-
-function processTableMeasurement(element, text) {
-  // Check if this DD contains only a number
-  const numberMatch = text.match(/^\d+(\.\d+)?$/);
-  
-  if (numberMatch) {
-    const numericValue = parseFloat(text);    
-    // Look for unit context in nearby elements
-    const unitContext = findUnitContext(element);
-    
-    if (unitContext) {
-      const conversionResult = convertTableMeasurement(numericValue, unitContext.unit);
-      
-      if (conversionResult) {        
-        // Create tooltip for this measurement
-        element.classList.add('hyper-hover');
-        element.dataset.convert = `${text} ${unitContext.unit} = ${conversionResult}`;
-        
-        // Add CSS styling if not already added
-        if (!document.querySelector('#hyper-converter-table-styles')) {
-          const style = document.createElement('style');
-          style.id = 'hyper-converter-table-styles';
-          style.textContent = `dd.hyper-hover { cursor: help !important; }`;
-          document.head.appendChild(style);
-        }
-      }
-    }
-  }
-}
-
 // ===== HELPER FUNCTIONS =====
-
-/**
- * Check if text is a unit word (cached for performance)
- */
-let UNIT_PATTERN = null;
-function isUnitWord(text) {
-  if (!UNIT_PATTERN) {
-    const unitWords = [
-      'inch', 'inches', 'ft', 'feet', 'cm', 'centimeters', 'centimetres',
-      'mm', 'millimeters', 'millimetres', 'm', 'meters', 'metres',
-      'kg', 'kilograms', 'kgs', 'g', 'grams', 'l', 'liters', 'litres',
-      'lb', 'lbs', 'pounds', 'oz', 'ounce', 'ounces', 'gal', 'gallons',
-      'cup', 'cups', 'tbsp', 'tablespoons', 'tsp', 'teaspoons', 'teaspoon',
-      'fahrenheit', 'celsius'
-    ];
-    UNIT_PATTERN = new RegExp(`^(${unitWords.join('|')})$`, 'i');
-  }
-  return UNIT_PATTERN.test(text);
-}
 
 /**
  * Find conversion with caching
@@ -1127,62 +997,6 @@ function getCookingConversion(value, unit) {
     return `${value} ${unit} = ${(numericValue * CONVERSION_FACTORS.OZ_TO_G).toFixed(1)} g`;
   }
   return null;
-}
-
-function processRecipeInstruction(element, text) {
-  // Get the compiled regex to find all measurements in the text
-  const regex = getCompiledRegex();
-  regex.lastIndex = 0;
-  
-  // Find all matches in the complete text
-  const matches = [];
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index === regex.lastIndex) {
-      regex.lastIndex++;
-      continue;
-    }
-    matches.push(match);
-  }
-  
-  if (matches.length <= 1) return; // Only process if multiple measurements
-  
-  // Build replacement HTML with all measurements converted
-  let processedHTML = text;
-  let offset = 0;
-  
-  for (const currentMatch of matches) {
-    const matchStart = currentMatch.index + offset;
-    const fullMatch = currentMatch[0];
-    
-    // Find the conversion
-    let conversionName = null;
-    for (const key in currentMatch.groups) {
-      if (currentMatch.groups[key] !== undefined) {
-        conversionName = key;
-        break;
-      }
-    }
-    
-    if (conversionName) {
-      const conversion = conversions.find(c => c.name === conversionName);
-      if (conversion) {
-        const valueMatch = fullMatch.match(new RegExp(conversion.pattern, "i"));
-        const conversionResult = valueMatch ? conversion.convert(valueMatch) : null;
-        
-        if (conversionResult) {
-          const replacement = `<span class="hyper-hover" data-convert="${conversionResult}">${fullMatch}</span>`;
-          processedHTML = processedHTML.slice(0, matchStart) + replacement + processedHTML.slice(matchStart + fullMatch.length);
-          offset += replacement.length - fullMatch.length;
-        }
-      }
-    }
-  }
-  
-  // Replace the element's innerHTML if changes were made
-  if (processedHTML !== text) {
-    element.innerHTML = processedHTML;
-  }
 }
 
 // ===== DEBOUNCED MUTATION OBSERVER =====
