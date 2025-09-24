@@ -348,6 +348,15 @@ const conversions = [
       return `${match[0]} = ${(fraction * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
     }
   },
+  {
+    name: "fraction_of_ounce",
+    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(ounces?|oz)\\b`,
+    convert: (match) => {
+      const fraction = parseMeasurementValue(match[1]);
+      if (isNaN(fraction)) return null;
+      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} g`;
+    }
+  },
   // ======= MEDIUM PRIORITY: Symbol-based units =======
   {
     name: "inches_symbol",
@@ -448,98 +457,98 @@ const conversions = [
       if (isNaN(num)) return null;
       return `${match[0]} = ${(num * CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} g`;
     },
-    },
-    {
-      name: "grams",
-      pattern: `${createNumberPattern()}\\s*-?\\s*(?:grams?|g)\\b(?![a-zA-Z])`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(num / CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} oz`;
-      },
-    },
-    {
-    name: "kilograms",
-    pattern: `${createNumberPattern()}\\s*-?\\s*(?:kilograms?|kg)\\b`,
+  },
+  {
+    name: "grams",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:grams?|g)\\b(?![a-zA-Z])`,
     convert: (match) => {
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
-      return `${match[0]} = ${(num / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
+      return `${match[0]} = ${(num / CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} oz`;
     },
+  },
+  {
+  name: "kilograms",
+  pattern: `${createNumberPattern()}\\s*-?\\s*(?:kilograms?|kg)\\b`,
+  convert: (match) => {
+    const num = parseMeasurementValue(match[1]);
+    if (isNaN(num)) return null;
+    return `${match[0]} = ${(num / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
+  },
+  },
+  {
+    name: "gallons",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:gallons?|gal)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} L`;
     },
-    {
-      name: "gallons",
-      pattern: `${createNumberPattern()}\\s*-?\\s*(?:gallons?|gal)\\b`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(num * CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} L`;
-      },
+  },
+  {
+    name: "liters",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:litres?|liters?|l|L)\\b(?![a-zA-Z])`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num / CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} gal`;
     },
-    {
-      name: "liters",
-      pattern: `${createNumberPattern()}\\s*-?\\s*(?:litres?|liters?|l|L)\\b(?![a-zA-Z])`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(num / CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} gal`;
-      },
+  },
+  {
+    name: "milliliters",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:millilitres?|milliliters?|ml|mL)\\b(?![a-zA-Z])`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num / CONVERSION_FACTORS.TSP_TO_ML).toFixed(2)} tsp`;
     },
-    {
-      name: "milliliters",
-      pattern: `${createNumberPattern()}\\s*-?\\s*(?:millilitres?|milliliters?|ml|mL)\\b(?![a-zA-Z])`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(num / CONVERSION_FACTORS.TSP_TO_ML).toFixed(2)} tsp`;
-      },
+  },
+  {
+    name: "cups",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:cups?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
     },
-    {
-      name: "cups",
-      pattern: `${createNumberPattern()}\\s*-?\\s*(?:cups?)\\b`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(num * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
-      },
+  },
+  {
+    name: "tablespoons",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
     },
-    {
-      name: "tablespoons",
-      pattern: `${createNumberPattern()}\\s*-?\\s*(?:tablespoons?|tbsp)\\b`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(num * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
-      },
+  },
+  {
+    name: "teaspoons",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
     },
-    {
-      name: "teaspoons",
-      pattern: `${createNumberPattern()}\\s*-?\\s*(?:teaspoons?|tsp)\\b`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(num * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
-      },
+  },
+  // ======= TEMPERATURE CONVERSIONS =======
+  {
+    name: "fahrenheit",
+    pattern: `(?<!\\d)(-?\\d+(?:\\.\\d+)?)\\s*(?:[°º]\\s?f|degrees?\\s?f|degrees?\\s?fahrenheit|fahrenheit)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(((num - 32) * 5) / 9).toFixed(1)} °C`;
     },
-    // ======= TEMPERATURE CONVERSIONS =======
-    {
-      name: "fahrenheit",
-      pattern: `(?<!\\d)(-?\\d+(?:\\.\\d+)?)\\s*(?:[°º]\\s?f|degrees?\\s?f|degrees?\\s?fahrenheit|fahrenheit)\\b`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(((num - 32) * 5) / 9).toFixed(1)} °C`;
-      },
+  },
+  {
+    name: "celsius",
+    pattern: `(?<!\\d)(-?\\d+(?:\\.\\d+)?)\\s*(?:[°º]\\s?c|degrees?\\s?c|degrees?\\s?celsius|celsius)\\b`, 
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${((num * 9) / 5 + 32).toFixed(1)} °F`;
     },
-    {
-      name: "celsius",
-      pattern: `(?<!\\d)(-?\\d+(?:\\.\\d+)?)\\s*(?:[°º]\\s?c|degrees?\\s?c|degrees?\\s?celsius|celsius)\\b`, 
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${((num * 9) / 5 + 32).toFixed(1)} °F`;
-      },
-    },
+  },
 ];
 
 // ===== PERFORMANCE OPTIMIZATION: Pre-compile the massive regex =====
