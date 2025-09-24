@@ -114,6 +114,8 @@ const createEnhancedFractionPattern = () => {
 const createFractionPattern = () => createEnhancedFractionPattern();
 const createNumberPattern = () => createUniversalPattern();
 
+console.log("📐 Number pattern generates:", createUniversalPattern());
+
 const conversions = [
   // ======= HIGHEST PRIORITY: Complex Multi-part patterns =======
   {
@@ -384,15 +386,6 @@ const conversions = [
       const num = parseMeasurementValue(match[1]);
       if (isNaN(num)) return null;
       return `${match[0]} = ${(num * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
-    },
-  },
-  {
-    name: "feet",
-    pattern: `${createNumberPattern()}\\s*-?\\s*(?:feet|foot|ft)\\b`,
-    convert: (match) => {
-      const num = parseMeasurementValue(match[1]);
-      if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
     },
   },
   {
