@@ -97,17 +97,21 @@ document.getElementById('disableAllPages').addEventListener('click', function() 
     updateToggleUI();
 });
 
-document.getElementById('manageBlacklist').addEventListener('click', function() {
-    if (blacklistedSites.length === 0) {
-        alert('No blocked sites yet');
-        return;
+// This function will handle opening the manager window.
+function openManager() {
+    if (typeof chrome !== 'undefined' && chrome.windows) {
+        chrome.windows.create({
+            url: 'manager.html',
+            type: 'popup',
+            width: 400,
+            height: 550
+        });
     }
-    
-    const sitesList = blacklistedSites.map((site, index) => 
-        `${index + 1}. ${site}`).join('\n');
-    const message = `Blocked sites:\n\n${sitesList}\n\nTo unblock a site, visit it and click the toggle.`;
-    alert(message);
-});
+}
+
+// Attach the function to BOTH buttons.
+document.getElementById('manageBlacklist').addEventListener('click', openManager);
+document.getElementById('gearButton').addEventListener('click', openManager);
 
 function updateToggleUI() {
     const toggleSwitch = document.getElementById('toggleSwitch');
@@ -198,18 +202,6 @@ emailInput.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         emailSubmit.click();
     }
-});
-
-document.getElementById('gearButton').addEventListener('click', function() {
-    if (blacklistedSites.length === 0) {
-        alert('No blocked sites yet');
-        return;
-    }
-    
-    const sitesList = blacklistedSites.map((site, index) => 
-        `${index + 1}. ${site}`).join('\n');
-    const message = `Blocked sites:\n\n${sitesList}\n\nTo unblock a site, visit it and click the toggle.`;
-    alert(message);
 });
 
 emailSubmit.addEventListener('click', async function() {
