@@ -15,6 +15,28 @@ const CONVERSION_FACTORS = {
   TSP_TO_ML: 4.929,
 };
 
+function isPageEnabled(settings) {
+    // 1. Check if the extension is globally turned off.
+    if (settings.globallyDisabled) {
+        return false;
+    }
+
+    // 2. Check if the site is on the blacklist.
+    const currentDomain = window.location.hostname;
+    const blacklistedSites = settings.blacklistedSites || [];
+
+    const isBlacklisted = blacklistedSites.some(site =>
+        currentDomain === site || currentDomain.endsWith('.' + site)
+    );
+
+    if (isBlacklisted) {
+        return false;
+    }
+
+    // 3. If not globally disabled and not blacklisted, check the simple toggle.
+    return settings.enabled !== false;
+}
+
 const measurementWords = {
   // Core numbers 0-100  
   'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
@@ -1449,55 +1471,53 @@ document.addEventListener("mouseout", function(e) {
     }
 }, true);
 
-chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
-  const isEnabled = result.enabled !== false && !result.globallyDisabled;
-  
- if (isEnabled) {
-  processUnified(document.body);
-  
-  const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    mutation.addedNodes.forEach((node) => {
-      if (node.nodeType === 1) {
-        // Process the new node
-        debouncedProcess(node);
-        
-        // AMAZON FIX: Also check for nested content that might contain measurements
-        const measurementElements = node.querySelectorAll && node.querySelectorAll('[data-asin], .s-result-item, .a-section, .a-row');
-        if (measurementElements && measurementElements.length > 0) {
-          measurementElements.forEach(el => debouncedProcess(el));
+// Listen for messages from the popup (for reloading the page).
+if (typeof chrome !== 'undefined' && chrome.runtime) {
+    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        if (request.action === "reloadPage") {
+            window.location.reload();
         }
-      }
     });
-  });
-});
+}
 
-// Scroll-based trigger for added robustness =====
-let scrollDebounceTimer = null;
-const SCROLL_DEBOUNCE_DELAY = 250; // ms
+// Check if the extension should run on this page.
+if (typeof chrome !== 'undefined' && chrome.storage) {
+    // 1. Fetch ALL necessary settings, including the blacklist.
+    chrome.storage.sync.get(['enabled', 'globallyDisabled', 'blacklistedSites'], (settings) => {
+        
+        // 2. Use our intelligent function to make the final decision.
+        if (isPageEnabled(settings)) {
+            
+            // 3. If enabled, run the extension.
+            processUnified(document.body);
+            
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1) {
+                            // Process the new node
+                            debouncedProcess(node);
+                            
+                            // AMAZON FIX IS PRESERVED HERE:
+                            const measurementElements = node.querySelectorAll && node.querySelectorAll('[data-asin], .s-result-item, .a-section, .a-row');
+                            if (measurementElements && measurementElements.length > 0) {
+                                measurementElements.forEach(el => debouncedProcess(el));
+                            }
+                        }
+                    });
+                });
+            });
 
-window.addEventListener('scroll', () => {
-  if (scrollDebounceTimer) {
-    clearTimeout(scrollDebounceTimer);
-  }
-  
-  scrollDebounceTimer = setTimeout(() => {
-    processUnified(document.body); // Re-process the body
-  }, SCROLL_DEBOUNCE_DELAY);
-}); 
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true // Make sure you've made this change too
+            console.log("🚀 HyperConverter initialized");
+        } else {
+            // If the page is disabled, do nothing and log it.
+            console.log("HyperConverter is disabled on this page.");
+        }
     });
-
-        observer.observe(document.body, {
-      childList: true,      // Watches for nodes being added/removed
-      subtree: true,        // Watches descendants of the target
-      characterData: true   // Watches for changes to text content
-    });
-
-    console.log("🚀 HyperConverter initialized");
-  }
-});
+}
