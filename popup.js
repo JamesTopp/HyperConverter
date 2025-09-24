@@ -372,7 +372,7 @@ document.getElementById('suggestFeature').addEventListener('click', function(e) 
     e.preventDefault();
     // Replace with your Google Form/Typeform URL
     if (typeof chrome !== 'undefined' && chrome.tabs) {
-        chrome.tabs.create({url: 'https://forms.google.com/your-form-url'});
+        chrome.tabs.create({url: 'https://forms.gle/6wS2ejuUCKebcEa97'});
     }
 });
 
