@@ -1445,45 +1445,46 @@ function convertTableMeasurement(value, unit) {
 }
 
 document.addEventListener("mouseover", function(e) {
-  let target = e.target;
+    // Start at the event's target and find the closest parent element (or itself)
+    // that has the .hyper-hover class.
+    const hoverTarget = e.target.closest('.hyper-hover');
 
-  // Check if target itself has hyper-hover
-  if (target && target.classList && target.classList.contains("hyper-hover")) {
-    const convertText = target.dataset.convert;
-    if (convertText) {
-      showTooltip(e, convertText);
-      return;
+    // If we found a hoverTarget, it means the mouse is inside one of our spans.
+    if (hoverTarget) {
+        const convertText = hoverTarget.dataset.convert;
+        if (convertText) {
+            showTooltip(e, convertText);
+        }
+        return; // We're done, no need to check for buttons.
     }
-  }
   
-  // For buttons: check if we're hovering inside a button that contains a hyper-hover span
-  let buttonParent = target.closest('button, .a-button, [role="button"]');
-  if (buttonParent) {
-    const hyperHoverChild = buttonParent.querySelector('.hyper-hover');
-    if (hyperHoverChild) {
-      const convertText = hyperHoverChild.dataset.convert;
-      if (convertText) {
-        showTooltip(e, convertText);
-        return;
-      }
+    // Your existing button logic remains as a fallback.
+    let buttonParent = e.target.closest('button, .a-button, [role="button"]');
+    if (buttonParent) {
+        const hyperHoverChild = buttonParent.querySelector('.hyper-hover');
+        if (hyperHoverChild) {
+            const convertText = hyperHoverChild.dataset.convert;
+            if (convertText) {
+                showTooltip(e, convertText);
+            }
+        }
     }
-  }
 }, true);
 
 document.addEventListener("mouseout", function(e) {
-  let target = e.target;
+    // Use the same robust .closest() logic to find the relevant span.
+    const hoverTarget = e.target.closest('.hyper-hover');
+
+    if (hoverTarget) {
+        hideTooltip();
+        return;
+    }
   
-  // Check if leaving a hyper-hover element
-  if (target && target.classList && target.classList.contains("hyper-hover")) {
-    hideTooltip();
-    return;
-  }
-  
-  // Check if leaving a button that contains hyper-hover
-  let buttonParent = target.closest('button, .a-button, [role="button"]');
-  if (buttonParent && buttonParent.querySelector('.hyper-hover')) {
-    hideTooltip();
-  }
+    // Your existing button logic.
+    let buttonParent = e.target.closest('button, .a-button, [role="button"]');
+    if (buttonParent && buttonParent.querySelector('.hyper-hover')) {
+        hideTooltip();
+    }
 }, true);
 
 chrome.storage.sync.get(['enabled', 'globallyDisabled'], (result) => {
