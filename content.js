@@ -894,9 +894,12 @@ function processTextNode(textNode) {
 
     if (matches.length === 0) return;
 
-    // Sort matches by index to process them in order
-    matches.sort((a, b) => a.index - b.index);
-
+    // Sort matches by index, then by length (prefer longer matches at same position)
+    matches.sort((a, b) => {
+        if (a.index !== b.index) return a.index - b.index;
+        return b[0].length - a[0].length;  // Longer matches first
+    });
+    
     // Build the replacement structure in a DocumentFragment
     const fragment = document.createDocumentFragment();
     let lastIndex = 0;
