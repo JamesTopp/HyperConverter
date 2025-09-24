@@ -80,25 +80,18 @@ const measurementWords = {
   'half of': 0.5, 'quarter of': 0.25, 'third of': 0.333
 };
 
-
 const createUniversalPattern = () => {
-  const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?|\\d+\\s+[${Object.keys(unicodeFractions).join('')}]`;
-  const unicodes = Object.keys(unicodeFractions).join('|');
-  
-  // Use all measurementWords keys instead of filtering
-  const allWordKeys = Object.keys(measurementWords);
-  
-  // Word phrases with "a/an" and "of a/an" support  
-  const baseWords = ['half', 'quarter', 'third', 'eighth', 'couple', 'few']; // Keep the existing base words for patterns
-  const wordPhrases = `(?:(?:${baseWords.join('|')})\\s+(?:of\\s+)?(?:a|an)\\s+)`;
-  
-  // Single words from measurementWords (escape special regex characters)
-  const singleWords = `(?:\\b(?:${allWordKeys.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b)`;
-  
-// Compound phrases like "one and half" and "1 ½" (number + unicode fraction)
-const compoundPhrases = `(?:\\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\\s+and\\s+(?:a\\s+)?(?:half|quarter|third|eighth|sixteenth)\\b|\\d+\\s+[${Object.keys(unicodeFractions).join('')}])`;
+    const textMixedNumber = `\\d+\\s+\\d+\\/\\d+`;
+    const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?|\\d+\\s+[${Object.keys(unicodeFractions).join('')}]`;
+    const unicodes = Object.keys(unicodeFractions).join('|');
+    const allWordKeys = Object.keys(measurementWords);
+    const baseWords = ['half', 'quarter', 'third', 'eighth', 'couple', 'few'];
+    const wordPhrases = `(?:(?:${baseWords.join('|')})\\s+(?:of\\s+)?(?:a|an)\\s+)`;
+    const singleWords = `(?:\\b(?:${allWordKeys.map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b)`;
+    const compoundPhrases = `(?:\\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)\\s+and\\s+(?:a\\s+)?(?:half|quarter|third|eighth|sixteenth)\\b|\\d+\\s+[${Object.keys(unicodeFractions).join('')}])`;
 
-return `(${numbers}|${unicodes}|${compoundPhrases}|${wordPhrases}|${singleWords})`;
+    // Return the combined pattern with our new pattern given the highest priority
+    return `(${textMixedNumber}|${numbers}|${unicodes}|${compoundPhrases}|${wordPhrases}|${singleWords})`;
 };
 
 const createEnhancedFractionPattern = () => {
@@ -573,103 +566,77 @@ const CONVERSION_CACHE = new Map();
 const MAX_CACHE_SIZE = 1000;
 
 function parseMeasurementValue(valueString) {
-  const valStr = String(valueString).toLowerCase().trim();
+    const valStr = String(valueString).toLowerCase().trim();
 
-  // Check measurement words first (including compound phrases)
-  if (measurementWords[valStr]) return measurementWords[valStr];
-  
-  // Handle "X and Y" patterns (like "two and half", "one and quarter")
-const compoundMatch = valStr.match(/^(\w+(?:\s+\w+)?)\s+and\s+(?:a\s+)?(\w+(?:\s+\w+)?)$/);
-if (compoundMatch) {
-  const first = measurementWords[compoundMatch[1]];
-  let second = measurementWords[compoundMatch[2]];
-  
-  // Special case: handle sloppy grammar for common fractions without "a"
-  const sloppyFractions = {
-    'half': 0.5,
-    'quarter': 0.25,
-    'third': 0.333,
-    'eighth': 0.125,
-    'sixteenth': 0.0625
-  };
-
-  if (sloppyFractions[compoundMatch[2]] && !valStr.includes(`and a ${compoundMatch[2]}`)) {
-    second = sloppyFractions[compoundMatch[2]];
-  }
-  
-  if (!isNaN(first) && !isNaN(second)) {
-    return first + second;
-  }
-}
-
-// Handle "number + unicode fraction" patterns (like "1 ½")
-const numberUnicodeMatch = valStr.match(/^(\d+)\s+([${Object.keys(unicodeFractions).join('')}])/);
-if (numberUnicodeMatch) {
-  const wholeNumber = parseFloat(numberUnicodeMatch[1]);
-  const fractionValue = unicodeFractions[numberUnicodeMatch[2]];
-  if (!isNaN(wholeNumber) && fractionValue !== undefined) {
-    return wholeNumber + fractionValue;
-  }
-}
-  
-  // Handle hyphenated numbers like "twenty-one"
-  const hyphenMatch = valStr.match(/^(\w+)-(\w+)$/);
-  if (hyphenMatch) {
-    const first = measurementWords[hyphenMatch[1]] || 0;
-    const second = measurementWords[hyphenMatch[2]] || 0;
-    if (first >= 20 && first <= 90 && second >= 1 && second <= 9) {
-      return first + second;
+    // NEW: Handle text-based mixed numbers like "1 1/2"
+    const textMixedMatch = valStr.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+    if (textMixedMatch) {
+        const whole = parseFloat(textMixedMatch[1]);
+        const num = parseFloat(textMixedMatch[2]);
+        const den = parseFloat(textMixedMatch[3]);
+        if (den !== 0 && !isNaN(whole) && !isNaN(num) && !isNaN(den)) {
+            return whole + (num / den);
+        }
     }
-  }
-  
-  // Handle "of" phrases like "half of a", "quarter of an"
-  if (valStr.includes(' of ')) {
-    const cleanStr = valStr.replace(/ of (?:a|an)\s*$/, '').replace(/ of$/, '');
-    if (measurementWords[cleanStr]) return measurementWords[cleanStr];
-  }
 
-  // Unicode fractions
-  if (unicodeFractions[valStr]) return unicodeFractions[valStr];
+    // Check measurement words first (including compound phrases)
+    if (measurementWords[valStr]) return measurementWords[valStr];
 
-  // Legacy word-to-number dictionary (keeping the rest of your existing logic)
-  const wordToNumber = {
-    // Numbers 0-19
-    'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-    'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
-    'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19,
-    // Tens
-    'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
-    'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
-    // Large scale numbers
-    'hundred': 100, 'thousand': 1000, 'million': 1000000, 'billion': 1000000000,
-    // Articles and fractions (now handled by measurementWords, but kept for safety)
-    'a': 1, 'an': 1, 'half': 0.5, 'quarter': 0.25,
-  };
-  if (wordToNumber[valStr]) return wordToNumber[valStr];
-  
-  // Handle complex phrases like "one and a half", "two and a quarter"
-  const complexMatch = valStr.match(/^(\w+)\s+and\s+(?:a\s+)?(\w+)$/);
-  if (complexMatch) {
-    const first = measurementWords[complexMatch[1]] || wordToNumber[complexMatch[1]];
-    const second = measurementWords[complexMatch[2]] || wordToNumber[complexMatch[2]];
-    if (!isNaN(first) && !isNaN(second)) {
-      return first + second;
+    // Handle "X and Y" patterns (like "two and half", "one and quarter")
+    const compoundMatch = valStr.match(/^(\w+(?:\s+\w+)?)\s+and\s+(?:a\s+)?(\w+(?:\s+\w+)?)$/);
+    if (compoundMatch) {
+        const first = measurementWords[compoundMatch[1]];
+        let second = measurementWords[compoundMatch[2]];
+        const sloppyFractions = { 'half': 0.5, 'quarter': 0.25, 'third': 0.333, 'eighth': 0.125, 'sixteenth': 0.0625 };
+        if (sloppyFractions[compoundMatch[2]] && !valStr.includes(`and a ${compoundMatch[2]}`)) {
+            second = sloppyFractions[compoundMatch[2]];
+        }
+        if (!isNaN(first) && !isNaN(second)) {
+            return first + second;
+        }
     }
-  }
-  
-  // Handle text fractions like "1/3"
-  if (valStr.includes("/")) {
-    const parts = valStr.split("/");
-    if (parts.length === 2) {
-      const num = parseFloat(parts[0]);
-      const den = parseFloat(parts[1]);
-      if (den !== 0 && !isNaN(num) && !isNaN(den)) return num / den;
-    }
-  }
 
-  // Handle standard numbers, including negatives
-  return parseFloat(valStr);
+    // Handle "number + unicode fraction" patterns (like "1 ½")
+    const numberUnicodeMatch = valStr.match(/^(\d+)\s+([${Object.keys(unicodeFractions).join('')}])/);
+    if (numberUnicodeMatch) {
+        const wholeNumber = parseFloat(numberUnicodeMatch[1]);
+        const fractionValue = unicodeFractions[numberUnicodeMatch[2]];
+        if (!isNaN(wholeNumber) && fractionValue !== undefined) {
+            return wholeNumber + fractionValue;
+        }
+    }
+
+    // Handle hyphenated numbers like "twenty-one"
+    const hyphenMatch = valStr.match(/^(\w+)-(\w+)$/);
+    if (hyphenMatch) {
+        const first = measurementWords[hyphenMatch[1]] || 0;
+        const second = measurementWords[hyphenMatch[2]] || 0;
+        if (first >= 20 && first <= 90 && second >= 1 && second <= 9) {
+            return first + second;
+        }
+    }
+
+    // Handle "of" phrases like "half of a", "quarter of an"
+    if (valStr.includes(' of ')) {
+        const cleanStr = valStr.replace(/ of (?:a|an)\s*$/, '').replace(/ of$/, '');
+        if (measurementWords[cleanStr]) return measurementWords[cleanStr];
+    }
+
+    // Unicode fractions
+    if (unicodeFractions[valStr]) return unicodeFractions[valStr];
+
+    // Handle simple text fractions like "1/3"
+    if (valStr.includes("/") && !valStr.includes(" ")) {
+        const parts = valStr.split("/");
+        if (parts.length === 2) {
+            const num = parseFloat(parts[0]);
+            const den = parseFloat(parts[1]);
+            if (den !== 0 && !isNaN(num) && !isNaN(den)) return num / den;
+        }
+    }
+
+    // Handle standard numbers, including negatives
+    return parseFloat(valStr);
 }
 
 // Tooltip setup
