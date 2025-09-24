@@ -673,6 +673,18 @@ function parseMeasurementValue(valueString) {
     return parseFloat(valStr);
 }
 
+function incrementConversionCount() {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.get(['conversionCount'], function(result) {
+            const currentCount = result.conversionCount || 0;
+            const newCount = currentCount + 1;
+            chrome.storage.local.set({conversionCount: newCount}, function() {
+                console.log(`Conversion count updated: ${newCount}`);
+            });
+        });
+    }
+}
+
 // Tooltip setup
 const tooltip = document.createElement("div");
 tooltip.id = "hyper-converter-tooltip";
@@ -728,7 +740,7 @@ document.head.appendChild(style);
 document.body.appendChild(tooltip);
 
 function showTooltip(e, text) {
-  // NEW: Render line breaks for multi-line tooltips
+    incrementConversionCount();
   tooltip.innerHTML = text.replace(/\n/g, '<br>');
   tooltip.style.display = "block";
   
