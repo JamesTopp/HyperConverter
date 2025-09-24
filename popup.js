@@ -3,6 +3,7 @@ let extensionEnabled = true;
 let globallyDisabled = false;
 let blacklistedSites = [];
 let currentDomain = '';
+let userConversions = 0;
 
 function getCurrentDomain() {
     if (typeof chrome !== 'undefined' && chrome.tabs) {
@@ -21,6 +22,20 @@ function isCurrentSiteBlacklisted() {
     return blacklistedSites.some(site =>
         currentDomain === site || currentDomain.endsWith('.' + site)
     );
+}
+
+// Load conversion count and update display
+function loadConversionCount() {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.get(['conversionCount'], function(result) {
+            userConversions = result.conversionCount || 0;
+            document.getElementById('userConversions').textContent = userConversions.toLocaleString();
+        });
+    } else {
+        // For preview
+        userConversions = 847;
+        document.getElementById('userConversions').textContent = userConversions.toLocaleString();
+    }
 }
 
 // Blacklist management functions
@@ -272,10 +287,12 @@ if (typeof chrome !== 'undefined' && chrome.storage) {
         globallyDisabled = result.globallyDisabled || false;
         blacklistedSites = result.blacklistedSites || [];
         getCurrentDomain();
+        loadConversionCount(); // Load the user's conversion count
     });
 } else {
     // For preview - just set initial state
     getCurrentDomain();
+    loadConversionCount();
 }
 
 // Email validation and submission
