@@ -76,4 +76,60 @@ document.addEventListener('DOMContentLoaded', function() {
         blacklistedSites = ['example.com', 'anothersite.org'];
         renderBlacklist();
     }
+    const newSiteInput = document.getElementById('newSiteInput');
+    const addSiteButton = document.getElementById('addSiteButton');
+
+    // Function to handle adding a new site to the blacklist
+    function addNewSite() {
+        // 1. Get the value from the input field and trim whitespace.
+        let newSite = newSiteInput.value.trim();
+        if (!newSite) {
+            // Do nothing if the input is empty.
+            return;
+        }
+
+        // 2. Basic validation: try to extract a valid hostname.
+        // This handles cases where users paste full URLs.
+        try {
+            // Prepend a protocol if one isn't there, so we can use the URL object.
+            if (!newSite.startsWith('http')) {
+                newSite = 'https://' + newSite;
+            }
+            const url = new URL(newSite);
+            newSite = url.hostname; 
+        } catch (error) {
+            // If the URL is invalid, alert the user and stop.
+            alert('Please enter a valid domain name (e.g., example.com)');
+            return;
+        }
+
+        // 3. Check if the site is already in the blacklist.
+        if (blacklistedSites.includes(newSite)) {
+            alert(`${newSite} is already on the blacklist.`);
+            return;
+        }
+
+        // 4. Add the new site to our array.
+        blacklistedSites.push(newSite);
+
+        // 5. Save the updated array to storage.
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+            chrome.storage.sync.set({ blacklistedSites: blacklistedSites }, function() {
+                console.log(`${newSite} has been added to the blacklist.`);
+                // Clear the input field and re-render the list.
+                newSiteInput.value = '';
+                renderBlacklist();
+            });
+        }
+    }
+
+    // Add event listener for the "Block" button.
+    addSiteButton.addEventListener('click', addNewSite);
+
+    // Also allow pressing "Enter" in the input field.
+    newSiteInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addNewSite();
+        }
+    });
 });
