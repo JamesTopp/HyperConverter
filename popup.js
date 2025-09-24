@@ -119,7 +119,8 @@ function updateToggleUI() {
     const disableOptions = document.getElementById('disableOptions');
     const gearButton = document.getElementById('gearButton');
     const extensionToggle = document.getElementById('extensionToggle');
-    
+    const neverRunButton = document.getElementById('neverRunButton'); // Get a reference to the button
+
     if (globallyDisabled) {
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Extension is off';
@@ -138,6 +139,13 @@ function updateToggleUI() {
         extensionToggle.style.cursor = 'pointer';
         extensionToggle.style.pointerEvents = 'auto';
         document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
+
+        // Explicitly set the button to its "disabled" state.
+        neverRunButton.textContent = `🚫 Disabled on ${currentDomain}`;
+        neverRunButton.style.opacity = '0.6';
+        neverRunButton.style.cursor = 'default';
+        // -------------------------
+
     } else if (extensionEnabled) {
         toggleSwitch.classList.add('active');
         statusText.textContent = 'Active on this page';
@@ -147,7 +155,14 @@ function updateToggleUI() {
         extensionToggle.style.cursor = 'pointer';
         extensionToggle.style.pointerEvents = 'auto';
         document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
-    } else {
+
+        // Explicitly reset the button to its default "enabled" state.
+        neverRunButton.textContent = '🚫 Never run on this page?';
+        neverRunButton.style.opacity = '1';
+        neverRunButton.style.cursor = 'pointer';
+        // --------------------------------
+
+    } else { // "Disabled on this page" (but not blacklisted)
         toggleSwitch.classList.remove('active');
         statusText.textContent = 'Disabled on this page';
         disableOptions.style.display = 'block';
@@ -156,6 +171,12 @@ function updateToggleUI() {
         extensionToggle.style.cursor = 'pointer';
         extensionToggle.style.pointerEvents = 'auto';
         document.getElementById('disableAllPages').textContent = '🔴 Turn off extension';
+
+        // Also ensure the button is in its default state here.
+        neverRunButton.textContent = '🚫 Never run on this page?';
+        neverRunButton.style.opacity = '1';
+        neverRunButton.style.cursor = 'pointer';
+        // --------------------------------
     }
 }
 
