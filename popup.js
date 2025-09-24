@@ -23,23 +23,42 @@ function isCurrentSiteBlacklisted() {
 
 document.getElementById('extensionToggle').addEventListener('click', function() {
     if (globallyDisabled) {
+        // If the entire extension is off, this toggle should do nothing.
         return;
-    } else if (isCurrentSiteBlacklisted()) {
-        // If site is blacklisted, remove from blacklist
-        blacklistedSites = blacklistedSites.filter(site => site !== currentDomain);
-        extensionEnabled = true;
-        updateToggleUI();
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-            chrome.storage.sync.set({enabled: true, blacklistedSites: blacklistedSites});
+    } 
+    
+    if (isCurrentSiteBlacklisted()) {
+        // 1. Ask the user for confirmation first.
+        const confirmation = confirm(`Remove ${currentDomain} from the blacklist?`);
+        
+        // 2. Only proceed if the user clicks "OK".
+        if (confirmation) {
+            // Remove the site from the blacklist array.
+            blacklistedSites = blacklistedSites.filter(site => site !== currentDomain);
+            extensionEnabled = true; // Set the page to active.
+                        document.getElementById('neverRunButton').textContent = '🚫 Never run on this page?';
+            
+            // Save the updated state to Chrome storage.
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                chrome.storage.sync.set({enabled: true, blacklistedSites: blacklistedSites});
+            }
+            
+            // Update the entire UI to reflect the new "Active" state.
+            updateToggleUI();
         }
+        // If the user clicks "Cancel", nothing happens.
+
     } else {
-        // Just toggle current page
+        // This is the normal toggle logic for a non-blacklisted page.
         extensionEnabled = !extensionEnabled;
-        updateToggleUI();
-        // Save state (only works in actual extension)  
+        
+        // Save the new state.
         if (typeof chrome !== 'undefined' && chrome.storage) {
             chrome.storage.sync.set({enabled: extensionEnabled});
         }
+        
+        // Update the UI.
+        updateToggleUI();
     }
 });
 
