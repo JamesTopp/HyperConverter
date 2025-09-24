@@ -288,67 +288,79 @@ const conversions = [
 },
   // ======= HIGH PRIORITY: "Fraction of" patterns =======
   {
-    name: "fraction_of_tablespoon",
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(tablespoons?|tbsp?)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
-    }
-  },
-  {
-    name: "fraction_of_teaspoon", 
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(teaspoons?|tsp?)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
-    }
-  },
-  {
-    name: "fraction_of_cup",
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(cups?)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
-    }
-  },
-  {
-    name: "fraction_of_inch",
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(inches?|inch|in)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
-    }
-  },
-  {
-    name: "fraction_of_foot",
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(feet|foot|ft)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
-    }
-  },
-  {
-    name: "fraction_of_pound",
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(pounds?|lbs?|lb)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
-    }
-  },
-  {
-    name: "fraction_of_ounce",
-    pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(ounces?|oz)\\b`,
-    convert: (match) => {
-      const fraction = parseMeasurementValue(match[1]);
-      if (isNaN(fraction)) return null;
-      return `${match[0]} = ${(fraction * CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} g`;
-    }
+      name: "fraction_of_unit",
+      // This pattern now includes all relevant units from your list.
+      pattern: `${createFractionPattern()}\\s+of\\s+an?\\s+(inches?|in|feet|foot|ft|centimet(er|re)s?|cm|millimet(er|re)s?|mm|met(er|re)s?|m|kilomet(er|re)s?|km|miles?|mi|pounds?|lbs?|lb|ounces?|oz|grams?|g|kilograms?|kg|gallons?|gal|lit(er|re)s?|l|millilit(er|re)s?|ml|cups?|tablespoons?|tbsp|teaspoons?|tsp|fahrenheit|celsius)\\b`,
+      convert: (match) => {
+          const fraction = parseMeasurementValue(match[1]);
+          const unit = match[2].toLowerCase();
+          if (isNaN(fraction)) return null;
+
+          // Length
+          if (unit.startsWith("inche") || unit === "in") {
+              return `${match[0]} = ${(fraction * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
+          }
+          if (unit.startsWith("feet") || unit.startsWith("foot") || unit === "ft") {
+              return `${match[0]} = ${(fraction * CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} m`;
+          }
+          if (unit.startsWith("centimet")) {
+              return `${match[0]} = ${(fraction / CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} in`;
+          }
+          if (unit.startsWith("millimet")) {
+              return `${match[0]} = ${(fraction * 0.0393701).toFixed(2)} in`;
+          }
+          if (unit.startsWith("met")) {
+              return `${match[0]} = ${(fraction / CONVERSION_FACTORS.FOOT_TO_M).toFixed(2)} ft`;
+          }
+          if (unit.startsWith("kilomet") || unit === "km") {
+              return `${match[0]} = ${(fraction * 0.621371).toFixed(2)} miles`;
+          }
+          if (unit.startsWith("mile") || unit === "mi") {
+              return `${match[0]} = ${(fraction * 1.60934).toFixed(2)} km`;
+          }
+          // Weight
+          if (unit.startsWith("pound") || unit.startsWith("lb")) {
+              return `${match[0]} = ${(fraction * CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} kg`;
+          }
+          if (unit.startsWith("ounce") || unit === "oz") {
+              return `${match[0]} = ${(fraction * CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} g`;
+          }
+          if (unit.startsWith("gram") || unit === "g") {
+              return `${match[0]} = ${(fraction / CONVERSION_FACTORS.OZ_TO_G).toFixed(2)} oz`;
+          }
+          if (unit.startsWith("kilogram") || unit === "kg") {
+              return `${match[0]} = ${(fraction / CONVERSION_FACTORS.LB_TO_KG).toFixed(2)} lbs`;
+          }
+          // Volume
+          if (unit.startsWith("gallon") || unit === "gal") {
+              return `${match[0]} = ${(fraction * CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} L`;
+          }
+          if (unit.startsWith("lit") || unit === "l") {
+              return `${match[0]} = ${(fraction / CONVERSION_FACTORS.GALLON_TO_L).toFixed(2)} gal`;
+          }
+          if (unit.startsWith("millilit") || unit === "ml") {
+              return `${match[0]} = ${(fraction / CONVERSION_FACTORS.TSP_TO_ML).toFixed(2)} tsp`;
+          }
+          // Cooking
+          if (unit.startsWith("cup")) {
+              return `${match[0]} = ${(fraction * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
+          }
+          if (unit.startsWith("tablespoon") || unit === "tbsp") {
+              return `${match[0]} = ${(fraction * CONVERSION_FACTORS.TBSP_TO_ML).toFixed(1)} ml`;
+          }
+          if (unit.startsWith("teaspoon") || unit === "tsp") {
+              return `${match[0]} = ${(fraction * CONVERSION_FACTORS.TSP_TO_ML).toFixed(1)} ml`;
+          }
+          // Temperature (less common for "fraction of", but included for completeness)
+          if (unit.startsWith("fahrenheit")) {
+              return `${match[0]} = ${(((fraction - 32) * 5) / 9).toFixed(1)} °C`;
+          }
+          if (unit.startsWith("celsius")) {
+              return `${match[0]} = ${((fraction * 9) / 5 + 32).toFixed(1)} °F`;
+          }
+
+          return null; // Should not be reached with this comprehensive pattern
+      }
   },
   // ======= MEDIUM PRIORITY: Symbol-based units =======
   {
