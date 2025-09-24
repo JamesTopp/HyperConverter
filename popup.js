@@ -47,6 +47,10 @@ document.getElementById('extensionToggle').addEventListener('click', function() 
             // Save the updated state to Chrome storage.
             if (typeof chrome !== 'undefined' && chrome.storage) {
                 chrome.storage.sync.set({enabled: true, blacklistedSites: blacklistedSites});
+                 // Send a message to the content script telling it to reload the page.
+                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, {action: "reloadPage"});
+                });
             }
             
             // Update the entire UI to reflect the new "Active" state.
