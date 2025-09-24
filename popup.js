@@ -18,7 +18,12 @@ function getCurrentDomain() {
 }
 
 function isCurrentSiteBlacklisted() {
-    return blacklistedSites.includes(currentDomain);
+    // .some() checks if at least one item in the array passes the test.
+    return blacklistedSites.some(site =>
+        // The test: is the current domain an EXACT match for the blacklisted site,
+        // OR does the current domain END WITH "." + the blacklisted site (making it a subdomain)?
+        currentDomain === site || currentDomain.endsWith('.' + site)
+    );
 }
 
 document.getElementById('extensionToggle').addEventListener('click', function() {
