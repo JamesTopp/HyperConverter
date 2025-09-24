@@ -101,8 +101,6 @@ const compoundPhrases = `(?:\\b(?:one|two|three|four|five|six|seven|eight|nine|t
 return `(${numbers}|${unicodes}|${compoundPhrases}|${wordPhrases}|${singleWords})`;
 };
 
-console.log("DEBUG - createNumberPattern regex:", createUniversalPattern());
-
 const createEnhancedFractionPattern = () => {
   const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?`;
   const unicodes = Object.keys(unicodeFractions).join('|');
@@ -506,13 +504,13 @@ const conversions = [
     },
   },
   {
-      name: "cups",
-      pattern: `(?:\\d+\\s+[${Object.keys(unicodeFractions).join('')}]|${createNumberPattern()})\\s*-?\\s*(?:cups?)\\b`,
-      convert: (match) => {
-        const num = parseMeasurementValue(match[1]);
-        if (isNaN(num)) return null;
-        return `${match[0]} = ${(num * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
-      },
+    name: "cups",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:cups?)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.CUP_TO_ML).toFixed(0)} ml`;
+    },
   },
   {
     name: "tablespoons",
