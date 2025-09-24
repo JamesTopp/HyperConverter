@@ -349,3 +349,13 @@ document.getElementById('authorLink').addEventListener('click', function(e) {
         chrome.tabs.create({url: 'https://your-website.com'});
     }
 });
+
+// Listen for messages from the popup script.
+if (typeof chrome !== 'undefined' && chrome.runtime) {
+    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        // If the message is to reload, refresh the page.
+        if (request.action === "reloadPage") {
+            window.location.reload();
+        }
+    });
+}
