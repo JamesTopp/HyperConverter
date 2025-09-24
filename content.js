@@ -378,6 +378,15 @@ const conversions = [
   },
   // ======= STANDARD PRIORITY: Single unit patterns =======
   {
+    name: "inches",
+    pattern: `${createNumberPattern()}\\s*-?\\s*(?:inches?|inch|in)\\b`,
+    convert: (match) => {
+      const num = parseMeasurementValue(match[1]);
+      if (isNaN(num)) return null;
+      return `${match[0]} = ${(num * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
+    },
+  },
+  {
     name: "feet",
     pattern: `${createNumberPattern()}\\s*-?\\s*(?:feet|foot|ft)\\b`,
     convert: (match) => {
