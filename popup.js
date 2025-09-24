@@ -36,8 +36,9 @@ document.getElementById('extensionToggle').addEventListener('click', function() 
             // Remove the site from the blacklist array.
             blacklistedSites = blacklistedSites.filter(site => site !== currentDomain);
             extensionEnabled = true; // Set the page to active.
-                        document.getElementById('neverRunButton').textContent = '🚫 Never run on this page?';
-            
+            document.getElementById('neverRunButton').textContent = '🚫 Never run on this page?';
+            document.getElementById('neverRunButton').style.opacity = '1';
+            document.getElementById('neverRunButton').style.cursor = 'pointer';
             // Save the updated state to Chrome storage.
             if (typeof chrome !== 'undefined' && chrome.storage) {
                 chrome.storage.sync.set({enabled: true, blacklistedSites: blacklistedSites});
@@ -68,6 +69,8 @@ document.getElementById('neverRunButton').addEventListener('click', function() {
         extensionEnabled = false;
         // Update button text
         this.textContent = `🚫 Disabled on ${currentDomain}`;
+        this.style.opacity = '0.6';
+        this.style.cursor = 'default';
         if (typeof chrome !== 'undefined' && chrome.storage) {
             chrome.storage.sync.set({blacklistedSites: blacklistedSites, enabled: false});
         }
