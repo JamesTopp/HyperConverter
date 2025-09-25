@@ -339,7 +339,7 @@ emailSubmit.addEventListener('click', async function() {
         
         try {
             // Send email to Google Apps Script
-            const response = await fetch('https://script.google.com/macros/s/AKfycbyE_E0d-yLIqyXCJe5CBo_C2XBF7IaeULgYMvw_okR9aR2jbQQlpsdiXsINsYV88Ih1/exec', {
+            const response = await fetch('https://script.google.com/macros/s/AKfycbxFp8erY5S5qfeEBPL-U3nAnn7NjP4CTuzFFzbCfTSuiM66oezNQRP4xC7nSbDScufL/exec', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
