@@ -327,6 +327,7 @@ emailInput.addEventListener('keypress', function(e) {
     }
 });
 
+// Update your existing emailSubmit event listener in popup.js
 emailSubmit.addEventListener('click', async function() {
     const email = emailInput.value;
     if (email && validateEmail(email)) {
@@ -336,32 +337,62 @@ emailSubmit.addEventListener('click', async function() {
         emailSpinner.style.display = 'block';
         emailValidation.classList.remove('show');
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Show success state and clear email first
-        emailSpinner.style.display = 'none';
-        emailButtonText.textContent = 'Joined!';
-        emailButtonText.style.display = 'block';
-        
-        // Clear email and validation, then show success message
-        emailInput.value = '';
-        emailInput.classList.remove('valid');
-        emailValidation.classList.remove('show');
-        
-        // Small delay before showing "Done." message
-        setTimeout(() => {
-            emailSuccess.classList.add('show');
-        }, 200);
-        
-        // Reset everything after showing success
-        setTimeout(() => {
-            emailSuccess.classList.remove('show');
-            emailButtonText.textContent = 'Join';
+        try {
+            // Send email to Google Apps Script
+            const response = await fetch('https://script.google.com/macros/s/AKfycbyE_E0d-yLIqyXCJe5CBo_C2XBF7IaeULgYMvw_okR9aR2jbQQlpsdiXsINsYV88Ih1/exec', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: email })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Show success state and clear email first
+                emailSpinner.style.display = 'none';
+                emailButtonText.textContent = 'Joined!';
+                emailButtonText.style.display = 'block';
+                
+                // Clear email and validation, then show success message
+                emailInput.value = '';
+                emailInput.classList.remove('valid');
+                emailValidation.classList.remove('show');
+                
+                // Small delay before showing "Done." message
+                setTimeout(() => {
+                    emailSuccess.classList.add('show');
+                }, 200);
+                
+                // Reset everything after showing success
+                setTimeout(() => {
+                    emailSuccess.classList.remove('show');
+                    emailButtonText.textContent = 'Join';
+                    emailSubmit.disabled = false;
+                }, 2000);
+                
+                console.log('Email successfully added to list');
+            } else {
+                // Handle errors (duplicate email, etc.)
+                emailSpinner.style.display = 'none';
+                emailButtonText.style.display = 'block';
+                emailSubmit.disabled = false;
+                
+                if (result.message === 'Email already subscribed') {
+                    alert('This email is already on our list!');
+                } else {
+                    alert('There was an error. Please try again.');
+                }
+            }
+        } catch (error) {
+            // Handle network errors
+            console.error('Email submission error:', error);
+            emailSpinner.style.display = 'none';
+            emailButtonText.style.display = 'block';
             emailSubmit.disabled = false;
-        }, 2000);
-        
-        console.log('Email signup:', email);
+            alert('Network error. Please check your connection and try again.');
+        }
     } else {
         alert('Please enter a valid email address');
     }
