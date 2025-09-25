@@ -685,79 +685,6 @@ function incrementConversionCount() {
     }
 }
 
-// Tooltip setup
-const tooltip = document.createElement("div");
-tooltip.id = "hyper-converter-tooltip";
-Object.assign(tooltip.style, {
-  position: "absolute",
-  background: "#FFEFE6",
-  color: "#2D2D2D",
-  padding: "8px 12px",
-  borderRadius: "8px",
-  fontSize: "12px",
-  zIndex: "2147483647",
-  pointerEvents: "none",
-  display: "none",
-  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-  maxWidth: "300px", // Increased max-width for multi-line
-  whiteSpace: "pre-wrap", // Allows wrapping and respects newlines
-  fontFamily: "Arial, sans-serif",
-  border: "none",
-  fontWeight: "500",
-  lineHeight: "1.4", // Added for better multi-line readability
-});
-
-const style = document.createElement("style");
-style.textContent = `
-  .hyper-hover {
-    position: relative !important;
-    cursor: help !important;
-    background-color: transparent !important;
-    border: none !important;
-    display: inline-block !important;
-  }
-  
-  .hyper-hover::after {
-    content: '' !important;
-    position: absolute !important;
-    bottom: 0px !important;
-    left: 0px !important;
-    width: 6px !important;
-    height: 6px !important;
-    background-color: #C8B5DB !important;
-    pointer-events: none !important;
-    z-index: 1 !important;
-    clip-path: polygon(0% 0%, 0% 100%, 100% 100%) !important;
-  }
-  
-  .hyper-hover:hover {
-    background-color: #FFEFE6 !important;
-    border-radius: 3px !important;
-    transition: background-color 0.2s ease !important;
-  }
-`;
-document.head.appendChild(style);
-document.body.appendChild(tooltip);
-
-function showTooltip(e, text) {
-  // Track this conversion with both local and GA4
-  trackConversion(text, window.location.hostname);
-  
-  // Render line breaks for multi-line tooltips
-  tooltip.innerHTML = text.replace(/\n/g, '<br>');
-  tooltip.style.display = "block";
-  
-  const x = e.clientX + window.scrollX;
-  const y = e.clientY + window.scrollY;
-  
-  tooltip.style.left = `${x + 15}px`;
-  tooltip.style.top = `${y - 35}px`;
-  
-  console.log("📦 Tooltip shown:", text);
-}
-
-// Add this to your content.js file after the existing tracking function
-
 // Google Analytics 4 tracking setup
 const GA_MEASUREMENT_ID = 'G-GSPK1L1VV0';
 const GA_API_SECRET = 'q97LMEguSB2nvol6MRKC4Q';
@@ -928,6 +855,77 @@ function trackExtensionLoad() {
         website_domain: window.location.hostname,
         page_url: window.location.href
     });
+}
+
+// Tooltip setup
+const tooltip = document.createElement("div");
+tooltip.id = "hyper-converter-tooltip";
+Object.assign(tooltip.style, {
+  position: "absolute",
+  background: "#FFEFE6",
+  color: "#2D2D2D",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  fontSize: "12px",
+  zIndex: "2147483647",
+  pointerEvents: "none",
+  display: "none",
+  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+  maxWidth: "300px", // Increased max-width for multi-line
+  whiteSpace: "pre-wrap", // Allows wrapping and respects newlines
+  fontFamily: "Arial, sans-serif",
+  border: "none",
+  fontWeight: "500",
+  lineHeight: "1.4", // Added for better multi-line readability
+});
+
+const style = document.createElement("style");
+style.textContent = `
+  .hyper-hover {
+    position: relative !important;
+    cursor: help !important;
+    background-color: transparent !important;
+    border: none !important;
+    display: inline-block !important;
+  }
+  
+  .hyper-hover::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: 0px !important;
+    left: 0px !important;
+    width: 6px !important;
+    height: 6px !important;
+    background-color: #C8B5DB !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    clip-path: polygon(0% 0%, 0% 100%, 100% 100%) !important;
+  }
+  
+  .hyper-hover:hover {
+    background-color: #FFEFE6 !important;
+    border-radius: 3px !important;
+    transition: background-color 0.2s ease !important;
+  }
+`;
+document.head.appendChild(style);
+document.body.appendChild(tooltip);
+
+function showTooltip(e, text) {
+  // Track this conversion with both local and GA4
+  trackConversion(text, window.location.hostname);
+  
+  // Render line breaks for multi-line tooltips
+  tooltip.innerHTML = text.replace(/\n/g, '<br>');
+  tooltip.style.display = "block";
+  
+  const x = e.clientX + window.scrollX;
+  const y = e.clientY + window.scrollY;
+  
+  tooltip.style.left = `${x + 15}px`;
+  tooltip.style.top = `${y - 35}px`;
+  
+  console.log("📦 Tooltip shown:", text);
 }
 
 function hideTooltip() {
