@@ -740,7 +740,10 @@ document.head.appendChild(style);
 document.body.appendChild(tooltip);
 
 function showTooltip(e, text) {
-    incrementConversionCount();
+  // Track this conversion with both local and GA4
+  trackConversion(text, window.location.hostname);
+  
+  // Render line breaks for multi-line tooltips
   tooltip.innerHTML = text.replace(/\n/g, '<br>');
   tooltip.style.display = "block";
   
@@ -751,6 +754,180 @@ function showTooltip(e, text) {
   tooltip.style.top = `${y - 35}px`;
   
   console.log("📦 Tooltip shown:", text);
+}
+
+// Add this to your content.js file after the existing tracking function
+
+// Google Analytics 4 tracking setup
+const GA_MEASUREMENT_ID = 'G-GSPK1L1VV0';
+const GA_API_SECRET = 'q97LMEguSB2nvol6MRKC4Q';
+
+// Function to send events to Google Analytics 4
+async function sendGA4Event(eventName, parameters = {}) {
+    try {
+        // Generate a unique client ID (stored locally per user)
+        let clientId = await getClientId();
+        
+        const payload = {
+            client_id: clientId,
+            events: [{
+                name: eventName,
+                params: {
+                    // Add timestamp
+                    engagement_time_msec: '1',
+                    session_id: Date.now().toString(),
+                    ...parameters
+                }
+            }]
+        };
+
+        // Send to GA4 Measurement Protocol
+        const response = await fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${GA_MEASUREMENT_ID}&api_secret=${GA_API_SECRET}`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log('GA4 event sent:', eventName, parameters);
+    } catch (error) {
+        console.error('GA4 tracking error:', error);
+    }
+}
+
+// Generate or retrieve client ID
+async function getClientId() {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+        return new Promise((resolve) => {
+            chrome.storage.local.get(['ga4_client_id'], function(result) {
+                if (result.ga4_client_id) {
+                    resolve(result.ga4_client_id);
+                } else {
+                    // Generate new client ID
+                    const clientId = 'client_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    chrome.storage.local.set({ga4_client_id: clientId});
+                    resolve(clientId);
+                }
+            });
+        });
+    } else {
+        // Fallback for testing
+        return 'test_client_' + Math.random().toString(36).substr(2, 9);
+    }
+}
+
+// Updated conversion tracking function
+function trackConversion(conversionText, currentDomain) {
+    // Increment local counter (keep existing functionality)
+    incrementConversionCount();
+    
+    // Extract conversion details
+    const conversionData = parseConversionData(conversionText);
+    
+    // Send to Google Analytics
+    sendGA4Event('conversion_viewed', {
+        conversion_type: conversionData.type,
+        original_unit: conversionData.originalUnit,
+        converted_unit: conversionData.convertedUnit,
+        website_domain: currentDomain,
+        custom_parameter_1: conversionData.category // length, weight, temperature, etc.
+    });
+}
+
+// Parse conversion data from tooltip text
+function parseConversionData(conversionText) {
+    // Examples: "5 inches = 12.7 cm", "75°F = 23.9°C"
+    const conversionMatch = conversionText.match(/(.+?)\s*=\s*(.+)/);
+    
+    if (conversionMatch) {
+        const original = conversionMatch[1].trim();
+        const converted = conversionMatch[2].trim();
+        
+        // Extract units
+        const originalUnit = extractUnit(original);
+        const convertedUnit = extractUnit(converted);
+        
+        // Determine category
+        const category = determineCategory(originalUnit, convertedUnit);
+        
+        return {
+            type: `${originalUnit}_to_${convertedUnit}`,
+            originalUnit: originalUnit,
+            convertedUnit: convertedUnit,
+            category: category
+        };
+    }
+    
+    return {
+        type: 'unknown',
+        originalUnit: 'unknown',
+        convertedUnit: 'unknown',
+        category: 'unknown'
+    };
+}
+
+// Extract unit from measurement text
+function extractUnit(measurementText) {
+    const unitPatterns = {
+        // Length
+        'inches': /\b(inches?|in|")\b/i,
+        'feet': /\b(feet|foot|ft|')\b/i,
+        'centimeters': /\b(centimeters?|centimetres?|cm)\b/i,
+        'meters': /\b(meters?|metres?|m)\b/i,
+        'millimeters': /\b(millimeters?|millimetres?|mm)\b/i,
+        
+        // Weight
+        'pounds': /\b(pounds?|lbs?|lb)\b/i,
+        'ounces': /\b(ounces?|oz)\b/i,
+        'kilograms': /\b(kilograms?|kg)\b/i,
+        'grams': /\b(grams?|g)\b/i,
+        
+        // Temperature
+        'fahrenheit': /\b(fahrenheit|°f|degrees?\s?f)\b/i,
+        'celsius': /\b(celsius|°c|degrees?\s?c)\b/i,
+        
+        // Volume
+        'gallons': /\b(gallons?|gal)\b/i,
+        'liters': /\b(liters?|litres?|l)\b/i,
+        'cups': /\b(cups?)\b/i,
+        'teaspoons': /\b(teaspoons?|tsp)\b/i,
+        'tablespoons': /\b(tablespoons?|tbsp)\b/i
+    };
+    
+    for (const [unit, pattern] of Object.entries(unitPatterns)) {
+        if (pattern.test(measurementText)) {
+            return unit;
+        }
+    }
+    
+    return 'unknown';
+}
+
+// Determine measurement category
+function determineCategory(originalUnit, convertedUnit) {
+    const categories = {
+        length: ['inches', 'feet', 'centimeters', 'meters', 'millimeters'],
+        weight: ['pounds', 'ounces', 'kilograms', 'grams'],
+        temperature: ['fahrenheit', 'celsius'],
+        volume: ['gallons', 'liters', 'cups', 'teaspoons', 'tablespoons']
+    };
+    
+    for (const [category, units] of Object.entries(categories)) {
+        if (units.includes(originalUnit) || units.includes(convertedUnit)) {
+            return category;
+        }
+    }
+    
+    return 'unknown';
+}
+
+// Track page load event (call once when extension loads)
+function trackExtensionLoad() {
+    sendGA4Event('extension_activated', {
+        website_domain: window.location.hostname,
+        page_url: window.location.href
+    });
 }
 
 function hideTooltip() {
