@@ -1065,6 +1065,7 @@ function processTextNode(textNode) {
                     console.log("  fullMatch:", fullMatch);
                     console.log("  conversionResult:", conversionResult);
                     span.dataset.convert = conversionResult;
+                    console.log("After setting dataset.convert:", span.dataset.convert);
                     fragment.appendChild(span);
                 } else {
                     fragment.appendChild(document.createTextNode(fullMatch));
