@@ -1061,11 +1061,7 @@ function processTextNode(textNode) {
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
                     span.textContent = fullMatch;
-                    console.log("About to create span:");
-                    console.log("  fullMatch:", fullMatch);
-                    console.log("  conversionResult:", conversionResult);
                     span.dataset.convert = conversionResult;
-                    console.log("After setting dataset.convert:", span.dataset.convert);
                     fragment.appendChild(span);
                 } else {
                     fragment.appendChild(document.createTextNode(fullMatch));
@@ -1590,6 +1586,7 @@ document.addEventListener("mouseover", function(e) {
     if (hoverTarget) {
         console.log("Hovering over span with textContent:", hoverTarget.textContent);
         console.log("Span dataset.convert:", hoverTarget.dataset.convert);
+        console.log("All span attributes:", hoverTarget.outerHTML);
         const convertText = hoverTarget.dataset.convert;
         if (convertText) {
             showTooltip(e, convertText);
