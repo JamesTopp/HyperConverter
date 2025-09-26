@@ -392,7 +392,7 @@ const conversions = [
     const num = parseMeasurementValue(match[1]);
     if (isNaN(num)) return null;
     const result = `${match[0]} = ${(num * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
-    return result;
+    return result.replace(/"/g, '&quot;');
   },
 },
   {
