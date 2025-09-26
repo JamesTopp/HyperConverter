@@ -916,7 +916,7 @@ document.head.appendChild(style);
 document.body.appendChild(tooltip);
 
 function showTooltip(e, text) {
-  // Track this conversion with both local and GA4
+  console.log("showTooltip received text:", text);
   trackConversion(text, window.location.hostname);
   
   // Render line breaks for multi-line tooltips
