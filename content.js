@@ -1082,6 +1082,7 @@ function processTextNode(textNode) {
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
                     span.textContent = fullMatch;
+                    console.log("Setting span dataset.convert to:", conversionResult);
                     span.dataset.convert = conversionResult;
                     fragment.appendChild(span);
                     // Temporary: Check what's actually being highlighted for mixed numbers
@@ -1630,7 +1631,7 @@ document.addEventListener("mouseover", function(e) {
         if (convertText) {
             showTooltip(e, convertText);
         }
-        return; // We're done, no need to check for buttons.
+        return;
     }
   
     // Your existing button logic remains as a fallback.
