@@ -1061,6 +1061,9 @@ function processTextNode(textNode) {
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
                     span.textContent = fullMatch;
+                    console.log("About to create span:");
+                    console.log("  fullMatch:", fullMatch);
+                    console.log("  conversionResult:", conversionResult);
                     span.dataset.convert = conversionResult;
                     fragment.appendChild(span);
                 } else {
