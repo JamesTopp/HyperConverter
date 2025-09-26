@@ -385,15 +385,19 @@ const conversions = [
       }
   },
   // ======= MEDIUM PRIORITY: Symbol-based units =======
-  {
-    name: "inches_symbol",
-    pattern: `${createNumberPattern()}(?:"|″|")`,
-    convert: (match) => {
-      const num = parseMeasurementValue(match[1]);
-      if (isNaN(num)) return null;
-      return `${match[0]} = ${(num * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
-    },
+{
+  name: "inches_symbol",
+  pattern: `${createNumberPattern()}(?:"|″|")`,
+  convert: (match) => {
+    console.log("inches_symbol match:", match);
+    const num = parseMeasurementValue(match[1]);
+    console.log("parsed number:", num);
+    if (isNaN(num)) return null;
+    const result = `${match[0]} = ${(num * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
+    console.log("conversion result:", result);
+    return result;
   },
+},
   {
     name: "feet_symbol",
     pattern: `${createNumberPattern()}'`,
