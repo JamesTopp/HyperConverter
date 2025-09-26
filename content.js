@@ -1584,9 +1584,6 @@ function convertTableMeasurement(value, unit) {
 document.addEventListener("mouseover", function(e) {
     const hoverTarget = e.target.closest('.hyper-hover');
     if (hoverTarget) {
-        console.log("Hovering over span with textContent:", hoverTarget.textContent);
-        console.log("Span dataset.convert:", hoverTarget.dataset.convert);
-        console.log("All span attributes:", hoverTarget.outerHTML);
         const convertText = hoverTarget.dataset.convert;
         if (convertText) {
             showTooltip(e, convertText);
