@@ -4,13 +4,7 @@
   "version": "1.0",
   "description": "Automatically converts units on any webpage.",
   "permissions": ["storage", "scripting", "tabs"],
-  "host_permissions": ["<all_urls>",
-   "https://www.google-analytics.com/*",
-   "https://www.analytics.google.com/*"
-  ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
-  },
+  "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "HyperConverter",
