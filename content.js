@@ -389,12 +389,9 @@ const conversions = [
   name: "inches_symbol",
   pattern: `${createNumberPattern()}(?:"|″|")`,
   convert: (match) => {
-    console.log("inches_symbol match:", match);
     const num = parseMeasurementValue(match[1]);
-    console.log("parsed number:", num);
     if (isNaN(num)) return null;
     const result = `${match[0]} = ${(num * CONVERSION_FACTORS.INCH_TO_CM).toFixed(2)} cm`;
-    console.log("conversion result:", result);
     return result;
   },
 },
@@ -683,7 +680,6 @@ function incrementConversionCount() {
             const currentCount = result.conversionCount || 0;
             const newCount = currentCount + 1;
             chrome.storage.local.set({conversionCount: newCount}, function() {
-                console.log(`Conversion count updated: ${newCount}`);
             });
         });
     }
@@ -721,7 +717,6 @@ async function sendGA4Event(eventName, parameters = {}) {
             }
         });
 
-        console.log('GA4 event sent:', eventName, parameters);
     } catch (error) {
         console.error('GA4 tracking error:', error);
     }
@@ -916,7 +911,6 @@ document.head.appendChild(style);
 document.body.appendChild(tooltip);
 
 function showTooltip(e, text) {
-  console.log("showTooltip received text:", text);
   trackConversion(text, window.location.hostname);
   
   // Render line breaks for multi-line tooltips
@@ -928,9 +922,7 @@ function showTooltip(e, text) {
   
   tooltip.style.left = `${x + 15}px`;
   tooltip.style.top = `${y - 35}px`;
-  
-  console.log("📦 Tooltip shown:", text);
-}
+  }
 
 function hideTooltip() {
   tooltip.style.display = "none";
@@ -980,19 +972,9 @@ function processTextNode(textNode) {
                 text = prevText + text; // Stitch backward
                 nodesToReplace.unshift(prevNode); // Mark the previous node to be removed
                 stitched = true;
-                console.log("Backward stitching:", prevText, "+", text, "=", prevText + text);
             }
         }
     }
-
-  // Debug logging to see what was stitched
-  if (stitched) {
-      console.log("📦 STITCHING DETAILS:", {
-          combinedText: text,
-          nodeCount: nodesToReplace.length,
-          nodes: nodesToReplace.map(n => n.textContent)
-      });
-  }
 
     const regex = getCompiledRegex();
     regex.lastIndex = 0;
@@ -1023,10 +1005,8 @@ function processTextNode(textNode) {
             
             // Special handling for mixed numbers - mark the fraction portion as processed too
             if (match[0].match(/\d+\s*[½¼¾⅛⅜⅝⅞⅓⅔⅙⅚]/)) {
-                console.log("📌 Marking mixed number range as processed:", match[0]);
             }
         } else {
-            console.log("⏭️ Skipping overlapping match:", match[0]);
         }
     }
 
@@ -1053,7 +1033,6 @@ function processTextNode(textNode) {
         );
         
         if (isOverlapping) {
-            console.log("⏭️ Skipping overlapping match in fragment building:", currentMatch[0]);
             continue;
         }
         
@@ -1082,17 +1061,8 @@ function processTextNode(textNode) {
                     const span = document.createElement("span");
                     span.className = "hyper-hover";
                     span.textContent = fullMatch;
-                    console.log("Setting span dataset.convert to:", conversionResult);
                     span.dataset.convert = conversionResult;
                     fragment.appendChild(span);
-                    // Temporary: Check what's actually being highlighted for mixed numbers
-                    if (fullMatch.includes('½') || fullMatch.includes('¼') || fullMatch.includes('¾')) {
-                        console.log("MIXED NUMBER SPAN CHECK:", {
-                            textContent: span.textContent,
-                            dataset: span.dataset.convert,
-                            fullMatch: fullMatch
-                        });
-                    }
                 } else {
                     fragment.appendChild(document.createTextNode(fullMatch));
                 }
@@ -1105,15 +1075,6 @@ function processTextNode(textNode) {
     if (afterText) {
         fragment.appendChild(document.createTextNode(afterText));
     }
-
-// Debug: Check what nodes are being replaced
-if (stitched) {
-    console.log("REPLACEMENT CHECK - Stitched nodes:", nodesToReplace.length);
-    nodesToReplace.forEach((node, i) => {
-        console.log(`  Node ${i}: "${node.textContent}"`);
-    });
-    console.log("  Fragment contains:", fragment.textContent);
-}
 
     // Perform the final, safe DOM replacement
     try {
