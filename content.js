@@ -1582,12 +1582,10 @@ function convertTableMeasurement(value, unit) {
 }
 
 document.addEventListener("mouseover", function(e) {
-    // Start at the event's target and find the closest parent element (or itself)
-    // that has the .hyper-hover class.
     const hoverTarget = e.target.closest('.hyper-hover');
-
-    // If we found a hoverTarget, it means the mouse is inside one of our spans.
     if (hoverTarget) {
+        console.log("Hovering over span with textContent:", hoverTarget.textContent);
+        console.log("Span dataset.convert:", hoverTarget.dataset.convert);
         const convertText = hoverTarget.dataset.convert;
         if (convertText) {
             showTooltip(e, convertText);
