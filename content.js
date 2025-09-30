@@ -1305,7 +1305,7 @@ function isUnitWord(text) {
  * Check if text contains cooking measurements
  */
 function hasCookingMeasurement(text) {
-  return /(\d+|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs)/i.test(text);
+  return /(\d+\s+\d+\/\d+|\d+|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞)\s+(cup|cups|teaspoon|teaspoons|tablespoon|tablespoons|tbsp|tsp|ounce|ounces|oz|pound|pounds|lb|lbs)/i.test(text);
 }
 
 /**
