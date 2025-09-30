@@ -1639,6 +1639,20 @@ if (typeof chrome !== 'undefined' && chrome.storage) {
             
             // 3. If enabled, run the extension.
             processUnified(document.body);
+
+                        let scrollDebounceTimer = null;
+            const SCROLL_DEBOUNCE_DELAY = 250; // ms
+
+            window.addEventListener('scroll', () => {
+                if (scrollDebounceTimer) {
+                    clearTimeout(scrollDebounceTimer);
+                }
+                
+                scrollDebounceTimer = setTimeout(() => {
+                    // Re-process the entire page on scroll to catch lazy-loaded content.
+                    processUnified(document.body); 
+                }, SCROLL_DEBOUNCE_DELAY);
+            });
             
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
