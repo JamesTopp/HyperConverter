@@ -1228,9 +1228,8 @@ function processIngredientItem(element, text) {
   // Check if this contains cooking measurements
   if (!hasCookingMeasurement(text)) return;
     
-  // Try to match cooking patterns
   const match = text.match(
-  /(½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅞|\d+\s+\d+\/\d+|\d+(?:\/\d+)?|\d+)\s+(teaspoon|teaspoons|cup|cups|tablespoon|tablespoons|tsp|tbsp|ounce|ounces|oz|pound|pounds|lb|lbs)/i
+    /(\d+\s+\d+\/\d+|½|¼|¾|⅛|⅙|⅕|⅓|⅜|⅖|⅔|⅗|⅘|⅚|⅝|⅞|\d+(?:\/\d+)?|\d+)\s+(teaspoon|teaspoons|cup|cups|tablespoon|tablespoons|tsp|tbsp|ounce|ounces|oz|pound|pounds|lb|lbs)/i
   );
   
   if (match) {
