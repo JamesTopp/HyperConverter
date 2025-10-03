@@ -104,7 +104,7 @@ const measurementWords = {
 
 const createUniversalPattern = () => {
     const textMixedNumber = `\\d+\\s+\\d+\\/\\d+`;
-    const numbers = `\\d+(?:\\.\\d+)?(?:\\/\\d+)?|\\d+\\s+[${Object.keys(unicodeFractions).join('')}]`;
+    const numbers = `\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?(?:\\/\\d+)?|\\d+\\s+[${Object.keys(unicodeFractions).join('')}]`;
     const unicodes = Object.keys(unicodeFractions).join('|');
     const allWordKeys = Object.keys(measurementWords);
     const baseWords = ['half', 'quarter', 'third', 'eighth', 'couple', 'few'];
@@ -160,8 +160,7 @@ const conversions = [
   },
 {
     name: "ranges_and_dimensions",
-    pattern: `(\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d+(?:\\.\\d+)?)(?:\\s*(?:[xX×]|x)\\s*(\\d+(?:\\.\\d+)?))?\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?|[°º]\\s?[fFcC]|degrees?\\s?[fFcC]|degrees?\\s?fahrenheit|degrees?\\s?celsius|fahrenheit|celsius)(?=\\s|$|[^a-zA-Z])`,
-    convert: (match) => {
+        pattern: `(\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?)\\s*(?:-|—|–|to|[xX×]|x)\\s*(\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?)(?:\\s*(?:[xX×]|x)\\s*(\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?))?\\s*(cm|centimeters?|centimetres?|in|inch|inches?|"|″|"|ft|feet|'|m|meters?|metres?|mm|millimeters?|millimetres?|km|kilometers?|kilometres?|lbs?|pounds?|kg|kilograms?|g|grams?|oz|ounces?|gal|gallons?|l|liters?|litres?|ml|milliliters?|millilitres?|cups?|tbsp|tablespoons?|tsp|teaspoons?|[°º]\\s?[fFcC]|degrees?\\s?[fFcC]|degrees?\\s?fahrenheit|degrees?\\s?celsius|fahrenheit|celsius)(?=\\s|$|[^a-zA-Z])`,    convert: (match) => {
         if (!match || !match[1] || !match[2] || !match[4]) return null; // match[4] is always the unit
         
         const val1 = parseMeasurementValue(match[1]);
@@ -601,7 +600,7 @@ const CONVERSION_CACHE = new Map();
 const MAX_CACHE_SIZE = 1000;
 
 function parseMeasurementValue(valueString) {
-    const valStr = String(valueString).toLowerCase().trim();
+      const valStr = String(valueString).replace(/,/g, '').toLowerCase().trim();
 
     // NEW: Handle text-based mixed numbers like "1 1/2"
     const textMixedMatch = valStr.match(/^(\d+)\s+(\d+)\/(\d+)$/);
