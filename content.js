@@ -1158,6 +1158,32 @@ function collectTextNodes(container) {
 }
 
 function processSpecialCases(container) {
+
+    // Handle AllRecipes split quantity/unit spans
+  const quantitySpans = container.querySelectorAll('[data-ingredient-quantity="true"]');
+  quantitySpans.forEach(qtySpan => {
+    const unitSpan = qtySpan.nextElementSibling;
+    if (unitSpan && unitSpan.getAttribute('data-ingredient-unit') === 'true') {
+      const quantity = qtySpan.textContent.trim();
+      const unit = unitSpan.textContent.trim();
+      const fullMeasurement = `${quantity} ${unit}`;
+      
+      // Find conversion
+      const conversionResult = findConversion(fullMeasurement);
+      
+      if (conversionResult) {
+        // Wrap both spans in a hover element
+        const wrapper = document.createElement('span');
+        wrapper.className = 'hyper-hover';
+        wrapper.dataset.convert = conversionResult;
+        wrapper.innerHTML = qtySpan.outerHTML + unitSpan.outerHTML;
+        
+        qtySpan.parentNode.replaceChild(wrapper, qtySpan);
+        unitSpan.remove();
+      }
+    }
+  });
+
   // Single query for all special elements we need to check
   const specialElements = container.querySelectorAll(`
     em, strong, b, i,
