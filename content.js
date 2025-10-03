@@ -960,6 +960,25 @@ function processTextNode(textNode) {
         }
     }
 
+    // STEP 1.5: CHECK FOR TEXT MIXED NUMBER FOLLOWED BY UNIT IN NEXT NODE
+    if (!stitched && text.match(/\d+\s+\d+\/\d+\s*$/)) {
+        let nextNode = textNode.nextSibling;
+        if (nextNode) {
+            // Skip element nodes to get to next text node
+            while (nextNode && nextNode.nodeType === 1) {
+                nextNode = nextNode.firstChild || nextNode.nextSibling;
+            }
+            if (nextNode && nextNode.nodeType === 3) {
+                const nextText = nextNode.textContent;
+                if (nextText.match(/^\s*(pounds?|lbs?|cups?|ounces?|oz|teaspoons?|tsp|tablespoons?|tbsp)/i)) {
+                    text += nextText;
+                    nodesToReplace.push(nextNode);
+                    stitched = true;
+                }
+            }
+        }
+    }
+
     // STEP 2: FALL BACK TO BACKWARD STITCHING (if no forward stitch happened)
     if (!stitched) {
         let prevNode = textNode.previousSibling;
