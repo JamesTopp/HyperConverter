@@ -25,7 +25,7 @@ const PERFORMANCE_SETTINGS = {
 };
 
 // DOM Selectors
-const EXCLUDED_SELECTORS = ".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true'], #hyper-converter-tooltip, nav, [role='navigation'], .bricks-nav-menu, .bricks-mobile-menu";
+const EXCLUDED_SELECTORS = ".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true'], #hyper-converter-tooltip, nav, [role='navigation']";
 
 const CONVERSION_FACTORS = {
   INCH_TO_CM: 2.54,
@@ -1299,8 +1299,12 @@ function processSpecialCases(container) {
   
   specialElements.forEach(element => {
     if (processedElements.has(element)) return;
+
+    // CRITICAL: Skip elements inside excluded areas (like navigation)
+    if (element.closest(EXCLUDED_SELECTORS)) return;
+
     processedElements.add(element);
-    
+
     const tagName = element.tagName.toLowerCase();
     const text = element.textContent.trim();
     
