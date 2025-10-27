@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperConverter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 360px;
+            min-height: 500px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #E6E0F8 0%, #FFEFE6 50%, #FFC8A2 100%);
+            color: #2D2D2D;
+            line-height: 1.6;
+        }
+
+        .container {
+            padding: 24px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, #B4A7D6, #FFC8A2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #2D2D2D;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .status:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 18px;
+            height: 10px;
+            background: #FFC8A2;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .toggle-switch.active {
+            background: #A8E6A3;
+        }
+
+        .toggle-dot {
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active .toggle-dot {
+            transform: translateX(8px);
+        }
+
+        .status-text {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #2D2D2D;
+            text-align: center;
+        }
+
+        .button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin-bottom: 8px;
+        }
+
+        .button:last-child {
+            margin-bottom: 0;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #B4A7D6, #FFC8A2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(180, 167, 214, 0.3);
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(180, 167, 214, 0.4);
+        }
+
+        .button-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: #2D2D2D;
+            border: 1px solid rgba(180, 167, 214, 0.2);
+        }
+
+        .button-secondary:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .email-field {
+            flex: 1;
+            padding: 12px 40px 12px 16px;
+            border: 1px solid rgba(180, 167, 214, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            transition: border-color 0.2s ease;
+        }
+
+        .email-field:focus {
+            outline: none;
+            border-color: #B4A7D6;
+            box-shadow: 0 0 0 3px rgba(180, 167, 214, 0.1);
+        }
+
+        .email-field.valid {
+            border-color: #A8E6A3;
+            box-shadow: 0 0 0 3px rgba(168, 230, 163, 0.1);
+        }
+
+        .email-validation {
+            position: absolute;
+            right: 90px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #A8E6A3;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .email-validation.show {
+            opacity: 1;
+        }
+
+        .email-success {
+            position: absolute;
+            right: 90px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #A8E6A3;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .email-success.show {
+            opacity: 1;
+        }
+
+        .email-submit {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #B4A7D6, #FFC8A2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .email-submit:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(180, 167, 214, 0.3);
+        }
+
+        .email-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .social-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .social-button {
+            flex: 1;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(180, 167, 214, 0.2);
+        }
+
+        .stats-global {
+            font-size: 12px;
+            font-weight: 500;
+            color: #B4A7D6;
+            margin-bottom: 2px;
+        }
+
+        .stats-personal {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        .footer a {
+            color: #B4A7D6;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Blacklist Management Styles */
+        .blacklist-section {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .blacklist-section.show {
+            display: block;
+        }
+
+        .blacklist-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .blacklist-container {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            border: 1px solid rgba(180, 167, 214, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .blacklist-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .blacklist-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(180, 167, 214, 0.1);
+        }
+
+        .blacklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .blacklist-item.empty {
+            color: #888;
+            font-style: italic;
+            justify-content: center;
+        }
+
+        .site-checkbox {
+            margin-right: 8px;
+        }
+
+        .site-label {
+            flex-grow: 1;
+        }
+
+        .add-site-input {
+            display: flex;
+            gap: 8px;
+        }
+
+        .new-site-field {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid rgba(180, 167, 214, 0.3);
+            border-radius: 6px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .new-site-field:focus {
+            outline: none;
+            border-color: #B4A7D6;
+            box-shadow: 0 0 0 2px rgba(180, 167, 214, 0.1);
+        }
+
+        .add-site-btn {
+            padding: 8px 16px;
+            border: none;
+            background: linear-gradient(135deg, #B4A7D6, #FFC8A2);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .add-site-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(180, 167, 214, 0.3);
+        }
+
+        .button[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(180, 167, 214, 0.95);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            z-index: 1000;
+            animation: tooltipFadeIn 0.2s ease-out;
+            box-shadow: 0 2px 8px rgba(180, 167, 214, 0.3);
+        }
+
+        @keyframes tooltipFadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="arrow1"></div>
+                <div class="arrow2"></div>
+            </div>
+            <h1>HyperConverter</h1>
+            <p class="subtitle">Just hover. We'll do the math.</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                <div class="status" id="extensionToggle">
+                    <div class="toggle-switch active" id="toggleSwitch">
+                        <div class="toggle-dot"></div>
+                    </div>
+                    <span class="status-text" id="statusText">Active on this page</span>
+                </div>
+                <button class="gear-button" id="gearButton" style="display: none; background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(180, 167, 214, 0.2); border-radius: 20px; padding: 8px 10px; cursor: pointer; font-size: 12px; transition: all 0.2s ease;">
+                    ⚙️
+                </button>
+            </div>
+            <div class="disable-options" id="disableOptions" style="display: none; margin-bottom: 8px;">
+                <button class="button button-secondary" id="disableAllPages" style="margin-bottom: 8px; font-size: 11px; padding: 6px 12px;">
+                    🔴 Turn off extension
+                </button>
+                <div style="display: flex; gap: 12px; margin-bottom: 8px;">
+                    <button class="button button-secondary" id="neverRunButton" style="flex: 1; margin-bottom: 0; font-size: 11px; padding: 6px 12px;">
+                        🚫 Never run on this page?
+                    </button>
+                    <button class="button button-secondary" id="manageBlacklist" style="flex: 1; margin-bottom: 0; font-size: 11px; padding: 6px 12px;">
+                        ⚙️ Manage blocked sites
+                    </button>
+                </div>
+            </div>
+
+            <!-- Blacklist Management Section -->
+            <div class="blacklist-section" id="blacklistSection">
+                <h3 class="blacklist-title">Blocked Sites</h3>
+                <div class="blacklist-container">
+                    <ul class="blacklist-list" id="blacklistList">
+                        <li class="blacklist-item empty">No sites blocked yet.</li>
+                    </ul>
+                </div>
+                <h3 class="blacklist-title">Add New Site</h3>
+                <div class="add-site-input">
+                    <input type="text" class="new-site-field" id="newSiteInput" placeholder="e.g., example.com">
+                    <button class="add-site-btn" id="addSiteButton">Block</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats">
+            <div class="stats-personal">You've converted <span id="userConversions">0</span> measurements</div>
+        </div>
+
+        <!-- Email Signup Section -->
+        <div class="section">
+            <h3 class="section-title">Get Early Access</h3>
+            <div class="email-input">
+                <input type="email" class="email-field" placeholder="Enter your email" id="emailInput">
+                <div class="email-validation" id="emailValidation">✓</div>
+                <div class="email-success" id="emailSuccess">✓ Done.</div>
+                <button class="email-submit" id="emailSubmit">
+                    <span id="emailButtonText">Join</span>
+                    <div class="spinner" id="emailSpinner" style="display: none;"></div>
+                </button>
+            </div>
+            <p style="font-size: 12px; color: #666; margin-top: 8px; text-align: center;">Be the first to get new features like currency conversion, dark mode, and more</p>
+        </div>
+
+        <!-- Feedback Section -->
+        <div class="section">
+            <h3 class="section-title">Help Us Improve</h3>
+            <a href="#" class="button button-primary" id="suggestFeature" title="Request a feature or let me know if something's off">
+                <span>💡</span>
+                Make a suggestion
+            </a>
+            <a href="#" class="button button-secondary" id="rateExtension">
+                <span>⭐</span>
+                Rate on Chrome Web Store
+            </a>
+        </div>
+
+        <!-- Share Section -->
+        <div class="section">
+            <h3 class="section-title">Spread the Word</h3>
+            <button class="button button-secondary" id="shareButton">
+                <span>📤</span>
+                Share HyperConverter
+            </button>
+            
+            <!-- Share Options (hidden by default) -->
+            <div class="share-options" id="shareOptions" style="display: none; margin-top: 12px;">
+                <button class="button button-secondary social-button" id="shareTwitter" style="margin-bottom: 4px; font-size: 12px; padding: 8px 12px;">
+                    <span>𝕏</span>
+                    Share on X
+                </button>
+                <button class="button button-secondary social-button" id="shareReddit" style="margin-bottom: 4px; font-size: 12px; padding: 8px 12px;">
+                    <span>🤖</span>
+                    Share on Reddit
+                </button>
+                <button class="button button-secondary social-button" id="copyLink" style="margin-bottom: 0; font-size: 12px; padding: 8px 12px;">
+                    <span>🔗</span>
+                    Copy Link
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            Made with ❤️ by <a href="#" id="authorLink">James</a>
+            <div class="version">v1.0.0</div>
+        </div>
+    </div>
+
+   <script src="popup.js"></script>
+</body>
+</html>
