@@ -25,7 +25,7 @@ const PERFORMANCE_SETTINGS = {
 };
 
 // DOM Selectors
-const EXCLUDED_SELECTORS = ".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true'], #hyper-converter-tooltip, nav, header, [role='navigation'], [role='banner'], .nav, .navbar, .navigation, .menu, .header";
+const EXCLUDED_SELECTORS = ".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true'], #hyper-converter-tooltip, nav, header, [role='navigation'], [role='banner'], .nav, .navbar, .navigation, .menu, .header, .bricks-nav-menu, .bricks-mobile-menu, .fr-nav-alpha, .brx-submenu-toggle, .sub-menu, [class*='nav-'], [class*='menu-'], img, picture, source, svg, [class*='image']";
 
 const CONVERSION_FACTORS = {
   INCH_TO_CM: 2.54,
