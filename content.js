@@ -25,7 +25,7 @@ const PERFORMANCE_SETTINGS = {
 };
 
 // DOM Selectors
-const EXCLUDED_SELECTORS = ".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true'], #hyper-converter-tooltip, nav, header, [role='navigation'], [role='banner'], .nav, .navbar, .navigation, .menu, .header, .bricks-nav-menu, .bricks-mobile-menu, .fr-nav-alpha, .brx-submenu-toggle, .sub-menu, [class*='nav-'], [class*='menu-'], img, picture, source, svg, [class*='image']";
+const EXCLUDED_SELECTORS = ".hyper-hover, script, style, noscript, input, textarea, [contenteditable='true'], #hyper-converter-tooltip, nav, [role='navigation'], .bricks-nav-menu, .bricks-mobile-menu";
 
 const CONVERSION_FACTORS = {
   INCH_TO_CM: 2.54,
@@ -1058,11 +1058,16 @@ function processTextNode(textNode) {
                 nextNode = nextNode.firstChild || nextNode.nextSibling;
             }
             if (nextNode && nextNode.nodeType === 3) {
-                const nextText = nextNode.textContent;
-                if (nextText.match(/^\s*(pounds?|lbs?|cups?|ounces?|oz|teaspoons?|tsp|tablespoons?|tbsp)/i)) {
-                    text += nextText;
-                    nodesToReplace.push(nextNode);
-                    stitched = true;
+                // Safety check: don't stitch if the next node is inside an excluded element
+                if (nextNode.parentNode && nextNode.parentNode.closest(EXCLUDED_SELECTORS)) {
+                    // Skip stitching - the target node is in an excluded area
+                } else {
+                    const nextText = nextNode.textContent;
+                    if (nextText.match(/^\s*(pounds?|lbs?|cups?|ounces?|oz|teaspoons?|tsp|tablespoons?|tbsp)/i)) {
+                        text += nextText;
+                        nodesToReplace.push(nextNode);
+                        stitched = true;
+                    }
                 }
             }
         }
@@ -1072,13 +1077,18 @@ function processTextNode(textNode) {
     if (!stitched) {
         let prevNode = textNode.previousSibling;
         if (prevNode && prevNode.nodeType === 3) {
-            const prevText = prevNode.textContent;
-            // Check for dimension patterns or word-based numbers.
-            if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
-                prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
-                text = prevText + text; // Stitch backward
-                nodesToReplace.unshift(prevNode); // Mark the previous node to be removed
-                stitched = true;
+            // Safety check: don't stitch if the previous node is inside an excluded element
+            if (prevNode.parentNode && prevNode.parentNode.closest(EXCLUDED_SELECTORS)) {
+                // Skip stitching - the target node is in an excluded area
+            } else {
+                const prevText = prevNode.textContent;
+                // Check for dimension patterns or word-based numbers.
+                if (prevText.match(/(?:\b|\s)\d+(\.\d+)?\s*[xX]\s*$/) ||
+                    prevText.match(/\b(half|quarter|third|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|a|an)\s+$/i)) {
+                    text = prevText + text; // Stitch backward
+                    nodesToReplace.unshift(prevNode); // Mark the previous node to be removed
+                    stitched = true;
+                }
             }
         }
     }
