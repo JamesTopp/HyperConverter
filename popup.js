@@ -412,7 +412,7 @@ document.getElementById('rateExtension').addEventListener('click', function(e) {
     e.preventDefault();
     // Replace with your Chrome Web Store URL
     if (typeof chrome !== 'undefined' && chrome.tabs) {
-        chrome.tabs.create({url: 'https://chrome.google.com/webstore/detail/your-extension-id'});
+        chrome.tabs.create({url: 'https://chromewebstore.google.com/detail/hyperconverter/gfjpkobijpblaciddplfhnooinabjkkj'});
     }
 });
 
