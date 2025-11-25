@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "HyperConverter",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "Automatically converts units on any website. Just hover over inches, pounds, etc. to see instant conversions.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["<all_urls>"],
