@@ -431,7 +431,7 @@ document.getElementById('shareButton').addEventListener('click', function () {
 // Share on Twitter/X
 document.getElementById('shareTwitter').addEventListener('click', function(e) {
     e.preventDefault();
-    const text = encodeURIComponent('Just discovered HyperConverter - instantly converts measurements on any website! 🔄 Perfect for international shopping and cooking. #productivity #chrome');
+    const text = encodeURIComponent('Just discovered HyperConverter - instantly converts measurements on any website! 🔄 Perfect for international shopping and cooking. https://chromewebstore.google.com/detail/hyperconverter/gfjpkobijpblaciddplfhnooinabjkkj #productivity #chrome');
     if (typeof chrome !== 'undefined' && chrome.tabs) {
         chrome.tabs.create({url: `https://twitter.com/intent/tweet?text=${text}`});
     } else {
@@ -443,7 +443,7 @@ document.getElementById('shareTwitter').addEventListener('click', function(e) {
 document.getElementById('shareReddit').addEventListener('click', function(e) {
     e.preventDefault();
     const title = encodeURIComponent('HyperConverter - Universal measurement conversion Chrome extension');
-    const text = encodeURIComponent('This extension automatically detects and converts measurements on websites. Perfect for international users dealing with different unit systems!');
+    const text = encodeURIComponent('This extension automatically detects and converts measurements on websites. Perfect for international users dealing with different unit systems! https://chromewebstore.google.com/detail/hyperconverter/gfjpkobijpblaciddplfhnooinabjkkj');
     if (typeof chrome !== 'undefined' && chrome.tabs) {
         chrome.tabs.create({url: `https://reddit.com/submit?title=${title}&text=${text}`});
     } else {
@@ -453,7 +453,7 @@ document.getElementById('shareReddit').addEventListener('click', function(e) {
 
 // Copy link
 document.getElementById('copyLink').addEventListener('click', function() {
-    const extensionUrl = 'https://chrome.google.com/webstore/detail/your-extension-id'; // Replace with your actual URL
+    const extensionUrl = 'https://chromewebstore.google.com/detail/hyperconverter/gfjpkobijpblaciddplfhnooinabjkkj'; // Replace with your actual URL
     navigator.clipboard.writeText(extensionUrl).then(function() {
         const originalText = this.innerHTML;
         this.innerHTML = '<span>✅</span> Copied!';
